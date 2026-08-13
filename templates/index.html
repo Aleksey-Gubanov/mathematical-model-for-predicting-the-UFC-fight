@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MMA PREDICTOR v43.3 | SENIOR PRODUCTION</title>
+    <style>
+        :root { --bg: #0b1120; --card: #151e32; --text: #e2e8f0; --muted: #94a3b8; --accent: #3b82f6; --green: #22c55e; --orange: #f97316; --red: #ef4444; --border: #334155; --yellow: #eab308; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 20px; min-height: 100vh; }
+        .container { max-width: 1000px; margin: 0 auto; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 15px; }
+        .title { font-size: 22px; font-weight: 700; color: var(--accent); }
+        .accuracy-box { border: 2px solid var(--red); background: #1a0f0f; padding: 10px 18px; border-radius: 8px; text-align: center; min-width: 200px; }
+        .accuracy-box .label { font-size: 11px; color: var(--red); text-transform: uppercase; margin-bottom: 4px; }
+        .accuracy-box .value { font-size: 20px; font-weight: 800; color: var(--red); font-family: monospace; }
+        .accuracy-box .predictions { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+        .tabs { display: flex; gap: 12px; margin-bottom: 24px; }
+        .tab { flex: 1; padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s; text-transform: uppercase; }
+        .tab.active { background: var(--green); color: #fff; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); }
+        .tab.inactive { background: var(--orange); color: #fff; opacity: 0.85; }
+
+        .input-section { background: var(--card); padding: 24px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border); }
+        .input-row { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+        .input-wrapper { flex: 1; min-width: 200px; }
+        .input-wrapper input { width: 100%; padding: 14px 16px; background: #0f172a; border: 2px solid var(--border); border-radius: 8px; color: #fff; font-size: 16px; }
+        .input-wrapper input:focus { outline: none; border-color: var(--accent); }
+
+        .btn { width: 100%; padding: 16px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .btn:hover { background: #2563eb; }
+        .btn:disabled { background: #475569; cursor: not-allowed; }
+        .loader { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .status-msg { text-align: center; margin-top: 12px; font-size: 14px; min-height: 20px; }
+
+        /* Прогресс-лист шагов */
+        .steps-container { background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border); display: none; }
+        .steps-container.visible { display: block; }
+        .steps-title { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 12px; text-transform: uppercase; }
+        .step-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 6px; margin-bottom: 6px; transition: all 0.3s; }
+        .step-item.running { background: rgba(59, 130, 246, 0.1); border-left: 3px solid var(--accent); }
+        .step-item.success { background: rgba(34, 197, 94, 0.1); border-left: 3px solid var(--green); }
+        .step-item.error { background: rgba(239, 68, 68, 0.1); border-left: 3px solid var(--red); }
+        .step-item.warning { background: rgba(234, 179, 8, 0.1); border-left: 3px solid var(--yellow); }
+        .step-icon { font-size: 18px; min-width: 24px; }
+        .step-text { font-size: 14px; color: var(--text); flex: 1; }
+        .step-spinner { width: 16px; height: 16px; border: 2px solid rgba(59, 130, 246, 0.3); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+
+        .result-section { background: var(--card); padding: 24px; border-radius: 12px; border: 1px solid var(--border); display: none; }
+        .result-section.visible { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .result-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; color: #fff; border-left: 4px solid var(--accent); padding-left: 12px; }
+
+        .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-bottom: 24px; background: #0f172a; padding: 16px; border-radius: 10px; }
+        .summary-item { text-align: center; }
+        .summary-item .label { font-size: 11px; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+        .summary-item .value { font-size: 18px; font-weight: 700; color: #fff; }
+
+        table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background: #0f172a; color: var(--muted); font-size: 12px; text-transform: uppercase; font-weight: 600; }
+        th:last-child, td:last-child { text-align: right; }
+        td:last-child { font-family: monospace; color: var(--accent); font-weight: 600; }
+
+        .log { background: #000; padding: 16px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 13px; color: #4ade80; margin-top: 20px; white-space: pre-wrap; display: none; border-left: 3px solid var(--green); }
+        .log.visible { display: block; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .modal { background: var(--card); padding: 32px; border-radius: 16px; border: 2px solid var(--accent); max-width: 500px; width: 90%; }
+        .modal h2 { margin: 0 0 20px 0; color: var(--accent); text-align: center; }
+        .modal p { color: var(--muted); margin-bottom: 15px; }
+        .modal input { width: 100%; padding: 14px; background: #0f172a; border: 2px solid var(--border); border-radius: 8px; color: #fff; font-size: 16px; margin-bottom: 16px; text-align: center; }
+        .modal button { width: 100%; padding: 14px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; }
+        .modal .error { color: var(--red); text-align: center; margin-top: 12px; }
+    </style>
+</head>
+<body>
+<div class="modal-overlay" id="agreementModal" style="display: none;">
+    <div class="modal">
+        <h2>⚖️ Юридическое соглашение</h2>
+        <p>Прогнозы носят информационный характер. Не являются финансовой рекомендацией. Вы принимаете полную ответственность.</p>
+        <button onclick="acceptAgreement()">ПРИНЯТЬ</button>
+        <div class="error" id="agreementError"></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="apiKeyModal" style="display: none;">
+    <div class="modal">
+        <h2>🔑 Лимит исчерпан</h2>
+        <p>Введите свой API ключ DeepSeek</p>
+        <input type="text" id="apiKeyInput" placeholder="sk-...">
+        <button onclick="setApiKey()">СОХРАНИТЬ</button>
+        <div class="error" id="apiKeyError"></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="initModal" style="display: none;">
+    <div class="modal">
+        <h2>🔐 Инициализация</h2>
+        <p>Введите мастер-пароль</p>
+        <input type="password" id="passwordInput" placeholder="Пароль">
+        <button onclick="initSystem()">ВОЙТИ</button>
+        <div class="error" id="initError"></div>
+    </div>
+</div>
+
+<div class="container" id="mainContent" style="display: none;">
+    <div class="header">
+        <div class="title">🔵 MMA PREDICTOR v43.3</div>
+        <div class="accuracy-box">
+            <div class="label">Точность модели</div>
+            <div class="value" id="accDisplay">--%</div>
+            <div class="predictions" id="predictionsDisplay"></div>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="setMode('forecast', this)">ПРОГНОЗ</button>
+        <button class="tab inactive" onclick="setMode('training', this)">ОБУЧЕНИЕ</button>
+        <button class="tab inactive" onclick="setMode('calibration', this)">КАЛИБРОВКА</button>
+    </div>
+
+    <div class="input-section">
+        <div class="input-row">
+            <div class="input-wrapper"><input type="text" id="f1" placeholder="Имя бойца 1"></div>
+            <div class="input-wrapper"><input type="text" id="f2" placeholder="Имя бойца 2"></div>
+        </div>
+        <button class="btn" id="calcBtn" onclick="analyze()">
+            <span id="btnText">РАССЧИТАТЬ</span>
+            <span class="loader" id="loader"></span>
+        </button>
+        <div class="status-msg" id="statusMsg"></div>
+    </div>
+
+    <!-- Прогресс-лист шагов -->
+    <div class="steps-container" id="stepsContainer">
+        <div class="steps-title">📋 Процесс выполнения</div>
+        <div id="stepsList"></div>
+    </div>
+
+    <div class="result-section" id="results">
+        <div class="result-title">ПРОГНОЗ БОЯ МОДЕЛИ:</div>
+
+        <div class="summary">
+            <div class="summary-item"><div class="label">Победитель</div><div class="value" id="resWinner">--</div></div>
+            <div class="summary-item"><div class="label">Вероятность</div><div class="value" id="resProb">--%</div></div>
+            <div class="summary-item"><div class="label">Способ</div><div class="value" id="resMethod">--</div></div>
+            <div class="summary-item"><div class="label">Раунд</div><div class="value" id="resRnd">--</div></div>
+            <div class="summary-item"><div class="label">Коэф. Модели</div><div class="value" id="resOddsModel">--</div></div>
+            <div class="summary-item"><div class="label">Коэф. БК</div><div class="value" id="resOddsBook">--</div></div>
+        </div>
+
+        <table>
+            <thead>
+            <tr><th>Параметр</th><th>Прогноз</th><th>Факт</th><th>Точность</th></tr>
+            </thead>
+            <tbody>
+            <tr><td>Победитель</td><td id="tPredWin">--</td><td id="tFactWin">--</td><td id="tAccWin">--%</td></tr>
+            <tr><td>Раунд</td><td id="tPredRnd">--</td><td id="tFactRnd">--</td><td id="tAccRnd">--%</td></tr>
+            <tr><td>Способ</td><td id="tPredMth">--</td><td id="tFactMth">--</td><td id="tAccMth">--%</td></tr>
+            <tr><td id="lblF1">Боец 1</td><td id="tOddsF1">--</td><td id="tBookF1">--</td><td></td></tr>
+            <tr><td id="lblF2">Боец 2</td><td id="tOddsF2">--</td><td id="tBookF2">--</td><td></td></tr>
+            </tbody>
+        </table>
+
+        <div class="log" id="trainingLog"></div>
+    </div>
+</div>
+
+<script>
+    let currentMode = 'forecast';
+    const API = window.location.origin;
+
+    window.onload = async function() {
+        try {
+            const res = await fetch(API + '/api/status');
+            const data = await res.json();
+            if (!data.initialized) {
+                document.getElementById('initModal').style.display = 'flex';
+            } else {
+                document.getElementById('mainContent').style.display = 'block';
+                loadStatus();
+            }
+        } catch (e) { console.error(e); }
+    };
+
+    async function acceptAgreement() {
+        try {
+            const res = await fetch(API + '/api/agreement', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({agreed: true})
+            });
+            if (res.ok) {
+                document.getElementById('agreementModal').style.display = 'none';
+                document.getElementById('initModal').style.display = 'flex';
+            }
+        } catch (e) {
+            document.getElementById('agreementError').innerText = 'Ошибка';
+        }
+    }
+
+    async function setApiKey() {
+        const key = document.getElementById('apiKeyInput').value.trim();
+        if (!key) return;
+        try {
+            const res = await fetch(API + '/api/set_api_key', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({api_key: key})
+            });
+            if (res.ok) {
+                document.getElementById('apiKeyModal').style.display = 'none';
+                document.getElementById('initModal').style.display = 'flex';
+            }
+        } catch (e) {
+            document.getElementById('apiKeyError').innerText = 'Ошибка';
+        }
+    }
+
+    async function initSystem() {
+        const pwd = document.getElementById('passwordInput').value;
+        if (!pwd) return;
+        try {
+            const res = await fetch(API + '/api/init', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({password: pwd})
+            });
+            if (res.ok) {
+                document.getElementById('initModal').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                loadStatus();
+            } else {
+                document.getElementById('initError').innerText = 'Неверный пароль';
+            }
+        } catch (e) {
+            document.getElementById('initError').innerText = 'Ошибка соединения';
+        }
+    }
+
+    document.getElementById('passwordInput').addEventListener('keypress', e => {
+        if (e.key === 'Enter') initSystem();
+    });
+
+    function setMode(mode, btn) {
+        currentMode = mode;
+        document.querySelectorAll('.tab').forEach(b => b.className = 'tab inactive');
+        btn.className = 'tab active';
+        const btnText = document.getElementById('btnText');
+        if (mode === 'forecast') btnText.innerText = 'РАССЧИТАТЬ ПРОГНОЗ';
+        else if (mode === 'training') btnText.innerText = 'ДОБАВИТЬ И ОБУЧИТЬ';
+        else btnText.innerText = 'КАЛИБРОВКА';
+        document.getElementById('statusMsg').innerText = '';
+        document.getElementById('results').classList.remove('visible');
+        document.getElementById('stepsContainer').classList.remove('visible');
+        document.getElementById('f1').value = '';
+        document.getElementById('f2').value = '';
+    }
+
+async function analyze() {
+    const f1 = document.getElementById('f1').value.trim();
+    const f2 = document.getElementById('f2').value.trim();
+
+    // Для калибровки имена не нужны
+    if (currentMode !== 'calibration' && (!f1 || !f2)) {
+        showStatus('Введите имена обоих бойцов', 'red');
+        return;
+    }
+
+    document.getElementById('calcBtn').disabled = true;
+    document.getElementById('loader').style.display = 'inline-block';
+    document.getElementById('results').classList.remove('visible');
+    document.getElementById('stepsContainer').classList.remove('visible');
+    document.getElementById('stepsList').innerHTML = '';
+
+    try {
+        let endpoint, payload;
+
+        if (currentMode === 'calibration') {
+            // Калибровка не требует имен бойцов
+            endpoint = '/api/calibrate';
+            payload = {};
+            showStatus('⏳ Запуск калибровки (5-10 минут)...', 'blue');
+        } else {
+            // Прогноз и обучение требуют имен
+            endpoint = '/api/analyze';
+            payload = {fighter1: f1, fighter2: f2, mode: currentMode};
+        }
+
+        const res = await fetch(API + endpoint, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            if (data.detail === 'Лимит исчерпан') {
+                document.getElementById('apiKeyModal').style.display = 'flex';
+            } else {
+                throw new Error(data.detail || 'Ошибка');
+            }
+            return;
+        }
+
+        if (currentMode === 'calibration') {
+            showStatus(`✅ Калибровка завершена! Точность: ${data.accuracy.toFixed(1)}%`, 'green');
+            loadStatus();
+            return;
+        }
+
+        // Отображаем шаги для прогноза/обучения
+        if (data.steps && data.steps.length > 0) {
+            renderSteps(data.steps);
+        }
+
+        renderResults(data);
+        showStatus('✅ Расчет выполнен', 'green');
+        loadStatus();
+    } catch (e) {
+        showStatus('❌ ' + e.message, 'red');
+    } finally {
+        document.getElementById('calcBtn').disabled = false;
+        document.getElementById('loader').style.display = 'none';
+    }
+}
+    function renderSteps(steps) {
+        const container = document.getElementById('stepsContainer');
+        const list = document.getElementById('stepsList');
+        list.innerHTML = '';
+
+        steps.forEach(step => {
+            const item = document.createElement('div');
+            item.className = `step-item ${step.status}`;
+
+            let iconHtml = '';
+            if (step.status === 'running') {
+                iconHtml = `<span class="step-spinner"></span>`;
+            } else {
+                iconHtml = `<span class="step-icon">${step.icon}</span>`;
+            }
+
+            item.innerHTML = `${iconHtml}<span class="step-text">${step.text}</span>`;
+            list.appendChild(item);
+        });
+
+        container.classList.add('visible');
+    }
+
+    function renderResults(data) {
+        const p = data.prediction;
+        document.getElementById('results').classList.add('visible');
+
+        document.getElementById('resWinner').innerText = p.winner;
+        document.getElementById('resProb').innerText = `${p.prob}% ±${p.margin}%`;
+        document.getElementById('resMethod').innerText = p.method;
+        document.getElementById('resRnd').innerText = p.rnd;
+        document.getElementById('resOddsModel').innerText = p.prob >= 50 ? `1/${(p.prob/100).toFixed(2)}` : `1/${((100-p.prob)/100).toFixed(2)}`;
+        document.getElementById('resOddsBook').innerText = data.odds.bookmaker === '—' ? 'Уточняется' : `${data.odds.book_f1} / ${data.odds.book_f2}`;
+
+        document.getElementById('tPredWin').innerText = p.winner;
+        document.getElementById('tFactWin').innerText = data.fact.winner;
+        document.getElementById('tAccWin').innerText = data.accuracy.win.toFixed(1) + '%';
+
+        document.getElementById('tPredRnd').innerText = p.rnd;
+        document.getElementById('tFactRnd').innerText = data.fact.rnd;
+        document.getElementById('tAccRnd').innerText = data.accuracy.rnd.toFixed(1) + '%';
+
+        document.getElementById('tPredMth').innerText = p.method;
+        document.getElementById('tFactMth').innerText = data.fact.method;
+        document.getElementById('tAccMth').innerText = data.accuracy.method.toFixed(1) + '%';
+
+        document.getElementById('lblF1').innerText = `Коэф. ${data.fighter1_clean}`;
+        document.getElementById('tOddsF1').innerText = data.odds.model_f1.toFixed(2) + ' (Модель)';
+        document.getElementById('tBookF1').innerText = `${data.odds.book_f1} (${data.odds.bookmaker})`;
+
+        document.getElementById('lblF2').innerText = `Коэф. ${data.fighter2_clean}`;
+        document.getElementById('tOddsF2').innerText = data.odds.model_f2.toFixed(2) + ' (Модель)';
+        document.getElementById('tBookF2').innerText = `${data.odds.book_f2} (${data.odds.bookmaker})`;
+
+        if (data.training_log) {
+            const logEl = document.getElementById('trainingLog');
+            logEl.innerText = data.training_log;
+            logEl.classList.add('visible');
+        }
+
+        document.getElementById('f1').value = '';
+        document.getElementById('f2').value = '';
+    }
+
+    function showStatus(msg, color) {
+        const el = document.getElementById('statusMsg');
+        el.innerText = msg;
+        el.style.color = color === 'red' ? 'var(--red)' : 'var(--green)';
+    }
+
+    async function loadStatus() {
+        try {
+            const res = await fetch(API + '/api/status');
+            const data = await res.json();
+            if (data.initialized && data.accuracy > 0) {
+                document.getElementById('accDisplay').innerText = data.accuracy.toFixed(1) + '%';
+                if (data.predictions_used !== undefined) {
+                    document.getElementById('predictionsDisplay').innerText = `Прогнозов: ${data.predictions_used} / ${data.predictions_limit}`;
+                }
+            }
+        } catch (e) { console.error(e); }
+    }
+</script>
+</body>
+</html>

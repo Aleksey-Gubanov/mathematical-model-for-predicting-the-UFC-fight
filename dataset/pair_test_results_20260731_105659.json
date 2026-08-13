@@ -1,0 +1,4178 @@
+{
+  "timestamp": "2026-07-31T11:53:51.671746",
+  "duration_seconds": 3388.8206684589386,
+  "fights_per_test": 50,
+  "total_tests": 10,
+  "results": [
+    {
+      "pair_name": "fin_x_td + sub_x_grap",
+      "features": [
+        "fin_x_td",
+        "sub_x_grap"
+      ],
+      "indices": [
+        16,
+        17
+      ],
+      "correct": 35,
+      "total": 50,
+      "failed": 0,
+      "accuracy": 70.0,
+      "battles": [
+        {
+          "fighter_a": "Umar Nurmagomedov",
+          "fighter_b": "Bekzat Almakhan",
+          "winner": "Umar Nurmagomedov",
+          "predicted": "Umar Nurmagomedov",
+          "confidence": 0.5283828428166076,
+          "correct": true
+        },
+        {
+          "fighter_a": "Charles Oliveira",
+          "fighter_b": "Beneil Dariush",
+          "winner": "Charles Oliveira",
+          "predicted": "Charles Oliveira",
+          "confidence": 0.5283323072071843,
+          "correct": true
+        },
+        {
+          "fighter_a": "Abus Magomedov",
+          "fighter_b": "Dustin Stoltzfus",
+          "winner": "Abus Magomedov",
+          "predicted": "Abus Magomedov",
+          "confidence": 0.5283874397217492,
+          "correct": true
+        },
+        {
+          "fighter_a": "Mike Malott",
+          "fighter_b": "Charles Radtke",
+          "winner": "Mike Malott",
+          "predicted": "Mike Malott",
+          "confidence": 0.5284075428177165,
+          "correct": true
+        },
+        {
+          "fighter_a": "Zygimantas Ramaska",
+          "fighter_b": "Nathan Fletcher",
+          "winner": "Nathan Fletcher",
+          "predicted": "Zygimantas Ramaska",
+          "confidence": 0.5283834421602904,
+          "correct": false
+        },
+        {
+          "fighter_a": "Kevin Lee",
+          "fighter_b": "Rinat Fakhretdinov",
+          "winner": "Rinat Fakhretdinov",
+          "predicted": "Kevin Lee",
+          "confidence": 0.5283828428166076,
+          "correct": false
+        },
+        {
+          "fighter_a": "Raphael Assuncao",
+          "fighter_b": "Victor Henry",
+          "winner": "Raphael Assuncao",
+          "predicted": "Raphael Assuncao",
+          "confidence": 0.5283773249435573,
+          "correct": true
+        },
+        {
+          "fighter_a": "Shi Ming",
+          "fighter_b": "Feng Xiaocan",
+          "winner": "Shi Ming",
+          "predicted": "Shi Ming",
+          "confidence": 0.5283840917959424,
+          "correct": true
+        },
+        {
+          "fighter_a": "Cub Swanson",
+          "fighter_b": "Billy Quarantillo",
+          "winner": "Cub Swanson",
+          "predicted": "Cub Swanson",
+          "confidence": 0.5283778719522783,
+          "correct": true
+        },
+        {
+          "fighter_a": "Trevin Giles",
+          "fighter_b": "Preston Parsons",
+          "winner": "Trevin Giles",
+          "predicted": "Trevin Giles",
+          "confidence": 0.5283478885893972,
+          "correct": true
+        },
+        {
+          "fighter_a": "Ignacio Bahamondes",
+          "fighter_b": "Ludovit Klein",
+          "winner": "Ludovit Klein",
+          "predicted": "Ignacio Bahamondes",
+          "confidence": 0.5283828428166076,
+          "correct": false
+        },
+        {
+          "fighter_a": "Tresean Gore",
+          "fighter_b": "Marco Tulio",
+          "winner": "Marco Tulio",
+          "predicted": "Tresean Gore",
+          "confidence": 0.5283850362086554,
+          "correct": false
+        },
+        {
+          "fighter_a": "Rodrigo Nascimento",
+          "fighter_b": "Don'Tale Mayes",
+          "winner": "Rodrigo Nascimento",
+          "predicted": "Rodrigo Nascimento",
+          "confidence": 0.5283828428166076,
+          "correct": true
+        },
+        {
+          "fighter_a": "Darian Weeks",
+          "fighter_b": "Yohan Lainesse",
+          "winner": "Yohan Lainesse",
+          "predicted": "Darian Weeks",
+          "confidence": 0.5283630425868439,
+          "correct": false
+        },
+        {
+          "fighter_a": "Josefine Knutsson",
+          "fighter_b": "Julia Polastri",
+          "winner": "Josefine Knutsson",
+          "predicted": "Josefine Knutsson",
+          "confidence": 0.5283917683897223,
+          "correct": true
+        },
+        {
+          "fighter_a": "Jailton Almeida",
+          "fighter_b": "Anton Turkalj",
+          "winner": "Jailton Almeida",
+          "predicted": "Jailton Almeida",
+          "confidence": 0.5283416247943883,
+          "correct": true
+        },
+        {
+          "fighter_a": "Jack Della Maddalena",
+          "fighter_b": "Danny Roberts",
+          "winner": "Jack Della Maddalena",
+          "predicted": "Jack Della Maddalena",
+          "confidence": 0.5283860901608128,
+          "correct": true
+        },
+        {
+          "fighter_a": "Dan Ige",
+          "fighter_b": "Patricio Freire",
+          "winner": "Patricio Freire",
+          "predicted": "Dan Ige",
+          "confidence": 0.5283595283535061,
+          "correct": false
+        },
+        {
+          "fighter_a": "Jennifer Maia",
+          "fighter_b": "Maryna Moroz",
+          "winner": "Jennifer Maia",
+          "predicted": "Jennifer Maia",
+          "confidence": 0.5283978305030879,
+          "correct": true
+        },
+        {
+          "fighter_a": "Jairzinho Rozenstruik",
+          "fighter_b": "Jailton Almeida",
+          "winner": "Jailton Almeida",
+          "predicted": "Jairzinho Rozenstruik",
+          "confidence": 0.5283163797536025,
+          "correct": false
+        },
+        {
+          "fighter_a": "Nora Cornolle",
+          "fighter_b": "Joselyne Edwards",
+          "winner": "Nora Cornolle",
+          "predicted": "Nora Cornolle",
+          "confidence": 0.5283828428166076,
+          "correct": true
+        },
+        {
+          "fighter_a": "Rinya Nakamura",
+          "fighter_b": "Muin Gafurov",
+          "winner": "Muin Gafurov",
+          "predicted": "Rinya Nakamura",
+          "confidence": 0.5284278763866587,
+          "correct": false
+        },
+        {
+          "fighter_a": "Muhammad Mokaev",
+          "fighter_b": "Malcolm Gordon",
+          "winner": "Muhammad Mokaev",
+          "predicted": "Muhammad Mokaev",
+          "confidence": 0.5283424334512737,
+          "correct": true
+        },
+        {
+          "fighter_a": "Ignacio Bahamondes",
+          "fighter_b": "Trey Ogden",
+          "winner": "Ignacio Bahamondes",
+          "predicted": "Ignacio Bahamondes",
+          "confidence": 0.5283852835064283,
+          "correct": true
+        },
+        {
+          "fighter_a": "Waldo Cortes-Acosta",
+          "fighter_b": "Robelis Despaigne",
+          "winner": "Waldo Cortes-Acosta",
+          "predicted": "Waldo Cortes-Acosta",
+          "confidence": 0.5283783414871112,
+          "correct": true
+        },
+        {
+          "fighter_a": "Marcin Tybura",
+          "fighter_b": "Ante Delija",
+          "winner": "Ante Delija",
+          "predicted": "Marcin Tybura",
+          "confidence": 0.528384249407989,
+          "correct": false
+        },
+        {
+          "fighter_a": "Nursulton Ruziboev",
+          "fighter_b": "Eric McConico",
+          "winner": "Nursulton Ruziboev",
+          "predicted": "Nursulton Ruziboev",
+          "confidence": 0.5283806214813271,
+          "correct": true
+        },
+        {
+          "fighter_a": "Carlos Ulberg",
+          "fighter_b": "Da Woon Jung",
+          "winner": "Carlos Ulberg",
+          "predicted": "Carlos Ulberg",
+          "confidence": 0.5283756031574941,
+          "correct": true
+        },
+        {
+          "fighter_a": "Leon Edwards",
+          "fighter_b": "Kamaru Usman",
+          "winner": "Leon Edwards",
+          "predicted": "Leon Edwards",
+          "confidence": 0.5283716857789168,
+          "correct": true
+        },
+        {
+          "fighter_a": "Anthony Hernandez",
+          "fighter_b": "Marc-Andre Barriault",
+          "winner": "Anthony Hernandez",
+          "predicted": "Anthony Hernandez",
+          "confidence": 0.5284097322525282,
+          "correct": true
+        },
+        {
+          "fighter_a": "JeongYeong Lee",
+          "fighter_b": "Blake Bilder",
+          "winner": "JeongYeong Lee",
+          "predicted": "JeongYeong Lee",
+          "confidence": 0.5284041175360543,
+          "correct": true
+        },
+        {
+          "fighter_a": "Jamey-Lyn Horth",
+          "fighter_b": "Ivana Petrovic",
+          "winner": "Jamey-Lyn Horth",
+          "predicted": "Jamey-Lyn Horth",
+          "confidence": 0.5283592690055419,
+          "correct": true
+        },
+        {
+          "fighter_a": "David Onama",
+          "fighter_b": "Roberto Romero",
+          "winner": "David Onama",
+          "predicted": "David Onama",
+          "confidence": 0.5283891609024752,
+          "correct": true
+        },
+        {
+          "fighter_a": "Ji Yeon Kim",
+          "fighter_b": "Mandy Bohm",
+          "winner": "Mandy Bohm",
+          "predicted": "Ji Yeon Kim",
+          "confidence": 0.5283761083396991,
+          "correct": false
+        },
+        {
+          "fighter_a": "Ryan Spann",
+          "fighter_b": "Lukasz Brzeski",
+          "winner": "Ryan Spann",
+          "predicted": "Ryan Spann",
+          "confidence": 0.5283762201379972,
+          "correct": true
+        },
+        {
+          "fighter_a": "Sam Patterson",
+          "fighter_b": "Yanal Ashmouz",
+          "winner": "Yanal Ashmouz",
+          "predicted": "Sam Patterson",
+          "confidence": 0.5283632758991893,
+          "correct": false
+        },
+        {
+          "fighter_a": "Mohammad Yahya",
+          "fighter_b": "Kaue Fernandes",
+          "winner": "Kaue Fernandes",
+          "predicted": "Mohammad Yahya",
+          "confidence": 0.5283806442311211,
+          "correct": false
+        },
+        {
+          "fighter_a": "Abubakar Nurmagomedov",
+          "fighter_b": "Gadzhi Omargadzhiev",
+          "winner": "Abubakar Nurmagomedov",
+          "predicted": "Abubakar Nurmagomedov",
+          "confidence": 0.5283842784582403,
+          "correct": true
+        },
+        {
+          "fighter_a": "Matt Brown",
+          "fighter_b": "Court McGee",
+          "winner": "Matt Brown",
+          "predicted": "Matt Brown",
+          "confidence": 0.5283673548353106,
+          "correct": true
+        },
+        {
+          "fighter_a": "Rafa Garcia",
+          "fighter_b": "Vinc Pichel",
+          "winner": "Rafa Garcia",
+          "predicted": "Rafa Garcia",
+          "confidence": 0.5283841591297399,
+          "correct": true
+        },
+        {
+          "fighter_a": "Rinya Nakamura",
+          "fighter_b": "Nathan Fletcher",
+          "winner": "Rinya Nakamura",
+          "predicted": "Rinya Nakamura",
+          "confidence": 0.5283705023842801,
+          "correct": true
+        },
+        {
+          "fighter_a": "Terrance McKinney",
+          "fighter_b": "Esteban Ribovics",
+          "winner": "Esteban Ribovics",
+          "predicted": "Terrance McKinney",
+          "confidence": 0.5284222408084956,
+          "correct": false
+        },
+        {
+          "fighter_a": "Shannon Ross",
+          "fighter_b": "Jesus Aguilar",
+          "winner": "Jesus Aguilar",
+          "predicted": "Shannon Ross",
+          "confidence": 0.5283920019753381,
+          "correct": false
+        },
+        {
+          "fighter_a": "Malcolm Wellmaker",
+          "fighter_b": "Cameron Saaiman",
+          "winner": "Malcolm Wellmaker",
+          "predicted": "Malcolm Wellmaker",
+          "confidence": 0.5283826927724988,
+          "correct": true
+        },
+        {
+          "fighter_a": "Alonzo Menifield",
+          "fighter_b": "Oumar Sy",
+          "winner": "Alonzo Menifield",
+          "predicted": "Alonzo Menifield",
+          "confidence": 0.5283616100160546,
+          "correct": true
+        },
+        {
+          "fighter_a": "Johnny Walker",
+          "fighter_b": "Ion Cutelaba",
+          "winner": "Johnny Walker",
+          "predicted": "Johnny Walker",
+          "confidence": 0.528374686679389,
+          "correct": true
+        },
+        {
+          "fighter_a": "Nate Maness",
+          "fighter_b": "Mateus Mendonca",
+          "winner": "Nate Maness",
+          "predicted": "Nate Maness",
+          "confidence": 0.5283802079294427,
+          "correct": true
+        },
+        {
+          "fighter_a": "Jake Matthews",
+          "fighter_b": "Matthew Semelsberger",
+          "winner": "Matthew Semelsberger",
+          "predicted": "Jake Matthews",
+          "confidence": 0.5283337434500408,
+          "correct": false
+        },
+        {
+          "fighter_a": "Jamie Mullarkey",
+          "fighter_b": "Francisco Prado",
+          "winner": "Jamie Mullarkey",
+          "predicted": "Jamie Mullarkey",
+          "confidence": 0.5283828428166076,
+          "correct": true
+        },
+        {
+          "fighter_a": "Rose Namajunas",
+          "fighter_b": "Tracy Cortez",
+          "winner": "Rose Namajunas",
+          "predicted": "Rose Namajunas",
+          "confidence": 0.5283924359333433,
+          "correct": true
+        }
+      ]
+    },
+    {
+      "pair_name": "fin_rate + sub_rate",
+      "features": [
+        "fin_rate_diff",
+        "sub_rate_diff"
+      ],
+      "indices": [
+        1,
+        2
+      ],
+      "correct": 33,
+      "total": 50,
+      "failed": 0,
+      "accuracy": 66.0,
+      "battles": [
+        {
+          "fighter_a": "Tom Nolan",
+          "fighter_b": "Alex Reyes",
+          "winner": "Tom Nolan",
+          "predicted": "Tom Nolan",
+          "confidence": 0.5283757149536538,
+          "correct": true
+        },
+        {
+          "fighter_a": "Dan Argueta",
+          "fighter_b": "Cody Haddon",
+          "winner": "Cody Haddon",
+          "predicted": "Dan Argueta",
+          "confidence": 0.5283190277197213,
+          "correct": false
+        },
+        {
+          "fighter_a": "Alonzo Menifield",
+          "fighter_b": "Oumar Sy",
+          "winner": "Alonzo Menifield",
+          "predicted": "Alonzo Menifield",
+          "confidence": 0.5284555971520762,
+          "correct": true
+        },
+        {
+          "fighter_a": "Cody Garbrandt",
+          "fighter_b": "Brian Kelleher",
+          "winner": "Cody Garbrandt",
+          "predicted": "Cody Garbrandt",
+          "confidence": 0.5286107622727353,
+          "correct": true
+        },
+        {
+          "fighter_a": "Amanda Lemos",
+          "fighter_b": "Mackenzie Dern",
+          "winner": "Amanda Lemos",
+          "predicted": "Amanda Lemos",
+          "confidence": 0.5284945129965433,
+          "correct": true
+        },
+        {
+          "fighter_a": "Montana De La Rosa",
+          "fighter_b": "JJ Aldrich",
+          "winner": "JJ Aldrich",
+          "predicted": "Montana De La Rosa",
+          "confidence": 0.5282973968944634,
+          "correct": false
+        },
+        {
+          "fighter_a": "Court McGee",
+          "fighter_b": "Tim Means",
+          "winner": "Court McGee",
+          "predicted": "Court McGee",
+          "confidence": 0.528219191571095,
+          "correct": true
+        },
+        {
+          "fighter_a": "Youssef Zalal",
+          "fighter_b": "Jarno Errens",
+          "winner": "Youssef Zalal",
+          "predicted": "Youssef Zalal",
+          "confidence": 0.5284209116089618,
+          "correct": true
+        },
+        {
+          "fighter_a": "Muslim Salikhov",
+          "fighter_b": "Carlos Leal",
+          "winner": "Muslim Salikhov",
+          "predicted": "Muslim Salikhov",
+          "confidence": 0.5283751058173607,
+          "correct": true
+        },
+        {
+          "fighter_a": "Erik Silva",
+          "fighter_b": "Muhammad Naimov",
+          "winner": "Muhammad Naimov",
+          "predicted": "Erik Silva",
+          "confidence": 0.5282872423381324,
+          "correct": false
+        },
+        {
+          "fighter_a": "Tim Means",
+          "fighter_b": "Andre Fialho",
+          "winner": "Tim Means",
+          "predicted": "Tim Means",
+          "confidence": 0.5282674190689539,
+          "correct": true
+        },
+        {
+          "fighter_a": "Tom Aspinall",
+          "fighter_b": "Curtis Blaydes",
+          "winner": "Tom Aspinall",
+          "predicted": "Tom Aspinall",
+          "confidence": 0.5283212050535719,
+          "correct": true
+        },
+        {
+          "fighter_a": "Jake Matthews",
+          "fighter_b": "Chidi Njokuani",
+          "winner": "Jake Matthews",
+          "predicted": "Jake Matthews",
+          "confidence": 0.5282063794793483,
+          "correct": true
+        },
+        {
+          "fighter_a": "Song Kenan",
+          "fighter_b": "Ricky Glenn",
+          "winner": "Song Kenan",
+          "predicted": "Song Kenan",
+          "confidence": 0.5285595260562392,
+          "correct": true
+        },
+        {
+          "fighter_a": "Luana Pinheiro",
+          "fighter_b": "Amanda Ribas",
+          "winner": "Amanda Ribas",
+          "predicted": "Luana Pinheiro",
+          "confidence": 0.5284246568743349,
+          "correct": false
+        },
+        {
+          "fighter_a": "Chris Curtis",
+          "fighter_b": "Joaquin Buckley",
+          "winner": "Chris Curtis",
+          "predicted": "Chris Curtis",
+          "confidence": 0.528379337197102,
+          "correct": true
+        },
+        {
+          "fighter_a": "Jean Silva",
+          "fighter_b": "Melsik Baghdasaryan",
+          "winner": "Jean Silva",
+          "predicted": "Jean Silva",
+          "confidence": 0.5284705843419693,
+          "correct": true
+        },
+        {
+          "fighter_a": "Leon Edwards",
+          "fighter_b": "Sean Brady",
+          "winner": "Sean Brady",
+          "predicted": "Leon Edwards",
+          "confidence": 0.5284974076414437,
+          "correct": false
+        },
+        {
+          "fighter_a": "Denise Gomes",
+          "fighter_b": "Loma Lookboonmee",
+          "winner": "Loma Lookboonmee",
+          "predicted": "Denise Gomes",
+          "confidence": 0.5284535496419503,
+          "correct": false
+        },
+        {
+          "fighter_a": "Ibo Aslan",
+          "fighter_b": "Billy Elekana",
+          "winner": "Billy Elekana",
+          "predicted": "Ibo Aslan",
+          "confidence": 0.528567987807957,
+          "correct": false
+        },
+        {
+          "fighter_a": "Karl Williams",
+          "fighter_b": "Lukasz Brzeski",
+          "winner": "Karl Williams",
+          "predicted": "Karl Williams",
+          "confidence": 0.528378851191984,
+          "correct": true
+        },
+        {
+          "fighter_a": "Joanderson Brito",
+          "fighter_b": "Lucas Alexander",
+          "winner": "Joanderson Brito",
+          "predicted": "Joanderson Brito",
+          "confidence": 0.5282471160193669,
+          "correct": true
+        },
+        {
+          "fighter_a": "Caio Borralho",
+          "fighter_b": "Michal Oleksiejczuk",
+          "winner": "Caio Borralho",
+          "predicted": "Caio Borralho",
+          "confidence": 0.5281690313529057,
+          "correct": true
+        },
+        {
+          "fighter_a": "Brad Tavares",
+          "fighter_b": "Gerald Meerschaert",
+          "winner": "Brad Tavares",
+          "predicted": "Brad Tavares",
+          "confidence": 0.528555048931366,
+          "correct": true
+        },
+        {
+          "fighter_a": "Chelsea Chandler",
+          "fighter_b": "Joselyne Edwards",
+          "winner": "Joselyne Edwards",
+          "predicted": "Chelsea Chandler",
+          "confidence": 0.5284639395997615,
+          "correct": false
+        },
+        {
+          "fighter_a": "Merab Dvalishvili",
+          "fighter_b": "Sean O'Malley",
+          "winner": "Merab Dvalishvili",
+          "predicted": "Merab Dvalishvili",
+          "confidence": 0.5284524545535394,
+          "correct": true
+        },
+        {
+          "fighter_a": "Thiago Moises",
+          "fighter_b": "Mitch Ramirez",
+          "winner": "Thiago Moises",
+          "predicted": "Thiago Moises",
+          "confidence": 0.5282540046996479,
+          "correct": true
+        },
+        {
+          "fighter_a": "Thiago Moises",
+          "fighter_b": "Ludovit Klein",
+          "winner": "Ludovit Klein",
+          "predicted": "Thiago Moises",
+          "confidence": 0.5282484445018443,
+          "correct": false
+        },
+        {
+          "fighter_a": "Uros Medic",
+          "fighter_b": "Gilbert Urbina",
+          "winner": "Uros Medic",
+          "predicted": "Uros Medic",
+          "confidence": 0.5285533643864432,
+          "correct": true
+        },
+        {
+          "fighter_a": "Yair Rodriguez",
+          "fighter_b": "Josh Emmett",
+          "winner": "Yair Rodriguez",
+          "predicted": "Yair Rodriguez",
+          "confidence": 0.5281496926769624,
+          "correct": true
+        },
+        {
+          "fighter_a": "Zhang Mingyang",
+          "fighter_b": "Ozzy Diaz",
+          "winner": "Zhang Mingyang",
+          "predicted": "Zhang Mingyang",
+          "confidence": 0.5284588628678047,
+          "correct": true
+        },
+        {
+          "fighter_a": "CJ Vergara",
+          "fighter_b": "Daniel Lacerda",
+          "winner": "CJ Vergara",
+          "predicted": "CJ Vergara",
+          "confidence": 0.5284642991987099,
+          "correct": true
+        },
+        {
+          "fighter_a": "AJ Dobson",
+          "fighter_b": "Tafon Nchukwi",
+          "winner": "AJ Dobson",
+          "predicted": "AJ Dobson",
+          "confidence": 0.5283706346793322,
+          "correct": true
+        },
+        {
+          "fighter_a": "Jailton Almeida",
+          "fighter_b": "Serghei Spivac",
+          "winner": "Jailton Almeida",
+          "predicted": "Jailton Almeida",
+          "confidence": 0.5283083937900636,
+          "correct": true
+        },
+        {
+          "fighter_a": "Chase Hooper",
+          "fighter_b": "Viacheslav Borshchev",
+          "winner": "Chase Hooper",
+          "predicted": "Chase Hooper",
+          "confidence": 0.5281185066104394,
+          "correct": true
+        },
+        {
+          "fighter_a": "Jessica Penne",
+          "fighter_b": "Tabatha Ricci",
+          "winner": "Tabatha Ricci",
+          "predicted": "Jessica Penne",
+          "confidence": 0.5283086335464411,
+          "correct": false
+        },
+        {
+          "fighter_a": "Jan Blachowicz",
+          "fighter_b": "Alex Pereira",
+          "winner": "Alex Pereira",
+          "predicted": "Jan Blachowicz",
+          "confidence": 0.528229463192211,
+          "correct": false
+        },
+        {
+          "fighter_a": "Armen Petrosyan",
+          "fighter_b": "AJ Dobson",
+          "winner": "Armen Petrosyan",
+          "predicted": "Armen Petrosyan",
+          "confidence": 0.5283894911592268,
+          "correct": true
+        },
+        {
+          "fighter_a": "John Castaneda",
+          "fighter_b": "Kyung Ho Kang",
+          "winner": "John Castaneda",
+          "predicted": "John Castaneda",
+          "confidence": 0.52850489942588,
+          "correct": true
+        },
+        {
+          "fighter_a": "Mana Martinez",
+          "fighter_b": "Cameron Saaiman",
+          "winner": "Cameron Saaiman",
+          "predicted": "Mana Martinez",
+          "confidence": 0.5284227259364491,
+          "correct": false
+        },
+        {
+          "fighter_a": "Liang Na",
+          "fighter_b": "JJ Aldrich",
+          "winner": "JJ Aldrich",
+          "predicted": "Liang Na",
+          "confidence": 0.5283224168535569,
+          "correct": false
+        },
+        {
+          "fighter_a": "Edson Barboza",
+          "fighter_b": "Billy Quarantillo",
+          "winner": "Edson Barboza",
+          "predicted": "Edson Barboza",
+          "confidence": 0.528531250834009,
+          "correct": true
+        },
+        {
+          "fighter_a": "Jack Jenkins",
+          "fighter_b": "Herbert Burns",
+          "winner": "Jack Jenkins",
+          "predicted": "Jack Jenkins",
+          "confidence": 0.5286936579848753,
+          "correct": true
+        },
+        {
+          "fighter_a": "Billy Ray Goff",
+          "fighter_b": "Trey Waters",
+          "winner": "Trey Waters",
+          "predicted": "Billy Ray Goff",
+          "confidence": 0.5283718464412462,
+          "correct": false
+        },
+        {
+          "fighter_a": "Malcolm Gordon",
+          "fighter_b": "Jimmy Flick",
+          "winner": "Jimmy Flick",
+          "predicted": "Malcolm Gordon",
+          "confidence": 0.5284728780746271,
+          "correct": false
+        },
+        {
+          "fighter_a": "Davey Grant",
+          "fighter_b": "Ramon Taveras",
+          "winner": "Davey Grant",
+          "predicted": "Davey Grant",
+          "confidence": 0.52830718197929,
+          "correct": true
+        },
+        {
+          "fighter_a": "Tagir Ulanbekov",
+          "fighter_b": "Nate Maness",
+          "winner": "Tagir Ulanbekov",
+          "predicted": "Tagir Ulanbekov",
+          "confidence": 0.5283305104845156,
+          "correct": true
+        },
+        {
+          "fighter_a": "Josefine Knutsson",
+          "fighter_b": "Marnic Mann",
+          "winner": "Josefine Knutsson",
+          "predicted": "Josefine Knutsson",
+          "confidence": 0.5283888820282744,
+          "correct": true
+        },
+        {
+          "fighter_a": "Fernie Garcia",
+          "fighter_b": "Hyder Amil",
+          "winner": "Hyder Amil",
+          "predicted": "Fernie Garcia",
+          "confidence": 0.5283496071956777,
+          "correct": false
+        },
+        {
+          "fighter_a": "Elves Brener",
+          "fighter_b": "Esteban Ribovics",
+          "winner": "Esteban Ribovics",
+          "predicted": "Elves Brener",
+          "confidence": 0.5282859138883216,
+          "correct": false
+        }
+      ]
+    },
+    {
+      "pair_name": "recent_wins + activity",
+      "features": [
+        "recent_wins_diff",
+        "activity_diff"
+      ],
+      "indices": [
+        0,
+        7
+      ],
+      "correct": 31,
+      "total": 50,
+      "failed": 0,
+      "accuracy": 62.0,
+      "battles": [
+        {
+          "fighter_a": "Rodolfo Vieira",
+          "fighter_b": "Armen Petrosyan",
+          "winner": "Rodolfo Vieira",
+          "predicted": "Rodolfo Vieira",
+          "confidence": 0.5319103875653296,
+          "correct": true
+        },
+        {
+          "fighter_a": "Jafel Filho",
+          "fighter_b": "Ode Osbourne",
+          "winner": "Jafel Filho",
+          "predicted": "Jafel Filho",
+          "confidence": 0.5334983408144206,
+          "correct": true
+        },
+        {
+          "fighter_a": "Sodiq Yusuff",
+          "fighter_b": "Don Shainis",
+          "winner": "Sodiq Yusuff",
+          "predicted": "Sodiq Yusuff",
+          "confidence": 0.5275863073620057,
+          "correct": true
+        },
+        {
+          "fighter_a": "Shara Magomedov",
+          "fighter_b": "Marc-Andre Barriault",
+          "winner": "Shara Magomedov",
+          "predicted": "Shara Magomedov",
+          "confidence": 0.5370126552341193,
+          "correct": true
+        },
+        {
+          "fighter_a": "Ikram Aliskerov",
+          "fighter_b": "Andre Muniz",
+          "winner": "Ikram Aliskerov",
+          "predicted": "Ikram Aliskerov",
+          "confidence": 0.5327045960221481,
+          "correct": true
+        },
+        {
+          "fighter_a": "Ibo Aslan",
+          "fighter_b": "Billy Elekana",
+          "winner": "Billy Elekana",
+          "predicted": "Ibo Aslan",
+          "confidence": 0.5275863073620057,
+          "correct": false
+        },
+        {
+          "fighter_a": "Trevor Peek",
+          "fighter_b": "Yanal Ashmouz",
+          "winner": "Yanal Ashmouz",
+          "predicted": "Trevor Peek",
+          "confidence": 0.5283828428166076,
+          "correct": false
+        },
+        {
+          "fighter_a": "Renato Moicano",
+          "fighter_b": "Drew Dober",
+          "winner": "Renato Moicano",
+          "predicted": "Renato Moicano",
+          "confidence": 0.5283828428166076,
+          "correct": true
+        },
+        {
+          "fighter_a": "Tatiana Suarez",
+          "fighter_b": "Montana De La Rosa",
+          "winner": "Tatiana Suarez",
+          "predicted": "Tatiana Suarez",
+          "confidence": 0.5413052689220527,
+          "correct": true
+        },
+        {
+          "fighter_a": "Seokhyeon Ko",
+          "fighter_b": "Oban Elliott",
+          "winner": "Seokhyeon Ko",
+          "predicted": "Seokhyeon Ko",
+          "confidence": 0.5275863073620057,
+          "correct": true
+        },
+        {
+          "fighter_a": "Vitor Petrino",
+          "fighter_b": "Dustin Jacoby",
+          "winner": "Dustin Jacoby",
+          "predicted": "Vitor Petrino",
+          "confidence": 0.5370126552341193,
+          "correct": false
+        },
+        {
+          "fighter_a": "Bryan Battle",
+          "fighter_b": "AJ Fletcher",
+          "winner": "Bryan Battle",
+          "predicted": "Bryan Battle",
+          "confidence": 0.5319103875653296,
+          "correct": true
+        },
+        {
+          "fighter_a": "Rafael Fiziev",
+          "fighter_b": "Mateusz Gamrot",
+          "winner": "Mateusz Gamrot",
+          "predicted": "Rafael Fiziev",
+          "confidence": 0.5275863073620057,
+          "correct": false
+        },
+        {
+          "fighter_a": "Israel Adesanya",
+          "fighter_b": "Alex Pereira",
+          "winner": "Alex Pereira",
+          "predicted": "Israel Adesanya",
+          "confidence": 0.5224517708888906,
+          "correct": false
+        },
+        {
+          "fighter_a": "Volkan Oezdemir",
+          "fighter_b": "Nikita Krylov",
+          "winner": "Nikita Krylov",
+          "predicted": "Volkan Oezdemir",
+          "confidence": 0.5240491699386821,
+          "correct": false
+        },
+        {
+          "fighter_a": "Jessica Andrade",
+          "fighter_b": "Marina Rodriguez",
+          "winner": "Jessica Andrade",
+          "predicted": "Jessica Andrade",
+          "confidence": 0.5307699832457902,
+          "correct": true
+        },
+        {
+          "fighter_a": "Mohammed Usman",
+          "fighter_b": "Zac Pauga",
+          "winner": "Mohammed Usman",
+          "predicted": "Mohammed Usman",
+          "confidence": 0.5267893794495339,
+          "correct": true
+        },
+        {
+          "fighter_a": "Ciryl Gane",
+          "fighter_b": "Serghei Spivac",
+          "winner": "Ciryl Gane",
+          "predicted": "Ciryl Gane",
+          "confidence": 0.5283828428166076,
+          "correct": true
+        },
+        {
+          "fighter_a": "Steve Erceg",
+          "fighter_b": "Ode Osbourne",
+          "winner": "Steve Erceg",
+          "predicted": "Steve Erceg",
+          "confidence": 0.5327045960221481,
+          "correct": true
+        },
+        {
+          "fighter_a": "Brendan Allen",
+          "fighter_b": "Chris Curtis",
+          "winner": "Brendan Allen",
+          "predicted": "Brendan Allen",
+          "confidence": 0.5283828428166076,
+          "correct": true
+        },
+        {
+          "fighter_a": "Jeka Saragih",
+          "fighter_b": "Anshul Jubli",
+          "winner": "Anshul Jubli",
+          "predicted": "Jeka Saragih",
+          "confidence": 0.5248473608301109,
+          "correct": false
+        },
+        {
+          "fighter_a": "Max Griffin",
+          "fighter_b": "Jeremiah Wells",
+          "winner": "Max Griffin",
+          "predicted": "Max Griffin",
+          "confidence": 0.5248473608301109,
+          "correct": true
+        },
+        {
+          "fighter_a": "Daniel Rodriguez",
+          "fighter_b": "Alex Morono",
+          "winner": "Daniel Rodriguez",
+          "predicted": "Daniel Rodriguez",
+          "confidence": 0.5291789746831126,
+          "correct": true
+        },
+        {
+          "fighter_a": "Charles Oliveira",
+          "fighter_b": "Islam Makhachev",
+          "winner": "Islam Makhachev",
+          "predicted": "Charles Oliveira",
+          "confidence": 0.5205052900550983,
+          "correct": false
+        },
+        {
+          "fighter_a": "Josefine Knutsson",
+          "fighter_b": "Julia Polastri",
+          "winner": "Josefine Knutsson",
+          "predicted": "Josefine Knutsson",
+          "confidence": 0.5370126552341193,
+          "correct": true
+        },
+        {
+          "fighter_a": "Karolina Kowalkiewicz",
+          "fighter_b": "Denise Gomes",
+          "winner": "Denise Gomes",
+          "predicted": "Karolina Kowalkiewicz",
+          "confidence": 0.5240491699386821,
+          "correct": false
+        },
+        {
+          "fighter_a": "Luana Pinheiro",
+          "fighter_b": "Angela Hill",
+          "winner": "Angela Hill",
+          "predicted": "Luana Pinheiro",
+          "confidence": 0.5311157264426766,
+          "correct": false
+        },
+        {
+          "fighter_a": "Mateusz Rebecki",
+          "fighter_b": "Loik Radzhabov",
+          "winner": "Mateusz Rebecki",
+          "predicted": "Mateusz Rebecki",
+          "confidence": 0.5385941887434049,
+          "correct": true
+        },
+        {
+          "fighter_a": "Stephanie Egger",
+          "fighter_b": "Irina Alekseeva",
+          "winner": "Irina Alekseeva",
+          "predicted": "Stephanie Egger",
+          "confidence": 0.5232506362103996,
+          "correct": false
+        },
+        {
+          "fighter_a": "Jonathan Pearce",
+          "fighter_b": "David Onama",
+          "winner": "David Onama",
+          "predicted": "Jonathan Pearce",
+          "confidence": 0.5291789746831126,
+          "correct": false
+        },
+        {
+          "fighter_a": "John Castaneda",
+          "fighter_b": "Kyung Ho Kang",
+          "winner": "John Castaneda",
+          "predicted": "John Castaneda",
+          "confidence": 0.5291789746831126,
+          "correct": true
+        },
+        {
+          "fighter_a": "Stephanie Luciano",
+          "fighter_b": "Sam Hughes",
+          "winner": "Sam Hughes",
+          "predicted": "Stephanie Luciano",
+          "confidence": 0.5370126552341193,
+          "correct": false
+        },
+        {
+          "fighter_a": "Lone'er Kavanagh",
+          "fighter_b": "Felipe dos Santos",
+          "winner": "Lone'er Kavanagh",
+          "predicted": "Lone'er Kavanagh",
+          "confidence": 0.5327045960221481,
+          "correct": true
+        },
+        {
+          "fighter_a": "Amanda Nunes",
+          "fighter_b": "Irene Aldana",
+          "winner": "Amanda Nunes",
+          "predicted": "Amanda Nunes",
+          "confidence": 0.5362210986155534,
+          "correct": true
+        },
+        {
+          "fighter_a": "Azamat Murzakanov",
+          "fighter_b": "Alonzo Menifield",
+          "winner": "Azamat Murzakanov",
+          "predicted": "Azamat Murzakanov",
+          "confidence": 0.5362210986155534,
+          "correct": true
+        },
+        {
+          "fighter_a": "Viktoriia Dudakova",
+          "fighter_b": "Jinh Yu Frey",
+          "winner": "Viktoriia Dudakova",
+          "predicted": "Viktoriia Dudakova",
+          "confidence": 0.5413052689220527,
+          "correct": true
+        },
+        {
+          "fighter_a": "Mairon Santos",
+          "fighter_b": "Francis Marshall",
+          "winner": "Mairon Santos",
+          "predicted": "Mairon Santos",
+          "confidence": 0.5319103875653296,
+          "correct": true
+        },
+        {
+          "fighter_a": "Marina Rodriguez",
+          "fighter_b": "Amanda Lemos",
+          "winner": "Amanda Lemos",
+          "predicted": "Marina Rodriguez",
+          "confidence": 0.5240491699386821,
+          "correct": false
+        },
+        {
+          "fighter_a": "Ismail Naurdiev",
+          "fighter_b": "Bruno Silva",
+          "winner": "Ismail Naurdiev",
+          "predicted": "Ismail Naurdiev",
+          "confidence": 0.5291789746831126,
+          "correct": true
+        },
+        {
+          "fighter_a": "Dominick Reyes",
+          "fighter_b": "Ryan Spann",
+          "winner": "Ryan Spann",
+          "predicted": "Dominick Reyes",
+          "confidence": 0.5137499883426943,
+          "correct": false
+        },
+        {
+          "fighter_a": "Chris Weidman",
+          "fighter_b": "Bruno Silva",
+          "winner": "Chris Weidman",
+          "predicted": "Chris Weidman",
+          "confidence": 0.5224517708888906,
+          "correct": true
+        },
+        {
+          "fighter_a": "Nursulton Ruziboev",
+          "fighter_b": "Eric McConico",
+          "winner": "Nursulton Ruziboev",
+          "predicted": "Nursulton Ruziboev",
+          "confidence": 0.5334983408144206,
+          "correct": true
+        },
+        {
+          "fighter_a": "Islam Makhachev",
+          "fighter_b": "Alexander Volkanovski",
+          "winner": "Islam Makhachev",
+          "predicted": "Islam Makhachev",
+          "confidence": 0.5334983408144206,
+          "correct": true
+        },
+        {
+          "fighter_a": "Jake Matthews",
+          "fighter_b": "Darrius Flowers",
+          "winner": "Jake Matthews",
+          "predicted": "Jake Matthews",
+          "confidence": 0.5283828428166076,
+          "correct": true
+        },
+        {
+          "fighter_a": "Ricardo Ramos",
+          "fighter_b": "Julian Erosa",
+          "winner": "Julian Erosa",
+          "predicted": "Ricardo Ramos",
+          "confidence": 0.5232506362103996,
+          "correct": false
+        },
+        {
+          "fighter_a": "Rinat Fakhretdinov",
+          "fighter_b": "Nicolas Dalby",
+          "winner": "Rinat Fakhretdinov",
+          "predicted": "Rinat Fakhretdinov",
+          "confidence": 0.5378036888834751,
+          "correct": true
+        },
+        {
+          "fighter_a": "Robert Whittaker",
+          "fighter_b": "Reinier de Ridder",
+          "winner": "Reinier de Ridder",
+          "predicted": "Robert Whittaker",
+          "confidence": 0.5283828428166076,
+          "correct": false
+        },
+        {
+          "fighter_a": "Brad Katona",
+          "fighter_b": "Bekzat Almakhan",
+          "winner": "Bekzat Almakhan",
+          "predicted": "Brad Katona",
+          "confidence": 0.5240491699386821,
+          "correct": false
+        },
+        {
+          "fighter_a": "Melissa Martinez",
+          "fighter_b": "Elise Reed",
+          "winner": "Elise Reed",
+          "predicted": "Melissa Martinez",
+          "confidence": 0.5319103875653296,
+          "correct": false
+        },
+        {
+          "fighter_a": "Tatsuro Taira",
+          "fighter_b": "Carlos Hernandez",
+          "winner": "Tatsuro Taira",
+          "predicted": "Tatsuro Taira",
+          "confidence": 0.5378036888834751,
+          "correct": true
+        }
+      ]
+    },
+    {
+      "pair_name": "td_def + grap_def",
+      "features": [
+        "td_def_diff",
+        "grap_def_diff"
+      ],
+      "indices": [
+        3,
+        4
+      ],
+      "correct": 31,
+      "total": 50,
+      "failed": 0,
+      "accuracy": 62.0,
+      "battles": [
+        {
+          "fighter_a": "Jafel Filho",
+          "fighter_b": "Daniel Barez",
+          "winner": "Jafel Filho",
+          "predicted": "Jafel Filho",
+          "confidence": 0.5283843409880685,
+          "correct": true
+        },
+        {
+          "fighter_a": "Movsar Evloev",
+          "fighter_b": "Diego Lopes",
+          "winner": "Movsar Evloev",
+          "predicted": "Movsar Evloev",
+          "confidence": 0.5283672220498026,
+          "correct": true
+        },
+        {
+          "fighter_a": "Alonzo Menifield",
+          "fighter_b": "Oumar Sy",
+          "winner": "Alonzo Menifield",
+          "predicted": "Alonzo Menifield",
+          "confidence": 0.5282746928130767,
+          "correct": true
+        },
+        {
+          "fighter_a": "Cody Stamann",
+          "fighter_b": "Da'Mon Blackshear",
+          "winner": "Da'Mon Blackshear",
+          "predicted": "Cody Stamann",
+          "confidence": 0.5283828428166076,
+          "correct": false
+        },
+        {
+          "fighter_a": "Tatsuro Taira",
+          "fighter_b": "CJ Vergara",
+          "winner": "Tatsuro Taira",
+          "predicted": "Tatsuro Taira",
+          "confidence": 0.528509001795247,
+          "correct": true
+        },
+        {
+          "fighter_a": "Joanderson Brito",
+          "fighter_b": "Lucas Alexander",
+          "winner": "Joanderson Brito",
+          "predicted": "Joanderson Brito",
+          "confidence": 0.528319759525687,
+          "correct": true
+        },
+        {
+          "fighter_a": "Piera Rodriguez",
+          "fighter_b": "Sam Hughes",
+          "winner": "Piera Rodriguez",
+          "predicted": "Piera Rodriguez",
+          "confidence": 0.5285270180062454,
+          "correct": true
+        },
+        {
+          "fighter_a": "Brad Tavares",
+          "fighter_b": "Robert Bryczek",
+          "winner": "Robert Bryczek",
+          "predicted": "Brad Tavares",
+          "confidence": 0.5284615435585044,
+          "correct": false
+        },
+        {
+          "fighter_a": "Volkan Oezdemir",
+          "fighter_b": "Bogdan Guskov",
+          "winner": "Volkan Oezdemir",
+          "predicted": "Volkan Oezdemir",
+          "confidence": 0.5283182612927176,
+          "correct": true
+        },
+        {
+          "fighter_a": "Jared Cannonier",
+          "fighter_b": "Gregory Rodrigues",
+          "winner": "Jared Cannonier",
+          "predicted": "Jared Cannonier",
+          "confidence": 0.5284678514319641,
+          "correct": true
+        },
+        {
+          "fighter_a": "Gregory Rodrigues",
+          "fighter_b": "Denis Tiuliulin",
+          "winner": "Gregory Rodrigues",
+          "predicted": "Gregory Rodrigues",
+          "confidence": 0.528414383512704,
+          "correct": true
+        },
+        {
+          "fighter_a": "Brandon Royval",
+          "fighter_b": "Matheus Nicolau",
+          "winner": "Brandon Royval",
+          "predicted": "Brandon Royval",
+          "confidence": 0.5283828428166076,
+          "correct": true
+        },
+        {
+          "fighter_a": "Matt Schnell",
+          "fighter_b": "Steve Erceg",
+          "winner": "Steve Erceg",
+          "predicted": "Matt Schnell",
+          "confidence": 0.5283401909320116,
+          "correct": false
+        },
+        {
+          "fighter_a": "Adrian Yanez",
+          "fighter_b": "Daniel Marcos",
+          "winner": "Daniel Marcos",
+          "predicted": "Adrian Yanez",
+          "confidence": 0.5283227639273632,
+          "correct": false
+        },
+        {
+          "fighter_a": "Farid Basharat",
+          "fighter_b": "Victor Hugo",
+          "winner": "Farid Basharat",
+          "predicted": "Farid Basharat",
+          "confidence": 0.5284783618515404,
+          "correct": true
+        },
+        {
+          "fighter_a": "Rafael Estevam",
+          "fighter_b": "Felipe Bunes",
+          "winner": "Rafael Estevam",
+          "predicted": "Rafael Estevam",
+          "confidence": 0.528441413353813,
+          "correct": true
+        },
+        {
+          "fighter_a": "Terrance McKinney",
+          "fighter_b": "Brendon Marotte",
+          "winner": "Terrance McKinney",
+          "predicted": "Terrance McKinney",
+          "confidence": 0.5283023402350482,
+          "correct": true
+        },
+        {
+          "fighter_a": "Kyung Ho Kang",
+          "fighter_b": "Muin Gafurov",
+          "winner": "Muin Gafurov",
+          "predicted": "Kyung Ho Kang",
+          "confidence": 0.528319759525687,
+          "correct": false
+        },
+        {
+          "fighter_a": "Axel Sola",
+          "fighter_b": "Rhys McKee",
+          "winner": "Axel Sola",
+          "predicted": "Axel Sola",
+          "confidence": 0.5285765873163276,
+          "correct": true
+        },
+        {
+          "fighter_a": "Djorden Santos",
+          "fighter_b": "Ozzy Diaz",
+          "winner": "Ozzy Diaz",
+          "predicted": "Djorden Santos",
+          "confidence": 0.5284285056825128,
+          "correct": false
+        },
+        {
+          "fighter_a": "Montel Jackson",
+          "fighter_b": "Daniel Marcos",
+          "winner": "Montel Jackson",
+          "predicted": "Montel Jackson",
+          "confidence": 0.5283828428166076,
+          "correct": true
+        },
+        {
+          "fighter_a": "Gaston Bolanos",
+          "fighter_b": "Quang Le",
+          "winner": "Quang Le",
+          "predicted": "Gaston Bolanos",
+          "confidence": 0.5283828428166076,
+          "correct": false
+        },
+        {
+          "fighter_a": "Lauren Murphy",
+          "fighter_b": "Jessica Andrade",
+          "winner": "Jessica Andrade",
+          "predicted": "Lauren Murphy",
+          "confidence": 0.5284038647246606,
+          "correct": false
+        },
+        {
+          "fighter_a": "Damon Jackson",
+          "fighter_b": "Pat Sabatini",
+          "winner": "Damon Jackson",
+          "predicted": "Damon Jackson",
+          "confidence": 0.5283684205989977,
+          "correct": true
+        },
+        {
+          "fighter_a": "Grant Dawson",
+          "fighter_b": "Rafa Garcia",
+          "winner": "Grant Dawson",
+          "predicted": "Grant Dawson",
+          "confidence": 0.5284579401821727,
+          "correct": true
+        },
+        {
+          "fighter_a": "Waldo Cortes-Acosta",
+          "fighter_b": "Ryan Spann",
+          "winner": "Waldo Cortes-Acosta",
+          "predicted": "Waldo Cortes-Acosta",
+          "confidence": 0.5283693195102945,
+          "correct": true
+        },
+        {
+          "fighter_a": "Shauna Bannon",
+          "fighter_b": "Sam Hughes",
+          "winner": "Sam Hughes",
+          "predicted": "Shauna Bannon",
+          "confidence": 0.5284855685019537,
+          "correct": false
+        },
+        {
+          "fighter_a": "Brad Riddell",
+          "fighter_b": "Renato Moicano",
+          "winner": "Renato Moicano",
+          "predicted": "Brad Riddell",
+          "confidence": 0.5283513014873716,
+          "correct": false
+        },
+        {
+          "fighter_a": "Chris Curtis",
+          "fighter_b": "Joaquin Buckley",
+          "winner": "Chris Curtis",
+          "predicted": "Chris Curtis",
+          "confidence": 0.5283999615846834,
+          "correct": true
+        },
+        {
+          "fighter_a": "Tamires Vidal",
+          "fighter_b": "Melissa Gatto",
+          "winner": "Melissa Gatto",
+          "predicted": "Tamires Vidal",
+          "confidence": 0.5283332832580651,
+          "correct": false
+        },
+        {
+          "fighter_a": "Alex Pereira",
+          "fighter_b": "Khalil Rountree Jr.",
+          "winner": "Alex Pereira",
+          "predicted": "Alex Pereira",
+          "confidence": 0.528319759525687,
+          "correct": true
+        },
+        {
+          "fighter_a": "Magomed Gadzhiyasulov",
+          "fighter_b": "Brendson Ribeiro",
+          "winner": "Magomed Gadzhiyasulov",
+          "predicted": "Magomed Gadzhiyasulov",
+          "confidence": 0.5284444254622919,
+          "correct": true
+        },
+        {
+          "fighter_a": "Johnny Walker",
+          "fighter_b": "Ion Cutelaba",
+          "winner": "Johnny Walker",
+          "predicted": "Johnny Walker",
+          "confidence": 0.5284206915758857,
+          "correct": true
+        },
+        {
+          "fighter_a": "Jalin Turner",
+          "fighter_b": "Dan Hooker",
+          "winner": "Dan Hooker",
+          "predicted": "Jalin Turner",
+          "confidence": 0.5283146575877217,
+          "correct": false
+        },
+        {
+          "fighter_a": "Michael Johnson",
+          "fighter_b": "Daniel Zellhuber",
+          "winner": "Michael Johnson",
+          "predicted": "Michael Johnson",
+          "confidence": 0.5282960316971295,
+          "correct": true
+        },
+        {
+          "fighter_a": "Joe Pyfer",
+          "fighter_b": "Marc-Andre Barriault",
+          "winner": "Joe Pyfer",
+          "predicted": "Joe Pyfer",
+          "confidence": 0.5284474216862163,
+          "correct": true
+        },
+        {
+          "fighter_a": "Andre Fili",
+          "fighter_b": "Bill Algeo",
+          "winner": "Andre Fili",
+          "predicted": "Andre Fili",
+          "confidence": 0.5283026398847844,
+          "correct": true
+        },
+        {
+          "fighter_a": "Nazim Sadykhov",
+          "fighter_b": "Evan Elder",
+          "winner": "Nazim Sadykhov",
+          "predicted": "Nazim Sadykhov",
+          "confidence": 0.5283498032844259,
+          "correct": true
+        },
+        {
+          "fighter_a": "Danny Roberts",
+          "fighter_b": "Jonny Parsons",
+          "winner": "Jonny Parsons",
+          "predicted": "Danny Roberts",
+          "confidence": 0.5283813446437183,
+          "correct": false
+        },
+        {
+          "fighter_a": "Alex Morono",
+          "fighter_b": "Carlos Leal",
+          "winner": "Carlos Leal",
+          "predicted": "Alex Morono",
+          "confidence": 0.528268691761018,
+          "correct": false
+        },
+        {
+          "fighter_a": "Niko Price",
+          "fighter_b": "Jacobe Smith",
+          "winner": "Jacobe Smith",
+          "predicted": "Niko Price",
+          "confidence": 0.528319759525687,
+          "correct": false
+        },
+        {
+          "fighter_a": "Kevin Holland",
+          "fighter_b": "Michal Oleksiejczuk",
+          "winner": "Kevin Holland",
+          "predicted": "Kevin Holland",
+          "confidence": 0.5285174067398681,
+          "correct": true
+        },
+        {
+          "fighter_a": "Loma Lookboonmee",
+          "fighter_b": "Bruna Brasil",
+          "winner": "Loma Lookboonmee",
+          "predicted": "Loma Lookboonmee",
+          "confidence": 0.5283843409880685,
+          "correct": true
+        },
+        {
+          "fighter_a": "Michael Chiesa",
+          "fighter_b": "Max Griffin",
+          "winner": "Michael Chiesa",
+          "predicted": "Michael Chiesa",
+          "confidence": 0.528379838529675,
+          "correct": true
+        },
+        {
+          "fighter_a": "Josh Parisian",
+          "fighter_b": "Jamal Pogues",
+          "winner": "Jamal Pogues",
+          "predicted": "Josh Parisian",
+          "confidence": 0.5281920870155457,
+          "correct": false
+        },
+        {
+          "fighter_a": "Randy Brown",
+          "fighter_b": "Muslim Salikhov",
+          "winner": "Randy Brown",
+          "predicted": "Randy Brown",
+          "confidence": 0.5283527996888905,
+          "correct": true
+        },
+        {
+          "fighter_a": "Payton Talbott",
+          "fighter_b": "Nick Aguirre",
+          "winner": "Payton Talbott",
+          "predicted": "Payton Talbott",
+          "confidence": 0.528414383512704,
+          "correct": true
+        },
+        {
+          "fighter_a": "Niko Price",
+          "fighter_b": "Jacobe Smith",
+          "winner": "Jacobe Smith",
+          "predicted": "Niko Price",
+          "confidence": 0.5283416891441105,
+          "correct": false
+        },
+        {
+          "fighter_a": "Matthew Semelsberger",
+          "fighter_b": "Charles Radtke",
+          "winner": "Charles Radtke",
+          "predicted": "Matthew Semelsberger",
+          "confidence": 0.5284684506682494,
+          "correct": false
+        },
+        {
+          "fighter_a": "Darren Elkins",
+          "fighter_b": "Jonathan Pearce",
+          "winner": "Jonathan Pearce",
+          "predicted": "Darren Elkins",
+          "confidence": 0.528414383512704,
+          "correct": false
+        }
+      ]
+    },
+    {
+      "pair_name": "rust_x_exp + stress_x_camp",
+      "features": [
+        "rust_x_exp",
+        "stress_x_camp"
+      ],
+      "indices": [
+        18,
+        19
+      ],
+      "correct": 30,
+      "total": 50,
+      "failed": 0,
+      "accuracy": 60.0,
+      "battles": [
+        {
+          "fighter_a": "Raul Rosas Jr.",
+          "fighter_b": "Christian Rodriguez",
+          "winner": "Christian Rodriguez",
+          "predicted": "Raul Rosas Jr.",
+          "confidence": 0.5196876296828017,
+          "correct": false
+        },
+        {
+          "fighter_a": "Wang Cong",
+          "fighter_b": "Gabriella Fernandes",
+          "winner": "Gabriella Fernandes",
+          "predicted": "Wang Cong",
+          "confidence": 0.5284278168112417,
+          "correct": false
+        },
+        {
+          "fighter_a": "Mick Parkin",
+          "fighter_b": "Caio Machado",
+          "winner": "Mick Parkin",
+          "predicted": "Mick Parkin",
+          "confidence": 0.5287386456523258,
+          "correct": true
+        },
+        {
+          "fighter_a": "Luana Santos",
+          "fighter_b": "Tainara Lisboa",
+          "winner": "Luana Santos",
+          "predicted": "Luana Santos",
+          "confidence": 0.528314002577278,
+          "correct": true
+        },
+        {
+          "fighter_a": "Robert Whittaker",
+          "fighter_b": "Reinier de Ridder",
+          "winner": "Reinier de Ridder",
+          "predicted": "Robert Whittaker",
+          "confidence": 0.5293224675029071,
+          "correct": false
+        },
+        {
+          "fighter_a": "Oumar Sy",
+          "fighter_b": "Da Woon Jung",
+          "winner": "Oumar Sy",
+          "predicted": "Oumar Sy",
+          "confidence": 0.5281900825693983,
+          "correct": true
+        },
+        {
+          "fighter_a": "Damon Jackson",
+          "fighter_b": "Chepe Mariscal",
+          "winner": "Chepe Mariscal",
+          "predicted": "Damon Jackson",
+          "confidence": 0.5283985417070469,
+          "correct": false
+        },
+        {
+          "fighter_a": "Chad Anheliger",
+          "fighter_b": "Jose Johnson",
+          "winner": "Jose Johnson",
+          "predicted": "Chad Anheliger",
+          "confidence": 0.5293969770347159,
+          "correct": false
+        },
+        {
+          "fighter_a": "Michael Morales",
+          "fighter_b": "Jake Matthews",
+          "winner": "Michael Morales",
+          "predicted": "Michael Morales",
+          "confidence": 0.528487974813841,
+          "correct": true
+        },
+        {
+          "fighter_a": "Derrick Lewis",
+          "fighter_b": "Tallison Teixeira",
+          "winner": "Derrick Lewis",
+          "predicted": "Derrick Lewis",
+          "confidence": 0.5280974491513635,
+          "correct": true
+        },
+        {
+          "fighter_a": "Ode Osbourne",
+          "fighter_b": "Tyson Nam",
+          "winner": "Tyson Nam",
+          "predicted": "Ode Osbourne",
+          "confidence": 0.528816763914548,
+          "correct": false
+        },
+        {
+          "fighter_a": "Dan Hooker",
+          "fighter_b": "Claudio Puelles",
+          "winner": "Dan Hooker",
+          "predicted": "Dan Hooker",
+          "confidence": 0.5259177920574043,
+          "correct": true
+        },
+        {
+          "fighter_a": "Billy Ray Goff",
+          "fighter_b": "Ramiz Brahimaj",
+          "winner": "Ramiz Brahimaj",
+          "predicted": "Billy Ray Goff",
+          "confidence": 0.5302084209418797,
+          "correct": false
+        },
+        {
+          "fighter_a": "Max Holloway",
+          "fighter_b": "Chan Sung Jung",
+          "winner": "Max Holloway",
+          "predicted": "Max Holloway",
+          "confidence": 0.5289590309514977,
+          "correct": true
+        },
+        {
+          "fighter_a": "Rinya Nakamura",
+          "fighter_b": "Muin Gafurov",
+          "winner": "Muin Gafurov",
+          "predicted": "Rinya Nakamura",
+          "confidence": 0.5254687910700783,
+          "correct": false
+        },
+        {
+          "fighter_a": "Colby Covington",
+          "fighter_b": "Joaquin Buckley",
+          "winner": "Joaquin Buckley",
+          "predicted": "Colby Covington",
+          "confidence": 0.5315598558574084,
+          "correct": false
+        },
+        {
+          "fighter_a": "Bill Algeo",
+          "fighter_b": "Kyle Nelson",
+          "winner": "Kyle Nelson",
+          "predicted": "Bill Algeo",
+          "confidence": 0.5283828428166076,
+          "correct": false
+        },
+        {
+          "fighter_a": "Angela Hill",
+          "fighter_b": "Denise Gomes",
+          "winner": "Angela Hill",
+          "predicted": "Angela Hill",
+          "confidence": 0.5286597455766366,
+          "correct": true
+        },
+        {
+          "fighter_a": "Amanda Ribas",
+          "fighter_b": "Rose Namajunas",
+          "winner": "Rose Namajunas",
+          "predicted": "Amanda Ribas",
+          "confidence": 0.5286348782081224,
+          "correct": false
+        },
+        {
+          "fighter_a": "Navajo Stirling",
+          "fighter_b": "Ivan Erslan",
+          "winner": "Navajo Stirling",
+          "predicted": "Navajo Stirling",
+          "confidence": 0.5283406393852185,
+          "correct": true
+        },
+        {
+          "fighter_a": "Charles Johnson",
+          "fighter_b": "Jake Hadley",
+          "winner": "Charles Johnson",
+          "predicted": "Charles Johnson",
+          "confidence": 0.5288068319099345,
+          "correct": true
+        },
+        {
+          "fighter_a": "Aljamain Sterling",
+          "fighter_b": "Sean O'Malley",
+          "winner": "Sean O'Malley",
+          "predicted": "Aljamain Sterling",
+          "confidence": 0.5280358574535774,
+          "correct": false
+        },
+        {
+          "fighter_a": "Tatsuro Taira",
+          "fighter_b": "Edgar Chairez",
+          "winner": "Tatsuro Taira",
+          "predicted": "Tatsuro Taira",
+          "confidence": 0.5277321831415249,
+          "correct": true
+        },
+        {
+          "fighter_a": "Ismael Bonfim",
+          "fighter_b": "Vinc Pichel",
+          "winner": "Ismael Bonfim",
+          "predicted": "Ismael Bonfim",
+          "confidence": 0.5313867420281055,
+          "correct": true
+        },
+        {
+          "fighter_a": "Taiyilake Nueraji",
+          "fighter_b": "Kiefer Crosbie",
+          "winner": "Taiyilake Nueraji",
+          "predicted": "Taiyilake Nueraji",
+          "confidence": 0.529707421101221,
+          "correct": true
+        },
+        {
+          "fighter_a": "Cory Sandhagen",
+          "fighter_b": "Rob Font",
+          "winner": "Cory Sandhagen",
+          "predicted": "Cory Sandhagen",
+          "confidence": 0.5283828428166076,
+          "correct": true
+        },
+        {
+          "fighter_a": "Chase Hooper",
+          "fighter_b": "Jordan Leavitt",
+          "winner": "Chase Hooper",
+          "predicted": "Chase Hooper",
+          "confidence": 0.5232865291172167,
+          "correct": true
+        },
+        {
+          "fighter_a": "Jonathan Pearce",
+          "fighter_b": "David Onama",
+          "winner": "David Onama",
+          "predicted": "Jonathan Pearce",
+          "confidence": 0.5287467311360631,
+          "correct": false
+        },
+        {
+          "fighter_a": "Benoit Saint Denis",
+          "fighter_b": "Thiago Moises",
+          "winner": "Benoit Saint Denis",
+          "predicted": "Benoit Saint Denis",
+          "confidence": 0.52622930807648,
+          "correct": true
+        },
+        {
+          "fighter_a": "Rayanne dos Santos",
+          "fighter_b": "Talita Alencar",
+          "winner": "Talita Alencar",
+          "predicted": "Rayanne dos Santos",
+          "confidence": 0.5316909885565415,
+          "correct": false
+        },
+        {
+          "fighter_a": "Marina Rodriguez",
+          "fighter_b": "Virna Jandiroba",
+          "winner": "Virna Jandiroba",
+          "predicted": "Marina Rodriguez",
+          "confidence": 0.5283828428166076,
+          "correct": false
+        },
+        {
+          "fighter_a": "Christian Leroy Duncan",
+          "fighter_b": "Andrey Pulyaev",
+          "winner": "Christian Leroy Duncan",
+          "predicted": "Christian Leroy Duncan",
+          "confidence": 0.5273127292528945,
+          "correct": true
+        },
+        {
+          "fighter_a": "Hamdy Abdelwahab",
+          "fighter_b": "Mohammed Usman",
+          "winner": "Mohammed Usman",
+          "predicted": "Hamdy Abdelwahab",
+          "confidence": 0.5283950447942899,
+          "correct": false
+        },
+        {
+          "fighter_a": "Mohammed Usman",
+          "fighter_b": "Junior Tafa",
+          "winner": "Mohammed Usman",
+          "predicted": "Mohammed Usman",
+          "confidence": 0.5287201162598487,
+          "correct": true
+        },
+        {
+          "fighter_a": "Fares Ziam",
+          "fighter_b": "Mike Davis",
+          "winner": "Fares Ziam",
+          "predicted": "Fares Ziam",
+          "confidence": 0.5283828428166076,
+          "correct": true
+        },
+        {
+          "fighter_a": "Jamie Mullarkey",
+          "fighter_b": "Francisco Prado",
+          "winner": "Jamie Mullarkey",
+          "predicted": "Jamie Mullarkey",
+          "confidence": 0.5360721922573312,
+          "correct": true
+        },
+        {
+          "fighter_a": "Brendan Allen",
+          "fighter_b": "Bruno Silva",
+          "winner": "Brendan Allen",
+          "predicted": "Brendan Allen",
+          "confidence": 0.5288453706402881,
+          "correct": true
+        },
+        {
+          "fighter_a": "Aiemann Zahabi",
+          "fighter_b": "Aoriqileng",
+          "winner": "Aiemann Zahabi",
+          "predicted": "Aiemann Zahabi",
+          "confidence": 0.5322328732527462,
+          "correct": true
+        },
+        {
+          "fighter_a": "Polyana Viana",
+          "fighter_b": "Jinh Yu Frey",
+          "winner": "Polyana Viana",
+          "predicted": "Polyana Viana",
+          "confidence": 0.527938310635655,
+          "correct": true
+        },
+        {
+          "fighter_a": "Gilbert Burns",
+          "fighter_b": "Jorge Masvidal",
+          "winner": "Gilbert Burns",
+          "predicted": "Gilbert Burns",
+          "confidence": 0.5237762038957657,
+          "correct": true
+        },
+        {
+          "fighter_a": "Lando Vannata",
+          "fighter_b": "Daniel Zellhuber",
+          "winner": "Daniel Zellhuber",
+          "predicted": "Lando Vannata",
+          "confidence": 0.5306274564788986,
+          "correct": false
+        },
+        {
+          "fighter_a": "Stephanie Egger",
+          "fighter_b": "Irina Alekseeva",
+          "winner": "Irina Alekseeva",
+          "predicted": "Stephanie Egger",
+          "confidence": 0.5271637827004497,
+          "correct": false
+        },
+        {
+          "fighter_a": "Brad Katona",
+          "fighter_b": "Cody Gibson",
+          "winner": "Brad Katona",
+          "predicted": "Brad Katona",
+          "confidence": 0.5262612143846076,
+          "correct": true
+        },
+        {
+          "fighter_a": "Jessica Andrade",
+          "fighter_b": "Jasmine Jasudavicius",
+          "winner": "Jasmine Jasudavicius",
+          "predicted": "Jessica Andrade",
+          "confidence": 0.5292114404754252,
+          "correct": false
+        },
+        {
+          "fighter_a": "Tom Aspinall",
+          "fighter_b": "Marcin Tybura",
+          "winner": "Tom Aspinall",
+          "predicted": "Tom Aspinall",
+          "confidence": 0.5280740805929349,
+          "correct": true
+        },
+        {
+          "fighter_a": "Abus Magomedov",
+          "fighter_b": "Dustin Stoltzfus",
+          "winner": "Abus Magomedov",
+          "predicted": "Abus Magomedov",
+          "confidence": 0.5321367478406225,
+          "correct": true
+        },
+        {
+          "fighter_a": "Alex Reyes",
+          "fighter_b": "Charlie Campbell",
+          "winner": "Charlie Campbell",
+          "predicted": "Alex Reyes",
+          "confidence": 0.5250434070319426,
+          "correct": false
+        },
+        {
+          "fighter_a": "Jake Matthews",
+          "fighter_b": "Chidi Njokuani",
+          "winner": "Jake Matthews",
+          "predicted": "Jake Matthews",
+          "confidence": 0.5277275965613661,
+          "correct": true
+        },
+        {
+          "fighter_a": "Nate Landwehr",
+          "fighter_b": "Austin Lingo",
+          "winner": "Nate Landwehr",
+          "predicted": "Nate Landwehr",
+          "confidence": 0.5297293052794261,
+          "correct": true
+        },
+        {
+          "fighter_a": "Ibo Aslan",
+          "fighter_b": "Anton Turkalj",
+          "winner": "Ibo Aslan",
+          "predicted": "Ibo Aslan",
+          "confidence": 0.5279201788008585,
+          "correct": true
+        }
+      ]
+    },
+    {
+      "pair_name": "age + exp",
+      "features": [
+        "age_diff",
+        "exp_diff"
+      ],
+      "indices": [
+        5,
+        6
+      ],
+      "correct": 28,
+      "total": 50,
+      "failed": 0,
+      "accuracy": 56.00000000000001,
+      "battles": [
+        {
+          "fighter_a": "Derek Brunson",
+          "fighter_b": "Dricus Du Plessis",
+          "winner": "Dricus Du Plessis",
+          "predicted": "Derek Brunson",
+          "confidence": 0.5080346381630702,
+          "correct": false
+        },
+        {
+          "fighter_a": "Allan Nascimento",
+          "fighter_b": "Carlos Hernandez",
+          "winner": "Allan Nascimento",
+          "predicted": "Allan Nascimento",
+          "confidence": 0.5341824783359497,
+          "correct": true
+        },
+        {
+          "fighter_a": "Phil Hawes",
+          "fighter_b": "Ikram Aliskerov",
+          "winner": "Ikram Aliskerov",
+          "predicted": "Phil Hawes",
+          "confidence": 0.5205506917417068,
+          "correct": false
+        },
+        {
+          "fighter_a": "Fares Ziam",
+          "fighter_b": "Michal Figlak",
+          "winner": "Fares Ziam",
+          "predicted": "Fares Ziam",
+          "confidence": 0.5448784915000393,
+          "correct": true
+        },
+        {
+          "fighter_a": "Max Griffin",
+          "fighter_b": "Chris Curtis",
+          "winner": "Chris Curtis",
+          "predicted": "Max Griffin",
+          "confidence": 0.5181423346589848,
+          "correct": false
+        },
+        {
+          "fighter_a": "Rei Tsuruya",
+          "fighter_b": "Carlos Hernandez",
+          "winner": "Rei Tsuruya",
+          "predicted": "Rei Tsuruya",
+          "confidence": 0.532067699490681,
+          "correct": true
+        },
+        {
+          "fighter_a": "Philipe Lins",
+          "fighter_b": "Maxim Grishin",
+          "winner": "Philipe Lins",
+          "predicted": "Philipe Lins",
+          "confidence": 0.5050936036475262,
+          "correct": true
+        },
+        {
+          "fighter_a": "Chase Hooper",
+          "fighter_b": "Alexander Hernandez",
+          "winner": "Alexander Hernandez",
+          "predicted": "Chase Hooper",
+          "confidence": 0.5333806013745063,
+          "correct": false
+        },
+        {
+          "fighter_a": "Joshua Van",
+          "fighter_b": "Kevin Borjas",
+          "winner": "Joshua Van",
+          "predicted": "Joshua Van",
+          "confidence": 0.5369788971801015,
+          "correct": true
+        },
+        {
+          "fighter_a": "Nasrat Haqparast",
+          "fighter_b": "Esteban Ribovics",
+          "winner": "Nasrat Haqparast",
+          "predicted": "Nasrat Haqparast",
+          "confidence": 0.531847501656038,
+          "correct": true
+        },
+        {
+          "fighter_a": "Tony Ferguson",
+          "fighter_b": "Paddy Pimblett",
+          "winner": "Paddy Pimblett",
+          "predicted": "Tony Ferguson",
+          "confidence": 0.5044317248503309,
+          "correct": false
+        },
+        {
+          "fighter_a": "Francisco Prado",
+          "fighter_b": "Nikolay Veretennikov",
+          "winner": "Nikolay Veretennikov",
+          "predicted": "Francisco Prado",
+          "confidence": 0.5615678395770385,
+          "correct": false
+        },
+        {
+          "fighter_a": "Viviane Araujo",
+          "fighter_b": "Amanda Ribas",
+          "winner": "Amanda Ribas",
+          "predicted": "Viviane Araujo",
+          "confidence": 0.5131341039124492,
+          "correct": false
+        },
+        {
+          "fighter_a": "Karolina Kowalkiewicz",
+          "fighter_b": "Denise Gomes",
+          "winner": "Denise Gomes",
+          "predicted": "Karolina Kowalkiewicz",
+          "confidence": 0.5008320777797741,
+          "correct": false
+        },
+        {
+          "fighter_a": "Taiyilake Nueraji",
+          "fighter_b": "Kiefer Crosbie",
+          "winner": "Taiyilake Nueraji",
+          "predicted": "Taiyilake Nueraji",
+          "confidence": 0.5456739294640331,
+          "correct": true
+        },
+        {
+          "fighter_a": "Bogdan Guskov",
+          "fighter_b": "Billy Elekana",
+          "winner": "Bogdan Guskov",
+          "predicted": "Bogdan Guskov",
+          "confidence": 0.5282094012540832,
+          "correct": true
+        },
+        {
+          "fighter_a": "Julianna Pena",
+          "fighter_b": "Kayla Harrison",
+          "winner": "Kayla Harrison",
+          "predicted": "Julianna Pena",
+          "confidence": 0.5253131021211375,
+          "correct": false
+        },
+        {
+          "fighter_a": "Kai Kara-France",
+          "fighter_b": "Steve Erceg",
+          "winner": "Kai Kara-France",
+          "predicted": "Kai Kara-France",
+          "confidence": 0.5389454167767115,
+          "correct": true
+        },
+        {
+          "fighter_a": "Julia Polastri",
+          "fighter_b": "Cory McKenna",
+          "winner": "Julia Polastri",
+          "predicted": "Julia Polastri",
+          "confidence": 0.5338728798562165,
+          "correct": true
+        },
+        {
+          "fighter_a": "Clayton Carpenter",
+          "fighter_b": "Lucas Rocha",
+          "winner": "Clayton Carpenter",
+          "predicted": "Clayton Carpenter",
+          "confidence": 0.5334692301177054,
+          "correct": true
+        },
+        {
+          "fighter_a": "Zubaira Tukhugov",
+          "fighter_b": "Elves Brener",
+          "winner": "Elves Brener",
+          "predicted": "Zubaira Tukhugov",
+          "confidence": 0.5100729959316955,
+          "correct": false
+        },
+        {
+          "fighter_a": "Natalia Silva",
+          "fighter_b": "Victoria Leonardo",
+          "winner": "Natalia Silva",
+          "predicted": "Natalia Silva",
+          "confidence": 0.5433164154331389,
+          "correct": true
+        },
+        {
+          "fighter_a": "Edson Barboza",
+          "fighter_b": "Lerone Murphy",
+          "winner": "Lerone Murphy",
+          "predicted": "Edson Barboza",
+          "confidence": 0.5253582545386378,
+          "correct": false
+        },
+        {
+          "fighter_a": "Ian Machado Garry",
+          "fighter_b": "Carlos Prates",
+          "winner": "Ian Machado Garry",
+          "predicted": "Ian Machado Garry",
+          "confidence": 0.5270737947187163,
+          "correct": true
+        },
+        {
+          "fighter_a": "Tabatha Ricci",
+          "fighter_b": "Loopy Godinez",
+          "winner": "Loopy Godinez",
+          "predicted": "Tabatha Ricci",
+          "confidence": 0.5240413603410483,
+          "correct": false
+        },
+        {
+          "fighter_a": "Alex Pereira",
+          "fighter_b": "Khalil Rountree Jr.",
+          "winner": "Alex Pereira",
+          "predicted": "Alex Pereira",
+          "confidence": 0.5189052762809039,
+          "correct": true
+        },
+        {
+          "fighter_a": "Vanessa Demopoulos",
+          "fighter_b": "Emily Ducote",
+          "winner": "Vanessa Demopoulos",
+          "predicted": "Vanessa Demopoulos",
+          "confidence": 0.5159908758434302,
+          "correct": true
+        },
+        {
+          "fighter_a": "Bolaji Oki",
+          "fighter_b": "Michael Aswell",
+          "winner": "Bolaji Oki",
+          "predicted": "Bolaji Oki",
+          "confidence": 0.522726803176023,
+          "correct": true
+        },
+        {
+          "fighter_a": "Jiri Prochazka",
+          "fighter_b": "Jamahal Hill",
+          "winner": "Jiri Prochazka",
+          "predicted": "Jiri Prochazka",
+          "confidence": 0.5463639919786498,
+          "correct": true
+        },
+        {
+          "fighter_a": "Dan Ige",
+          "fighter_b": "Sean Woodson",
+          "winner": "Dan Ige",
+          "predicted": "Dan Ige",
+          "confidence": 0.5308022812092366,
+          "correct": true
+        },
+        {
+          "fighter_a": "Mohammed Usman",
+          "fighter_b": "Thomas Petersen",
+          "winner": "Thomas Petersen",
+          "predicted": "Mohammed Usman",
+          "confidence": 0.5209324973012242,
+          "correct": false
+        },
+        {
+          "fighter_a": "Brandon Moreno",
+          "fighter_b": "Steve Erceg",
+          "winner": "Brandon Moreno",
+          "predicted": "Brandon Moreno",
+          "confidence": 0.5355838309515162,
+          "correct": true
+        },
+        {
+          "fighter_a": "Xiao Long",
+          "fighter_b": "SuYoung You",
+          "winner": "SuYoung You",
+          "predicted": "Xiao Long",
+          "confidence": 0.5436472716015892,
+          "correct": false
+        },
+        {
+          "fighter_a": "Trey Ogden",
+          "fighter_b": "Daniel Zellhuber",
+          "winner": "Trey Ogden",
+          "predicted": "Daniel Zellhuber",
+          "confidence": 0.5015207158417073,
+          "correct": false
+        },
+        {
+          "fighter_a": "Rongzhu",
+          "fighter_b": "Austin Hubbard",
+          "winner": "Rongzhu",
+          "predicted": "Rongzhu",
+          "confidence": 0.5396102681300868,
+          "correct": true
+        },
+        {
+          "fighter_a": "Tyson Nam",
+          "fighter_b": "Azat Maksum",
+          "winner": "Azat Maksum",
+          "predicted": "Tyson Nam",
+          "confidence": 0.5091748261705625,
+          "correct": false
+        },
+        {
+          "fighter_a": "Ciryl Gane",
+          "fighter_b": "Serghei Spivac",
+          "winner": "Ciryl Gane",
+          "predicted": "Ciryl Gane",
+          "confidence": 0.5111010197237587,
+          "correct": true
+        },
+        {
+          "fighter_a": "Taiyilake Nueraji",
+          "fighter_b": "Kiefer Crosbie",
+          "winner": "Taiyilake Nueraji",
+          "predicted": "Taiyilake Nueraji",
+          "confidence": 0.543561182290944,
+          "correct": true
+        },
+        {
+          "fighter_a": "Vicente Luque",
+          "fighter_b": "Themba Gorimbo",
+          "winner": "Vicente Luque",
+          "predicted": "Vicente Luque",
+          "confidence": 0.5393603599615304,
+          "correct": true
+        },
+        {
+          "fighter_a": "Dominick Reyes",
+          "fighter_b": "Ryan Spann",
+          "winner": "Ryan Spann",
+          "predicted": "Dominick Reyes",
+          "confidence": 0.5176270720052009,
+          "correct": false
+        },
+        {
+          "fighter_a": "Marcus McGhee",
+          "fighter_b": "Gaston Bolanos",
+          "winner": "Marcus McGhee",
+          "predicted": "Marcus McGhee",
+          "confidence": 0.5319173866692998,
+          "correct": true
+        },
+        {
+          "fighter_a": "Ode Osbourne",
+          "fighter_b": "Luis Gurule",
+          "winner": "Ode Osbourne",
+          "predicted": "Ode Osbourne",
+          "confidence": 0.5136632750523091,
+          "correct": true
+        },
+        {
+          "fighter_a": "Pedro Falcao",
+          "fighter_b": "Victor Hugo",
+          "winner": "Victor Hugo",
+          "predicted": "Pedro Falcao",
+          "confidence": 0.5173395927981287,
+          "correct": false
+        },
+        {
+          "fighter_a": "Da'Mon Blackshear",
+          "fighter_b": "Mario Bautista",
+          "winner": "Mario Bautista",
+          "predicted": "Da'Mon Blackshear",
+          "confidence": 0.5309821049012415,
+          "correct": false
+        },
+        {
+          "fighter_a": "Maheshate",
+          "fighter_b": "Nikolas Motta",
+          "winner": "Nikolas Motta",
+          "predicted": "Maheshate",
+          "confidence": 0.5365674005944281,
+          "correct": false
+        },
+        {
+          "fighter_a": "Islam Makhachev",
+          "fighter_b": "Renato Moicano",
+          "winner": "Islam Makhachev",
+          "predicted": "Islam Makhachev",
+          "confidence": 0.536011280204611,
+          "correct": true
+        },
+        {
+          "fighter_a": "Belal Muhammad",
+          "fighter_b": "Gilbert Burns",
+          "winner": "Belal Muhammad",
+          "predicted": "Belal Muhammad",
+          "confidence": 0.5327079504249885,
+          "correct": true
+        },
+        {
+          "fighter_a": "Cheyanne Vlismas",
+          "fighter_b": "Cory McKenna",
+          "winner": "Cory McKenna",
+          "predicted": "Cheyanne Vlismas",
+          "confidence": 0.5200381815573022,
+          "correct": false
+        },
+        {
+          "fighter_a": "Modestas Bukauskas",
+          "fighter_b": "Ion Cutelaba",
+          "winner": "Modestas Bukauskas",
+          "predicted": "Modestas Bukauskas",
+          "confidence": 0.5267844808147857,
+          "correct": true
+        },
+        {
+          "fighter_a": "Matheus Nicolau",
+          "fighter_b": "Asu Almabayev",
+          "winner": "Asu Almabayev",
+          "predicted": "Matheus Nicolau",
+          "confidence": 0.5241717508521457,
+          "correct": false
+        }
+      ]
+    },
+    {
+      "pair_name": "wp_diff + log_odds",
+      "features": [
+        "wp_diff",
+        "log_odds_ratio"
+      ],
+      "indices": [
+        10,
+        9
+      ],
+      "correct": 28,
+      "total": 50,
+      "failed": 0,
+      "accuracy": 56.00000000000001,
+      "battles": [
+        {
+          "fighter_a": "Bo Nickal",
+          "fighter_b": "Cody Brundage",
+          "winner": "Bo Nickal",
+          "predicted": "Bo Nickal",
+          "confidence": 0.5459589348179711,
+          "correct": true
+        },
+        {
+          "fighter_a": "Court McGee",
+          "fighter_b": "Alex Morono",
+          "winner": "Alex Morono",
+          "predicted": "Court McGee",
+          "confidence": 0.5223394071600967,
+          "correct": false
+        },
+        {
+          "fighter_a": "Charles Johnson",
+          "fighter_b": "Jake Hadley",
+          "winner": "Charles Johnson",
+          "predicted": "Charles Johnson",
+          "confidence": 0.5283828428166076,
+          "correct": true
+        },
+        {
+          "fighter_a": "Magomed Gadzhiyasulov",
+          "fighter_b": "Brendson Ribeiro",
+          "winner": "Magomed Gadzhiyasulov",
+          "predicted": "Magomed Gadzhiyasulov",
+          "confidence": 0.5340598150032674,
+          "correct": true
+        },
+        {
+          "fighter_a": "Tatsuro Taira",
+          "fighter_b": "Jesus Aguilar",
+          "winner": "Tatsuro Taira",
+          "predicted": "Tatsuro Taira",
+          "confidence": 0.5439054030033581,
+          "correct": true
+        },
+        {
+          "fighter_a": "Sean Strickland",
+          "fighter_b": "Paulo Costa",
+          "winner": "Sean Strickland",
+          "predicted": "Sean Strickland",
+          "confidence": 0.5283828428166076,
+          "correct": true
+        },
+        {
+          "fighter_a": "Ryan Spann",
+          "fighter_b": "Bogdan Guskov",
+          "winner": "Bogdan Guskov",
+          "predicted": "Ryan Spann",
+          "confidence": 0.5208798635756264,
+          "correct": false
+        },
+        {
+          "fighter_a": "Jordan Leavitt",
+          "fighter_b": "Victor Martinez",
+          "winner": "Jordan Leavitt",
+          "predicted": "Jordan Leavitt",
+          "confidence": 0.5310733049319419,
+          "correct": true
+        },
+        {
+          "fighter_a": "Jaqueline Amorim",
+          "fighter_b": "Vanessa Demopoulos",
+          "winner": "Jaqueline Amorim",
+          "predicted": "Jaqueline Amorim",
+          "confidence": 0.5404306129043897,
+          "correct": true
+        },
+        {
+          "fighter_a": "Joselyne Edwards",
+          "fighter_b": "Tamires Vidal",
+          "winner": "Joselyne Edwards",
+          "predicted": "Joselyne Edwards",
+          "confidence": 0.5266624894726271,
+          "correct": true
+        },
+        {
+          "fighter_a": "Liudvik Sholinian",
+          "fighter_b": "Johnny Munoz",
+          "winner": "Johnny Munoz",
+          "predicted": "Liudvik Sholinian",
+          "confidence": 0.5245865078386599,
+          "correct": false
+        },
+        {
+          "fighter_a": "Chidi Njokuani",
+          "fighter_b": "Albert Duraev",
+          "winner": "Albert Duraev",
+          "predicted": "Chidi Njokuani",
+          "confidence": 0.5268653395564039,
+          "correct": false
+        },
+        {
+          "fighter_a": "Elise Reed",
+          "fighter_b": "Jinh Yu Frey",
+          "winner": "Elise Reed",
+          "predicted": "Elise Reed",
+          "confidence": 0.5363239374898202,
+          "correct": true
+        },
+        {
+          "fighter_a": "Billy Ray Goff",
+          "fighter_b": "Trey Waters",
+          "winner": "Trey Waters",
+          "predicted": "Billy Ray Goff",
+          "confidence": 0.5264857439811289,
+          "correct": false
+        },
+        {
+          "fighter_a": "Ashlee Evans-Smith",
+          "fighter_b": "Ailin Perez",
+          "winner": "Ailin Perez",
+          "predicted": "Ashlee Evans-Smith",
+          "confidence": 0.5148206956979016,
+          "correct": false
+        },
+        {
+          "fighter_a": "Chris Weidman",
+          "fighter_b": "Brad Tavares",
+          "winner": "Brad Tavares",
+          "predicted": "Chris Weidman",
+          "confidence": 0.5289445135887764,
+          "correct": false
+        },
+        {
+          "fighter_a": "Brunno Ferreira",
+          "fighter_b": "Nursulton Ruziboev",
+          "winner": "Nursulton Ruziboev",
+          "predicted": "Brunno Ferreira",
+          "confidence": 0.5296463136698626,
+          "correct": false
+        },
+        {
+          "fighter_a": "Glover Teixeira",
+          "fighter_b": "Jamahal Hill",
+          "winner": "Jamahal Hill",
+          "predicted": "Glover Teixeira",
+          "confidence": 0.5220963480442815,
+          "correct": false
+        },
+        {
+          "fighter_a": "Andre Petroski",
+          "fighter_b": "Dylan Budka",
+          "winner": "Andre Petroski",
+          "predicted": "Andre Petroski",
+          "confidence": 0.5328002514479274,
+          "correct": true
+        },
+        {
+          "fighter_a": "Nazim Sadykhov",
+          "fighter_b": "Evan Elder",
+          "winner": "Nazim Sadykhov",
+          "predicted": "Nazim Sadykhov",
+          "confidence": 0.5342696252892025,
+          "correct": true
+        },
+        {
+          "fighter_a": "Sean Strickland",
+          "fighter_b": "Paulo Costa",
+          "winner": "Sean Strickland",
+          "predicted": "Sean Strickland",
+          "confidence": 0.5256481002156964,
+          "correct": true
+        },
+        {
+          "fighter_a": "Stephanie Egger",
+          "fighter_b": "Ailin Perez",
+          "winner": "Stephanie Egger",
+          "predicted": "Stephanie Egger",
+          "confidence": 0.5310349042504451,
+          "correct": true
+        },
+        {
+          "fighter_a": "Derrick Lewis",
+          "fighter_b": "Serghei Spivac",
+          "winner": "Serghei Spivac",
+          "predicted": "Derrick Lewis",
+          "confidence": 0.5236261289794802,
+          "correct": false
+        },
+        {
+          "fighter_a": "Ismail Naurdiev",
+          "fighter_b": "Bruno Silva",
+          "winner": "Ismail Naurdiev",
+          "predicted": "Ismail Naurdiev",
+          "confidence": 0.5346255891640075,
+          "correct": true
+        },
+        {
+          "fighter_a": "Roman Kopylov",
+          "fighter_b": "Josh Fremd",
+          "winner": "Roman Kopylov",
+          "predicted": "Roman Kopylov",
+          "confidence": 0.533370907417292,
+          "correct": true
+        },
+        {
+          "fighter_a": "Gerald Meerschaert",
+          "fighter_b": "Joe Pyfer",
+          "winner": "Joe Pyfer",
+          "predicted": "Gerald Meerschaert",
+          "confidence": 0.5198544796435753,
+          "correct": false
+        },
+        {
+          "fighter_a": "Guram Kutateladze",
+          "fighter_b": "Jordan Vucenic",
+          "winner": "Guram Kutateladze",
+          "predicted": "Guram Kutateladze",
+          "confidence": 0.5260911717322684,
+          "correct": true
+        },
+        {
+          "fighter_a": "Malcolm Wellmaker",
+          "fighter_b": "Kris Moutinho",
+          "winner": "Malcolm Wellmaker",
+          "predicted": "Malcolm Wellmaker",
+          "confidence": 0.5301054968459349,
+          "correct": true
+        },
+        {
+          "fighter_a": "Jake Hadley",
+          "fighter_b": "Malcolm Gordon",
+          "winner": "Jake Hadley",
+          "predicted": "Jake Hadley",
+          "confidence": 0.5411920681930555,
+          "correct": true
+        },
+        {
+          "fighter_a": "Diego Ferreira",
+          "fighter_b": "Michael Johnson",
+          "winner": "Diego Ferreira",
+          "predicted": "Diego Ferreira",
+          "confidence": 0.5413812087399238,
+          "correct": true
+        },
+        {
+          "fighter_a": "Anthony Hernandez",
+          "fighter_b": "Roman Kopylov",
+          "winner": "Anthony Hernandez",
+          "predicted": "Anthony Hernandez",
+          "confidence": 0.5323591251948383,
+          "correct": true
+        },
+        {
+          "fighter_a": "Elves Brener",
+          "fighter_b": "Esteban Ribovics",
+          "winner": "Esteban Ribovics",
+          "predicted": "Elves Brener",
+          "confidence": 0.5212898812843781,
+          "correct": false
+        },
+        {
+          "fighter_a": "Irina Alekseeva",
+          "fighter_b": "Klaudia Sygula",
+          "winner": "Klaudia Sygula",
+          "predicted": "Irina Alekseeva",
+          "confidence": 0.5257262975538886,
+          "correct": false
+        },
+        {
+          "fighter_a": "Santiago Ponzinibbio",
+          "fighter_b": "Carlston Harris",
+          "winner": "Santiago Ponzinibbio",
+          "predicted": "Santiago Ponzinibbio",
+          "confidence": 0.5323829734948371,
+          "correct": true
+        },
+        {
+          "fighter_a": "Calvin Kattar",
+          "fighter_b": "Arnold Allen",
+          "winner": "Arnold Allen",
+          "predicted": "Calvin Kattar",
+          "confidence": 0.5203299086130424,
+          "correct": false
+        },
+        {
+          "fighter_a": "Michel Pereira",
+          "fighter_b": "Ihor Potieria",
+          "winner": "Michel Pereira",
+          "predicted": "Michel Pereira",
+          "confidence": 0.5250931712663472,
+          "correct": true
+        },
+        {
+          "fighter_a": "Bo Nickal",
+          "fighter_b": "Jamie Pickett",
+          "winner": "Bo Nickal",
+          "predicted": "Bo Nickal",
+          "confidence": 0.5467167449392409,
+          "correct": true
+        },
+        {
+          "fighter_a": "Stephen Thompson",
+          "fighter_b": "Joaquin Buckley",
+          "winner": "Joaquin Buckley",
+          "predicted": "Stephen Thompson",
+          "confidence": 0.5256376736384308,
+          "correct": false
+        },
+        {
+          "fighter_a": "Michel Pereira",
+          "fighter_b": "Kyle Daukaus",
+          "winner": "Kyle Daukaus",
+          "predicted": "Michel Pereira",
+          "confidence": 0.5328002514479274,
+          "correct": false
+        },
+        {
+          "fighter_a": "Randy Brown",
+          "fighter_b": "Francisco Trinaldo",
+          "winner": "Randy Brown",
+          "predicted": "Randy Brown",
+          "confidence": 0.5300672369927537,
+          "correct": true
+        },
+        {
+          "fighter_a": "Paulo Costa",
+          "fighter_b": "Roman Kopylov",
+          "winner": "Paulo Costa",
+          "predicted": "Paulo Costa",
+          "confidence": 0.5260911717322684,
+          "correct": true
+        },
+        {
+          "fighter_a": "Loik Radzhabov",
+          "fighter_b": "Trey Ogden",
+          "winner": "Trey Ogden",
+          "predicted": "Loik Radzhabov",
+          "confidence": 0.5306892520055976,
+          "correct": false
+        },
+        {
+          "fighter_a": "Lucie Pudilova",
+          "fighter_b": "Ailin Perez",
+          "winner": "Ailin Perez",
+          "predicted": "Lucie Pudilova",
+          "confidence": 0.5240590885456157,
+          "correct": false
+        },
+        {
+          "fighter_a": "Arman Tsarukyan",
+          "fighter_b": "Joaquim Silva",
+          "winner": "Arman Tsarukyan",
+          "predicted": "Arman Tsarukyan",
+          "confidence": 0.5347164989186897,
+          "correct": true
+        },
+        {
+          "fighter_a": "Don'Tale Mayes",
+          "fighter_b": "Caio Machado",
+          "winner": "Don'Tale Mayes",
+          "predicted": "Don'Tale Mayes",
+          "confidence": 0.5132415025576539,
+          "correct": true
+        },
+        {
+          "fighter_a": "Umar Nurmagomedov",
+          "fighter_b": "Raoni Barcelos",
+          "winner": "Umar Nurmagomedov",
+          "predicted": "Umar Nurmagomedov",
+          "confidence": 0.5339604193883472,
+          "correct": true
+        },
+        {
+          "fighter_a": "Anthony Smith",
+          "fighter_b": "Roman Dolidze",
+          "winner": "Roman Dolidze",
+          "predicted": "Anthony Smith",
+          "confidence": 0.5209466521481728,
+          "correct": false
+        },
+        {
+          "fighter_a": "Jalin Turner",
+          "fighter_b": "Renato Moicano",
+          "winner": "Renato Moicano",
+          "predicted": "Jalin Turner",
+          "confidence": 0.5231509776054358,
+          "correct": false
+        },
+        {
+          "fighter_a": "Rani Yahya",
+          "fighter_b": "Victor Henry",
+          "winner": "Victor Henry",
+          "predicted": "Rani Yahya",
+          "confidence": 0.530498106364192,
+          "correct": false
+        },
+        {
+          "fighter_a": "Brandon Moreno",
+          "fighter_b": "Brandon Royval",
+          "winner": "Brandon Royval",
+          "predicted": "Brandon Moreno",
+          "confidence": 0.5298943383382814,
+          "correct": false
+        }
+      ]
+    },
+    {
+      "pair_name": "stress + motivation",
+      "features": [
+        "stress_diff",
+        "motivation_diff"
+      ],
+      "indices": [
+        11,
+        12
+      ],
+      "correct": 27,
+      "total": 50,
+      "failed": 0,
+      "accuracy": 54.0,
+      "battles": [
+        {
+          "fighter_a": "Sodiq Yusuff",
+          "fighter_b": "Don Shainis",
+          "winner": "Sodiq Yusuff",
+          "predicted": "Sodiq Yusuff",
+          "confidence": 0.5283828428166076,
+          "correct": true
+        },
+        {
+          "fighter_a": "Tatsuro Taira",
+          "fighter_b": "Carlos Hernandez",
+          "winner": "Tatsuro Taira",
+          "predicted": "Tatsuro Taira",
+          "confidence": 0.5283388050305965,
+          "correct": true
+        },
+        {
+          "fighter_a": "Alatengheili",
+          "fighter_b": "Kleydson Rodrigues",
+          "winner": "Alatengheili",
+          "predicted": "Alatengheili",
+          "confidence": 0.5283828428166076,
+          "correct": true
+        },
+        {
+          "fighter_a": "Karol Rosa",
+          "fighter_b": "Ailin Perez",
+          "winner": "Ailin Perez",
+          "predicted": "Karol Rosa",
+          "confidence": 0.5283819593977105,
+          "correct": false
+        },
+        {
+          "fighter_a": "Ashley Yoder",
+          "fighter_b": "Emily Ducote",
+          "winner": "Emily Ducote",
+          "predicted": "Ashley Yoder",
+          "confidence": 0.5284216057482192,
+          "correct": false
+        },
+        {
+          "fighter_a": "Cameron Smotherman",
+          "fighter_b": "Serhiy Sidey",
+          "winner": "Serhiy Sidey",
+          "predicted": "Cameron Smotherman",
+          "confidence": 0.5284327508153035,
+          "correct": false
+        },
+        {
+          "fighter_a": "Martin Buday",
+          "fighter_b": "Uran Satybaldiev",
+          "winner": "Martin Buday",
+          "predicted": "Martin Buday",
+          "confidence": 0.5284327508153035,
+          "correct": true
+        },
+        {
+          "fighter_a": "Roman Dolidze",
+          "fighter_b": "Nassourdine Imavov",
+          "winner": "Nassourdine Imavov",
+          "predicted": "Roman Dolidze",
+          "confidence": 0.5284022244020306,
+          "correct": false
+        },
+        {
+          "fighter_a": "Nasrat Haqparast",
+          "fighter_b": "Landon Quinones",
+          "winner": "Nasrat Haqparast",
+          "predicted": "Nasrat Haqparast",
+          "confidence": 0.5283731519342335,
+          "correct": true
+        },
+        {
+          "fighter_a": "King Green",
+          "fighter_b": "Jim Miller",
+          "winner": "King Green",
+          "predicted": "King Green",
+          "confidence": 0.5283937026055514,
+          "correct": true
+        },
+        {
+          "fighter_a": "Zhang Weili",
+          "fighter_b": "Yan Xiaonan",
+          "winner": "Zhang Weili",
+          "predicted": "Zhang Weili",
+          "confidence": 0.5283329332326451,
+          "correct": true
+        },
+        {
+          "fighter_a": "Navajo Stirling",
+          "fighter_b": "Ivan Erslan",
+          "winner": "Navajo Stirling",
+          "predicted": "Navajo Stirling",
+          "confidence": 0.5283925336392133,
+          "correct": true
+        },
+        {
+          "fighter_a": "Victor Martinez",
+          "fighter_b": "Tom Nolan",
+          "winner": "Tom Nolan",
+          "predicted": "Victor Martinez",
+          "confidence": 0.5284415579444244,
+          "correct": false
+        },
+        {
+          "fighter_a": "Tagir Ulanbekov",
+          "fighter_b": "Nate Maness",
+          "winner": "Tagir Ulanbekov",
+          "predicted": "Tagir Ulanbekov",
+          "confidence": 0.5283437933662994,
+          "correct": true
+        },
+        {
+          "fighter_a": "Tim Means",
+          "fighter_b": "Uros Medic",
+          "winner": "Uros Medic",
+          "predicted": "Tim Means",
+          "confidence": 0.5284706291448065,
+          "correct": false
+        },
+        {
+          "fighter_a": "Ismael Bonfim",
+          "fighter_b": "Nazim Sadykhov",
+          "winner": "Nazim Sadykhov",
+          "predicted": "Ismael Bonfim",
+          "confidence": 0.5283132652253213,
+          "correct": false
+        },
+        {
+          "fighter_a": "Brendan Allen",
+          "fighter_b": "Bruno Silva",
+          "winner": "Brendan Allen",
+          "predicted": "Brendan Allen",
+          "confidence": 0.5283828428166076,
+          "correct": true
+        },
+        {
+          "fighter_a": "Bryan Battle",
+          "fighter_b": "AJ Fletcher",
+          "winner": "Bryan Battle",
+          "predicted": "Bryan Battle",
+          "confidence": 0.5283828428166076,
+          "correct": true
+        },
+        {
+          "fighter_a": "Xiao Long",
+          "fighter_b": "SuYoung You",
+          "winner": "SuYoung You",
+          "predicted": "Xiao Long",
+          "confidence": 0.5284013409940339,
+          "correct": false
+        },
+        {
+          "fighter_a": "Yan Xiaonan",
+          "fighter_b": "Tabatha Ricci",
+          "winner": "Yan Xiaonan",
+          "predicted": "Yan Xiaonan",
+          "confidence": 0.528421891296479,
+          "correct": true
+        },
+        {
+          "fighter_a": "Belal Muhammad",
+          "fighter_b": "Sean Brady",
+          "winner": "Belal Muhammad",
+          "predicted": "Belal Muhammad",
+          "confidence": 0.5283534844296179,
+          "correct": true
+        },
+        {
+          "fighter_a": "Carla Esparza",
+          "fighter_b": "Zhang Weili",
+          "winner": "Zhang Weili",
+          "predicted": "Carla Esparza",
+          "confidence": 0.5284227746929097,
+          "correct": false
+        },
+        {
+          "fighter_a": "Daniel Lacerda",
+          "fighter_b": "Victor Altamirano",
+          "winner": "Victor Altamirano",
+          "predicted": "Daniel Lacerda",
+          "confidence": 0.5283828428166076,
+          "correct": false
+        },
+        {
+          "fighter_a": "Hamdy Abdelwahab",
+          "fighter_b": "Mohammed Usman",
+          "winner": "Mohammed Usman",
+          "predicted": "Hamdy Abdelwahab",
+          "confidence": 0.528398690767062,
+          "correct": false
+        },
+        {
+          "fighter_a": "Leonardo Santos",
+          "fighter_b": "Jared Gordon",
+          "winner": "Jared Gordon",
+          "predicted": "Leonardo Santos",
+          "confidence": 0.5283825572612465,
+          "correct": false
+        },
+        {
+          "fighter_a": "Jafel Filho",
+          "fighter_b": "Daniel Barez",
+          "winner": "Jafel Filho",
+          "predicted": "Jafel Filho",
+          "confidence": 0.5283534844296179,
+          "correct": true
+        },
+        {
+          "fighter_a": "Khaos Williams",
+          "fighter_b": "Carlston Harris",
+          "winner": "Khaos Williams",
+          "predicted": "Khaos Williams",
+          "confidence": 0.5284122006550622,
+          "correct": true
+        },
+        {
+          "fighter_a": "Joseph Holmes",
+          "fighter_b": "Claudio Ribeiro",
+          "winner": "Claudio Ribeiro",
+          "predicted": "Joseph Holmes",
+          "confidence": 0.5283828428166076,
+          "correct": false
+        },
+        {
+          "fighter_a": "Tresean Gore",
+          "fighter_b": "Antonio Trocoli",
+          "winner": "Tresean Gore",
+          "predicted": "Tresean Gore",
+          "confidence": 0.5283341022432932,
+          "correct": true
+        },
+        {
+          "fighter_a": "Mike Malott",
+          "fighter_b": "Trevin Giles",
+          "winner": "Mike Malott",
+          "predicted": "Mike Malott",
+          "confidence": 0.5284033933611552,
+          "correct": true
+        },
+        {
+          "fighter_a": "Miranda Maverick",
+          "fighter_b": "Dione Barbosa",
+          "winner": "Miranda Maverick",
+          "predicted": "Miranda Maverick",
+          "confidence": 0.5284122006550622,
+          "correct": true
+        },
+        {
+          "fighter_a": "Adam Fugitt",
+          "fighter_b": "Islam Dulatov",
+          "winner": "Islam Dulatov",
+          "predicted": "Adam Fugitt",
+          "confidence": 0.5283719829526063,
+          "correct": false
+        },
+        {
+          "fighter_a": "Mohammad Yahya",
+          "fighter_b": "Kaue Fernandes",
+          "winner": "Kaue Fernandes",
+          "predicted": "Mohammad Yahya",
+          "confidence": 0.5283828428166076,
+          "correct": false
+        },
+        {
+          "fighter_a": "Petr Yan",
+          "fighter_b": "Song Yadong",
+          "winner": "Petr Yan",
+          "predicted": "Petr Yan",
+          "confidence": 0.528319137096622,
+          "correct": true
+        },
+        {
+          "fighter_a": "Da'Mon Blackshear",
+          "fighter_b": "Jose Johnson",
+          "winner": "Da'Mon Blackshear",
+          "predicted": "Da'Mon Blackshear",
+          "confidence": 0.5283828428166076,
+          "correct": true
+        },
+        {
+          "fighter_a": "Rodolfo Vieira",
+          "fighter_b": "Tresean Gore",
+          "winner": "Rodolfo Vieira",
+          "predicted": "Rodolfo Vieira",
+          "confidence": 0.5283523154333692,
+          "correct": true
+        },
+        {
+          "fighter_a": "Paddy Pimblett",
+          "fighter_b": "Jared Gordon",
+          "winner": "Paddy Pimblett",
+          "predicted": "Paddy Pimblett",
+          "confidence": 0.5283388050305965,
+          "correct": true
+        },
+        {
+          "fighter_a": "Rinat Fakhretdinov",
+          "fighter_b": "Carlos Leal",
+          "winner": "Rinat Fakhretdinov",
+          "predicted": "Rinat Fakhretdinov",
+          "confidence": 0.5283681636916449,
+          "correct": true
+        },
+        {
+          "fighter_a": "Da'Mon Blackshear",
+          "fighter_b": "Alatengheili",
+          "winner": "Da'Mon Blackshear",
+          "predicted": "Da'Mon Blackshear",
+          "confidence": 0.5283631754332286,
+          "correct": true
+        },
+        {
+          "fighter_a": "Белал Мухаммад (Belal Muhammad)",
+          "fighter_b": "Джек Делла Маддалена",
+          "winner": "Джек Делла Маддалена",
+          "predicted": "Белал Мухаммад (Belal Muhammad)",
+          "confidence": 0.5283484961246407,
+          "correct": false
+        },
+        {
+          "fighter_a": "Raul Rosas Jr.",
+          "fighter_b": "Vince Morales",
+          "winner": "Raul Rosas Jr.",
+          "predicted": "Raul Rosas Jr.",
+          "confidence": 0.5283534844296179,
+          "correct": true
+        },
+        {
+          "fighter_a": "Chris Weidman",
+          "fighter_b": "Brad Tavares",
+          "winner": "Brad Tavares",
+          "predicted": "Chris Weidman",
+          "confidence": 0.528364058862683,
+          "correct": false
+        },
+        {
+          "fighter_a": "Farid Basharat",
+          "fighter_b": "Victor Hugo",
+          "winner": "Farid Basharat",
+          "predicted": "Farid Basharat",
+          "confidence": 0.5283388050305965,
+          "correct": true
+        },
+        {
+          "fighter_a": "Daniel Rodriguez",
+          "fighter_b": "Ian Machado Garry",
+          "winner": "Ian Machado Garry",
+          "predicted": "Daniel Rodriguez",
+          "confidence": 0.5283769711830747,
+          "correct": false
+        },
+        {
+          "fighter_a": "Dan Argueta",
+          "fighter_b": "Jean Matsumoto",
+          "winner": "Jean Matsumoto",
+          "predicted": "Dan Argueta",
+          "confidence": 0.5284122006550622,
+          "correct": false
+        },
+        {
+          "fighter_a": "Jai Herbert",
+          "fighter_b": "Fares Ziam",
+          "winner": "Fares Ziam",
+          "predicted": "Jai Herbert",
+          "confidence": 0.5284022244020306,
+          "correct": false
+        },
+        {
+          "fighter_a": "Takashi Sato",
+          "fighter_b": "Themba Gorimbo",
+          "winner": "Themba Gorimbo",
+          "predicted": "Takashi Sato",
+          "confidence": 0.5283631754332286,
+          "correct": false
+        },
+        {
+          "fighter_a": "Gerald Meerschaert",
+          "fighter_b": "Michal Oleksiejczuk",
+          "winner": "Michal Oleksiejczuk",
+          "predicted": "Gerald Meerschaert",
+          "confidence": 0.5283913646720053,
+          "correct": false
+        },
+        {
+          "fighter_a": "Jalin Turner",
+          "fighter_b": "Renato Moicano",
+          "winner": "Renato Moicano",
+          "predicted": "Jalin Turner",
+          "confidence": 0.5283631754332286,
+          "correct": false
+        },
+        {
+          "fighter_a": "Christian Leroy Duncan",
+          "fighter_b": "Claudio Ribeiro",
+          "winner": "Christian Leroy Duncan",
+          "predicted": "Christian Leroy Duncan",
+          "confidence": 0.5283534844296179,
+          "correct": true
+        }
+      ]
+    },
+    {
+      "pair_name": "mystic + mystic_v2",
+      "features": [
+        "mystic_diff",
+        "mystic_v2_diff"
+      ],
+      "indices": [
+        15,
+        20
+      ],
+      "correct": 27,
+      "total": 50,
+      "failed": 0,
+      "accuracy": 54.0,
+      "battles": [
+        {
+          "fighter_a": "Jessica Andrade",
+          "fighter_b": "Erin Blanchfield",
+          "winner": "Erin Blanchfield",
+          "predicted": "Jessica Andrade",
+          "confidence": 0.5283518479882308,
+          "correct": false
+        },
+        {
+          "fighter_a": "Niko Price",
+          "fighter_b": "Jacobe Smith",
+          "winner": "Jacobe Smith",
+          "predicted": "Niko Price",
+          "confidence": 0.5284080114175403,
+          "correct": false
+        },
+        {
+          "fighter_a": "Shamil Gaziev",
+          "fighter_b": "Thomas Petersen",
+          "winner": "Shamil Gaziev",
+          "predicted": "Shamil Gaziev",
+          "confidence": 0.5284679044830896,
+          "correct": true
+        },
+        {
+          "fighter_a": "Payton Talbott",
+          "fighter_b": "Cameron Saaiman",
+          "winner": "Payton Talbott",
+          "predicted": "Payton Talbott",
+          "confidence": 0.5283915813726385,
+          "correct": true
+        },
+        {
+          "fighter_a": "Brad Tavares",
+          "fighter_b": "Robert Bryczek",
+          "winner": "Robert Bryczek",
+          "predicted": "Brad Tavares",
+          "confidence": 0.5283335513772166,
+          "correct": false
+        },
+        {
+          "fighter_a": "Pat Sabatini",
+          "fighter_b": "Lucas Almeida",
+          "winner": "Pat Sabatini",
+          "predicted": "Pat Sabatini",
+          "confidence": 0.5283915813726385,
+          "correct": true
+        },
+        {
+          "fighter_a": "Mohammad Yahya",
+          "fighter_b": "Steven Nguyen",
+          "winner": "Steven Nguyen",
+          "predicted": "Mohammad Yahya",
+          "confidence": 0.5284456495892301,
+          "correct": false
+        },
+        {
+          "fighter_a": "Sedriques Dumas",
+          "fighter_b": "Michal Oleksiejczuk",
+          "winner": "Michal Oleksiejczuk",
+          "predicted": "Sedriques Dumas",
+          "confidence": 0.5283612967878463,
+          "correct": false
+        },
+        {
+          "fighter_a": "Alex Pereira",
+          "fighter_b": "Magomed Ankalaev",
+          "winner": "Magomed Ankalaev",
+          "predicted": "Alex Pereira",
+          "confidence": 0.5283533044463257,
+          "correct": false
+        },
+        {
+          "fighter_a": "Mateusz Gamrot",
+          "fighter_b": "Jalin Turner",
+          "winner": "Mateusz Gamrot",
+          "predicted": "Mateusz Gamrot",
+          "confidence": 0.5283931104080242,
+          "correct": true
+        },
+        {
+          "fighter_a": "Piera Rodriguez",
+          "fighter_b": "Ketlen Souza",
+          "winner": "Piera Rodriguez",
+          "predicted": "Piera Rodriguez",
+          "confidence": 0.528435454953664,
+          "correct": true
+        },
+        {
+          "fighter_a": "Baergeng Jieleyisi",
+          "fighter_b": "SuYoung You",
+          "winner": "SuYoung You",
+          "predicted": "Baergeng Jieleyisi",
+          "confidence": 0.5283813863858772,
+          "correct": false
+        },
+        {
+          "fighter_a": "Cub Swanson",
+          "fighter_b": "Andre Fili",
+          "winner": "Andre Fili",
+          "predicted": "Cub Swanson",
+          "confidence": 0.5283229465071044,
+          "correct": false
+        },
+        {
+          "fighter_a": "Michael Johnson",
+          "fighter_b": "Ottman Azaitar",
+          "winner": "Michael Johnson",
+          "predicted": "Michael Johnson",
+          "confidence": 0.5283540145208898,
+          "correct": true
+        },
+        {
+          "fighter_a": "Justin Tafa",
+          "fighter_b": "Austen Lane",
+          "winner": "Justin Tafa",
+          "predicted": "Justin Tafa",
+          "confidence": 0.5283412432414047,
+          "correct": true
+        },
+        {
+          "fighter_a": "Movsar Evloev",
+          "fighter_b": "Diego Lopes",
+          "winner": "Movsar Evloev",
+          "predicted": "Movsar Evloev",
+          "confidence": 0.5283876215911327,
+          "correct": true
+        },
+        {
+          "fighter_a": "Marvin Vettori",
+          "fighter_b": "Brendan Allen",
+          "winner": "Brendan Allen",
+          "predicted": "Marvin Vettori",
+          "confidence": 0.5283886685260291,
+          "correct": false
+        },
+        {
+          "fighter_a": "Viktoriia Dudakova",
+          "fighter_b": "Sam Hughes",
+          "winner": "Sam Hughes",
+          "predicted": "Viktoriia Dudakova",
+          "confidence": 0.5283828428166076,
+          "correct": false
+        },
+        {
+          "fighter_a": "Christian Leroy Duncan",
+          "fighter_b": "Dusko Todorovic",
+          "winner": "Christian Leroy Duncan",
+          "predicted": "Christian Leroy Duncan",
+          "confidence": 0.5283799299537968,
+          "correct": true
+        },
+        {
+          "fighter_a": "Sam Patterson",
+          "fighter_b": "Yanal Ashmouz",
+          "winner": "Yanal Ashmouz",
+          "predicted": "Sam Patterson",
+          "confidence": 0.5283828428166076,
+          "correct": false
+        },
+        {
+          "fighter_a": "Nathaniel Wood",
+          "fighter_b": "Morgan Charriere",
+          "winner": "Nathaniel Wood",
+          "predicted": "Nathaniel Wood",
+          "confidence": 0.528436501856656,
+          "correct": true
+        },
+        {
+          "fighter_a": "Gerald Meerschaert",
+          "fighter_b": "Joe Pyfer",
+          "winner": "Joe Pyfer",
+          "predicted": "Gerald Meerschaert",
+          "confidence": 0.5283401236583791,
+          "correct": false
+        },
+        {
+          "fighter_a": "Neil Magny",
+          "fighter_b": "Phil Rowe",
+          "winner": "Neil Magny",
+          "predicted": "Neil Magny",
+          "confidence": 0.5283262689818492,
+          "correct": true
+        },
+        {
+          "fighter_a": "Cesar Almeida",
+          "fighter_b": "Abdul Razak Alhassan",
+          "winner": "Cesar Almeida",
+          "predicted": "Cesar Almeida",
+          "confidence": 0.5284058086525669,
+          "correct": true
+        },
+        {
+          "fighter_a": "Victor Altamirano",
+          "fighter_b": "Vinicius Salvador",
+          "winner": "Victor Altamirano",
+          "predicted": "Victor Altamirano",
+          "confidence": 0.5283828428166076,
+          "correct": true
+        },
+        {
+          "fighter_a": "Christian Leroy Duncan",
+          "fighter_b": "Denis Tiuliulin",
+          "winner": "Christian Leroy Duncan",
+          "predicted": "Christian Leroy Duncan",
+          "confidence": 0.5283930377939177,
+          "correct": true
+        },
+        {
+          "fighter_a": "Bill Algeo",
+          "fighter_b": "TJ Brown",
+          "winner": "Bill Algeo",
+          "predicted": "Bill Algeo",
+          "confidence": 0.5283755606494568,
+          "correct": true
+        },
+        {
+          "fighter_a": "Zhang Mingyang",
+          "fighter_b": "Brendson Ribeiro",
+          "winner": "Zhang Mingyang",
+          "predicted": "Zhang Mingyang",
+          "confidence": 0.5283755606494568,
+          "correct": true
+        },
+        {
+          "fighter_a": "Cody Brundage",
+          "fighter_b": "Julian Marquez",
+          "winner": "Cody Brundage",
+          "predicted": "Cody Brundage",
+          "confidence": 0.5284258976812811,
+          "correct": true
+        },
+        {
+          "fighter_a": "Mateusz Gamrot",
+          "fighter_b": "Dan Hooker",
+          "winner": "Dan Hooker",
+          "predicted": "Mateusz Gamrot",
+          "confidence": 0.5284339622656372,
+          "correct": false
+        },
+        {
+          "fighter_a": "Rongzhu",
+          "fighter_b": "Austin Hubbard",
+          "winner": "Rongzhu",
+          "predicted": "Rongzhu",
+          "confidence": 0.5284434468771021,
+          "correct": true
+        },
+        {
+          "fighter_a": "Liudvik Sholinian",
+          "fighter_b": "Johnny Munoz",
+          "winner": "Johnny Munoz",
+          "predicted": "Liudvik Sholinian",
+          "confidence": 0.5283813863858772,
+          "correct": false
+        },
+        {
+          "fighter_a": "MarQuel Mederos",
+          "fighter_b": "Austin Hubbard",
+          "winner": "MarQuel Mederos",
+          "predicted": "MarQuel Mederos",
+          "confidence": 0.5284441932167788,
+          "correct": true
+        },
+        {
+          "fighter_a": "Raul Rosas Jr.",
+          "fighter_b": "Jay Perrin",
+          "winner": "Raul Rosas Jr.",
+          "predicted": "Raul Rosas Jr.",
+          "confidence": 0.5283872121006988,
+          "correct": true
+        },
+        {
+          "fighter_a": "Loopy Godinez",
+          "fighter_b": "Julia Polastri",
+          "winner": "Loopy Godinez",
+          "predicted": "Loopy Godinez",
+          "confidence": 0.528410587357211,
+          "correct": true
+        },
+        {
+          "fighter_a": "Toshiomi Kazama",
+          "fighter_b": "Garrett Armfield",
+          "winner": "Garrett Armfield",
+          "predicted": "Toshiomi Kazama",
+          "confidence": 0.5283755606494568,
+          "correct": false
+        },
+        {
+          "fighter_a": "Matheus Nicolau",
+          "fighter_b": "Asu Almabayev",
+          "winner": "Asu Almabayev",
+          "predicted": "Matheus Nicolau",
+          "confidence": 0.5283915813726385,
+          "correct": false
+        },
+        {
+          "fighter_a": "Marcin Tybura",
+          "fighter_b": "Ante Delija",
+          "winner": "Ante Delija",
+          "predicted": "Marcin Tybura",
+          "confidence": 0.5283401236583791,
+          "correct": false
+        },
+        {
+          "fighter_a": "Darren Elkins",
+          "fighter_b": "Julian Erosa",
+          "winner": "Julian Erosa",
+          "predicted": "Darren Elkins",
+          "confidence": 0.5283838897546883,
+          "correct": false
+        },
+        {
+          "fighter_a": "Morgan Charriere",
+          "fighter_b": "Manolo Zecchini",
+          "winner": "Morgan Charriere",
+          "predicted": "Morgan Charriere",
+          "confidence": 0.5283828428166076,
+          "correct": true
+        },
+        {
+          "fighter_a": "Miranda Maverick",
+          "fighter_b": "Jasmine Jasudavicius",
+          "winner": "Jasmine Jasudavicius",
+          "predicted": "Miranda Maverick",
+          "confidence": 0.5283901249500089,
+          "correct": false
+        },
+        {
+          "fighter_a": "Victor Altamirano",
+          "fighter_b": "Felipe dos Santos",
+          "winner": "Felipe dos Santos",
+          "predicted": "Victor Altamirano",
+          "confidence": 0.5283842992459882,
+          "correct": false
+        },
+        {
+          "fighter_a": "Elizeu Zaleski dos Santos",
+          "fighter_b": "Zachary Scroggin",
+          "winner": "Elizeu Zaleski dos Santos",
+          "predicted": "Elizeu Zaleski dos Santos",
+          "confidence": 0.5283587207673623,
+          "correct": true
+        },
+        {
+          "fighter_a": "Tresean Gore",
+          "fighter_b": "Marco Tulio",
+          "winner": "Marco Tulio",
+          "predicted": "Tresean Gore",
+          "confidence": 0.5283857556740186,
+          "correct": false
+        },
+        {
+          "fighter_a": "Payton Talbott",
+          "fighter_b": "Cameron Saaiman",
+          "winner": "Payton Talbott",
+          "predicted": "Payton Talbott",
+          "confidence": 0.5284032327050553,
+          "correct": true
+        },
+        {
+          "fighter_a": "Sean O'Malley",
+          "fighter_b": "Merab Dvalishvili",
+          "winner": "Merab Dvalishvili",
+          "predicted": "Sean O'Malley",
+          "confidence": 0.5283036025693968,
+          "correct": false
+        },
+        {
+          "fighter_a": "Julian Erosa",
+          "fighter_b": "Fernando Padilla",
+          "winner": "Fernando Padilla",
+          "predicted": "Julian Erosa",
+          "confidence": 0.5283901249500089,
+          "correct": false
+        },
+        {
+          "fighter_a": "Taiyilake Nueraji",
+          "fighter_b": "Kiefer Crosbie",
+          "winner": "Taiyilake Nueraji",
+          "predicted": "Taiyilake Nueraji",
+          "confidence": 0.5283784735203666,
+          "correct": true
+        },
+        {
+          "fighter_a": "Christian Rodriguez",
+          "fighter_b": "Austin Bashi",
+          "winner": "Christian Rodriguez",
+          "predicted": "Christian Rodriguez",
+          "confidence": 0.5282952730392224,
+          "correct": true
+        },
+        {
+          "fighter_a": "Kamaru Usman",
+          "fighter_b": "Joaquin Buckley",
+          "winner": "Kamaru Usman",
+          "predicted": "Kamaru Usman",
+          "confidence": 0.5283364643259304,
+          "correct": true
+        }
+      ]
+    },
+    {
+      "pair_name": "biorythm + camp",
+      "features": [
+        "biorythm_diff",
+        "camp_diff"
+      ],
+      "indices": [
+        13,
+        14
+      ],
+      "correct": 22,
+      "total": 50,
+      "failed": 0,
+      "accuracy": 44.0,
+      "battles": [
+        {
+          "fighter_a": "Stephanie Egger",
+          "fighter_b": "Ailin Perez",
+          "winner": "Stephanie Egger",
+          "predicted": "Stephanie Egger",
+          "confidence": 0.5283448983785212,
+          "correct": true
+        },
+        {
+          "fighter_a": "Brunno Ferreira",
+          "fighter_b": "Jackson McVey",
+          "winner": "Brunno Ferreira",
+          "predicted": "Brunno Ferreira",
+          "confidence": 0.5284857765553199,
+          "correct": true
+        },
+        {
+          "fighter_a": "Guram Kutateladze",
+          "fighter_b": "Jordan Vucenic",
+          "winner": "Guram Kutateladze",
+          "predicted": "Guram Kutateladze",
+          "confidence": 0.5283820377701902,
+          "correct": true
+        },
+        {
+          "fighter_a": "Yana Santos",
+          "fighter_b": "Miesha Tate",
+          "winner": "Yana Santos",
+          "predicted": "Yana Santos",
+          "confidence": 0.528384452908205,
+          "correct": true
+        },
+        {
+          "fighter_a": "Volkan Oezdemir",
+          "fighter_b": "Carlos Ulberg",
+          "winner": "Carlos Ulberg",
+          "predicted": "Volkan Oezdemir",
+          "confidence": 0.5283812327233604,
+          "correct": false
+        },
+        {
+          "fighter_a": "Braxton Smith",
+          "fighter_b": "Parker Porter",
+          "winner": "Parker Porter",
+          "predicted": "Braxton Smith",
+          "confidence": 0.5283828428166076,
+          "correct": false
+        },
+        {
+          "fighter_a": "Clay Guida",
+          "fighter_b": "Joaquim Silva",
+          "winner": "Joaquim Silva",
+          "predicted": "Clay Guida",
+          "confidence": 0.5283440933126761,
+          "correct": false
+        },
+        {
+          "fighter_a": "Christian Rodriguez",
+          "fighter_b": "Cameron Saaiman",
+          "winner": "Christian Rodriguez",
+          "predicted": "Christian Rodriguez",
+          "confidence": 0.5283820377701902,
+          "correct": true
+        },
+        {
+          "fighter_a": "Chris Curtis",
+          "fighter_b": "Kelvin Gastelum",
+          "winner": "Kelvin Gastelum",
+          "predicted": "Chris Curtis",
+          "confidence": 0.5283828428166076,
+          "correct": false
+        },
+        {
+          "fighter_a": "Diego Lopes",
+          "fighter_b": "Gavin Tucker",
+          "winner": "Diego Lopes",
+          "predicted": "Diego Lopes",
+          "confidence": 0.5283497287649409,
+          "correct": true
+        },
+        {
+          "fighter_a": "Kaue Fernandes",
+          "fighter_b": "Marc Diakiese",
+          "winner": "Marc Diakiese",
+          "predicted": "Kaue Fernandes",
+          "confidence": 0.5283820377701902,
+          "correct": false
+        },
+        {
+          "fighter_a": "Rob Font",
+          "fighter_b": "Adrian Yanez",
+          "winner": "Rob Font",
+          "predicted": "Rob Font",
+          "confidence": 0.5283448983785212,
+          "correct": true
+        },
+        {
+          "fighter_a": "Baergeng Jieleyisi",
+          "fighter_b": "SuYoung You",
+          "winner": "SuYoung You",
+          "predicted": "Baergeng Jieleyisi",
+          "confidence": 0.5283836478626126,
+          "correct": false
+        },
+        {
+          "fighter_a": "Matt Frevola",
+          "fighter_b": "Benoit Saint Denis",
+          "winner": "Benoit Saint Denis",
+          "predicted": "Matt Frevola",
+          "confidence": 0.5283154330988,
+          "correct": false
+        },
+        {
+          "fighter_a": "King Green",
+          "fighter_b": "Paddy Pimblett",
+          "winner": "Paddy Pimblett",
+          "predicted": "King Green",
+          "confidence": 0.528380427676118,
+          "correct": false
+        },
+        {
+          "fighter_a": "Nazim Sadykhov",
+          "fighter_b": "Terrance McKinney",
+          "winner": "Nazim Sadykhov",
+          "predicted": "Nazim Sadykhov",
+          "confidence": 0.5284215913649531,
+          "correct": true
+        },
+        {
+          "fighter_a": "Ricky Simon",
+          "fighter_b": "Cameron Smotherman",
+          "winner": "Ricky Simon",
+          "predicted": "Ricky Simon",
+          "confidence": 0.5283836478626126,
+          "correct": true
+        },
+        {
+          "fighter_a": "Vanessa Demopoulos",
+          "fighter_b": "Emily Ducote",
+          "winner": "Vanessa Demopoulos",
+          "predicted": "Vanessa Demopoulos",
+          "confidence": 0.5283828428166076,
+          "correct": true
+        },
+        {
+          "fighter_a": "Julian Marquez",
+          "fighter_b": "Marc-Andre Barriault",
+          "winner": "Marc-Andre Barriault",
+          "predicted": "Julian Marquez",
+          "confidence": 0.5283828428166076,
+          "correct": false
+        },
+        {
+          "fighter_a": "Drakkar Klose",
+          "fighter_b": "Joe Solecki",
+          "winner": "Drakkar Klose",
+          "predicted": "Drakkar Klose",
+          "confidence": 0.5283836478626126,
+          "correct": true
+        },
+        {
+          "fighter_a": "Niko Price",
+          "fighter_b": "Alex Morono",
+          "winner": "Niko Price",
+          "predicted": "Niko Price",
+          "confidence": 0.5283440933126761,
+          "correct": true
+        },
+        {
+          "fighter_a": "SeungGuk Choi",
+          "fighter_b": "HyunSung Park",
+          "winner": "HyunSung Park",
+          "predicted": "SeungGuk Choi",
+          "confidence": 0.5283828428166076,
+          "correct": false
+        },
+        {
+          "fighter_a": "Aoriqileng",
+          "fighter_b": "Jay Perrin",
+          "winner": "Aoriqileng",
+          "predicted": "Aoriqileng",
+          "confidence": 0.5283812327233604,
+          "correct": true
+        },
+        {
+          "fighter_a": "Colby Covington",
+          "fighter_b": "Joaquin Buckley",
+          "winner": "Joaquin Buckley",
+          "predicted": "Colby Covington",
+          "confidence": 0.528380427676118,
+          "correct": false
+        },
+        {
+          "fighter_a": "Song Kenan",
+          "fighter_b": "Kevin Jousset",
+          "winner": "Kevin Jousset",
+          "predicted": "Song Kenan",
+          "confidence": 0.528380427676118,
+          "correct": false
+        },
+        {
+          "fighter_a": "Julian Marquez",
+          "fighter_b": "Zachary Reese",
+          "winner": "Zachary Reese",
+          "predicted": "Julian Marquez",
+          "confidence": 0.528380427676118,
+          "correct": false
+        },
+        {
+          "fighter_a": "Julio Arce",
+          "fighter_b": "Montel Jackson",
+          "winner": "Montel Jackson",
+          "predicted": "Julio Arce",
+          "confidence": 0.5283812327233604,
+          "correct": false
+        },
+        {
+          "fighter_a": "Makhmud Muradov",
+          "fighter_b": "Caio Borralho",
+          "winner": "Caio Borralho",
+          "predicted": "Makhmud Muradov",
+          "confidence": 0.5283448983785212,
+          "correct": false
+        },
+        {
+          "fighter_a": "Jim Miller",
+          "fighter_b": "Chase Hooper",
+          "winner": "Chase Hooper",
+          "predicted": "Jim Miller",
+          "confidence": 0.528380427676118,
+          "correct": false
+        },
+        {
+          "fighter_a": "Ricardo Ramos",
+          "fighter_b": "Charles Jourdain",
+          "winner": "Charles Jourdain",
+          "predicted": "Ricardo Ramos",
+          "confidence": 0.5283828428166076,
+          "correct": false
+        },
+        {
+          "fighter_a": "Sergei Pavlovich",
+          "fighter_b": "Tom Aspinall",
+          "winner": "Tom Aspinall",
+          "predicted": "Sergei Pavlovich",
+          "confidence": 0.5284098917379482,
+          "correct": false
+        },
+        {
+          "fighter_a": "Alex Pereira",
+          "fighter_b": "Magomed Ankalaev",
+          "winner": "Magomed Ankalaev",
+          "predicted": "Alex Pereira",
+          "confidence": 0.5283146280178865,
+          "correct": false
+        },
+        {
+          "fighter_a": "Jasmine Jasudavicius",
+          "fighter_b": "Mayra Bueno Silva",
+          "winner": "Jasmine Jasudavicius",
+          "predicted": "Jasmine Jasudavicius",
+          "confidence": 0.5284857765553199,
+          "correct": true
+        },
+        {
+          "fighter_a": "Denise Gomes",
+          "fighter_b": "Loma Lookboonmee",
+          "winner": "Loma Lookboonmee",
+          "predicted": "Denise Gomes",
+          "confidence": 0.5283541833086705,
+          "correct": false
+        },
+        {
+          "fighter_a": "CJ Vergara",
+          "fighter_b": "Asu Almabayev",
+          "winner": "Asu Almabayev",
+          "predicted": "CJ Vergara",
+          "confidence": 0.528380427676118,
+          "correct": false
+        },
+        {
+          "fighter_a": "Tabatha Ricci",
+          "fighter_b": "Loopy Godinez",
+          "winner": "Loopy Godinez",
+          "predicted": "Tabatha Ricci",
+          "confidence": 0.5283828428166076,
+          "correct": false
+        },
+        {
+          "fighter_a": "Johnny Walker",
+          "fighter_b": "Ion Cutelaba",
+          "winner": "Johnny Walker",
+          "predicted": "Johnny Walker",
+          "confidence": 0.5283178483390714,
+          "correct": true
+        },
+        {
+          "fighter_a": "Baisangur Susurkaev",
+          "fighter_b": "Eric Nolan",
+          "winner": "Baisangur Susurkaev",
+          "predicted": "Baisangur Susurkaev",
+          "confidence": 0.5283497287649409,
+          "correct": true
+        },
+        {
+          "fighter_a": "Kevin Lee",
+          "fighter_b": "Rinat Fakhretdinov",
+          "winner": "Rinat Fakhretdinov",
+          "predicted": "Kevin Lee",
+          "confidence": 0.5283154330988,
+          "correct": false
+        },
+        {
+          "fighter_a": "Dione Barbosa",
+          "fighter_b": "Ernesta Kareckaite",
+          "winner": "Dione Barbosa",
+          "predicted": "Dione Barbosa",
+          "confidence": 0.5283820377701902,
+          "correct": true
+        },
+        {
+          "fighter_a": "Beneil Dariush",
+          "fighter_b": "Arman Tsarukyan",
+          "winner": "Arman Tsarukyan",
+          "predicted": "Beneil Dariush",
+          "confidence": 0.5283138229365616,
+          "correct": false
+        },
+        {
+          "fighter_a": "Modestas Bukauskas",
+          "fighter_b": "Ion Cutelaba",
+          "winner": "Modestas Bukauskas",
+          "predicted": "Modestas Bukauskas",
+          "confidence": 0.528384452908205,
+          "correct": true
+        },
+        {
+          "fighter_a": "Muhammad Naimov",
+          "fighter_b": "Bogdan Grad",
+          "winner": "Muhammad Naimov",
+          "predicted": "Muhammad Naimov",
+          "confidence": 0.5283440933126761,
+          "correct": true
+        },
+        {
+          "fighter_a": "Morgan Charriere",
+          "fighter_b": "Chepe Mariscal",
+          "winner": "Chepe Mariscal",
+          "predicted": "Morgan Charriere",
+          "confidence": 0.5283836478626126,
+          "correct": false
+        },
+        {
+          "fighter_a": "Andrei Arlovski",
+          "fighter_b": "Waldo Cortes-Acosta",
+          "winner": "Waldo Cortes-Acosta",
+          "predicted": "Andrei Arlovski",
+          "confidence": 0.5283780125319165,
+          "correct": false
+        },
+        {
+          "fighter_a": "Gilbert Burns",
+          "fighter_b": "Michael Morales",
+          "winner": "Michael Morales",
+          "predicted": "Gilbert Burns",
+          "confidence": 0.5283772074830245,
+          "correct": false
+        },
+        {
+          "fighter_a": "Francisco Prado",
+          "fighter_b": "Nikolay Veretennikov",
+          "winner": "Nikolay Veretennikov",
+          "predicted": "Francisco Prado",
+          "confidence": 0.5283812327233604,
+          "correct": false
+        },
+        {
+          "fighter_a": "Mike Breeden",
+          "fighter_b": "Anshul Jubli",
+          "winner": "Mike Breeden",
+          "predicted": "Mike Breeden",
+          "confidence": 0.5283812327233604,
+          "correct": true
+        },
+        {
+          "fighter_a": "Tim Elliott",
+          "fighter_b": "Sumudaerji",
+          "winner": "Tim Elliott",
+          "predicted": "Tim Elliott",
+          "confidence": 0.5283448983785212,
+          "correct": true
+        },
+        {
+          "fighter_a": "Belal Muhammad",
+          "fighter_b": "Sean Brady",
+          "winner": "Belal Muhammad",
+          "predicted": "Belal Muhammad",
+          "confidence": 0.5283836478626126,
+          "correct": true
+        }
+      ]
+    }
+  ]
+}

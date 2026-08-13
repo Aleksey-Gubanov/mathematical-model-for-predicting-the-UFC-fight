@@ -1,0 +1,19 @@
+{
+  "id": "1785475496_5568e9d6",
+  "status": "success",
+  "data": {
+    "stress_factor": 0.5,
+    "motivation_index": 0.5,
+    "biorythm_score": 0.6,
+    "camp_quality": 0.7,
+    "mystic_v2": 0.62,
+    "mystic_factor": 0.63
+  },
+  "error": null,
+  "validation": {
+    "complete": true,
+    "missing_fields": [],
+    "confidence": 0.85
+  },
+  "created_at": 1785475693.9994693
+}
