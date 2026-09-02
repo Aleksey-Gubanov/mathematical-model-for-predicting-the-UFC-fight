@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-MMA PREDICTION v44.2 | SENIOR PRODUCTION
+MMA PREDICTION v47.0 | РЕЖИМ ПРОГНОЗ + НОВОЕ ПОДМЕНЮ ОБУЧЕНИЯ
 ================================================================
-ИСПРАВЛЕНИЯ v44.2:
-1. ✅ Все импорты собраны в одном месте с единой обработкой ошибок
-2. ✅ The Odds API импортируется сразу (флаг HAS_ODDS_API)
-3. ✅ Добавлены недостающие импорты (math, requests, fighters_ids_manager)
-4. ✅ Готово для внедрения обогащения YandexGPT и реальных коэффов
+ИЗМЕНЕНИЯ v47.0:
+1. ✅ НОВОЕ подменю режима ОБУЧЕНИЕ (2a, 2b, 0)
+2. ✅ Подрежим 2a: Запуск обучения на датасете (direct_test_101.py)
+3. ✅ Подрежим 2b: Проверка работы модели (бэктест по дате)
+4. ✅ Анализ признаков, упершихся в лимит после обучения
+5. ✅ Удален старый блок ручного ввода
+6. ✅ Сохранены все улучшения v46.1
 ================================================================
 """
 import sys
@@ -25,9 +27,9 @@ import traceback
 import glob as glob_module
 from datetime import datetime, timedelta
 from typing import Optional, Tuple, Dict, List
+from espn_parser import ESPNParser
 from cryptography.fernet import Fernet
 
-# Очистка буфера stdin (Windows)
 try:
     import msvcrt
     WIN32 = True
@@ -40,11 +42,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 try:
     from secure_neural_channel import SecureNeuralChannel
     from math_engine import Fighter, FightData, Prediction, Result, FinishType, MMAEngine, names_match
-    from ufc_parser import UFCParser
     from deep_ai_analyst import DeepAIAnalyst
-    from sports_parser import SportsUFCScheduler
-    from exchange_protocol import ExchangeProtocol
-    from parser_worker import ParserWorker
     from fighters_ids_manager import (
         ensure_both_fighters_exist,
         add_ids_to_fight_in_memory,
@@ -53,6 +51,7 @@ try:
         names_match_by_id
     )
     from odds_api_client import OddsAPIClient
+    from mystic_calculator import calculate_mystic_factor
     HAS_ALL_IMPORTS = True
     HAS_ODDS_API = True
 except ImportError as e:
@@ -63,30 +62,42 @@ except ImportError as e:
     sys.exit(1)
 
 # ============================================================================
-# КОНСТАНТЫ ПУТЕЙ
+# КОНСТАНТЫ
 # ============================================================================
 DATASET_DIR = "dataset"
 REAL_DATASET_FILE = os.path.join(DATASET_DIR, "real_dataset.json")
 FIGHTERS_IDS_FILE = os.path.join(DATASET_DIR, "fighters_ids.json")
 MAX_DATASET_SIZE_MB = 2.2
+REQUEST_DELAY = 2.5
 
 # ============================================================================
-# ЭТАП 1: ОЧИСТКА ВВОДА (ЗАЩИТА ОТ КОНКАТЕНАЦИИ)
+# ✅ v46.1: ФУНКЦИЯ ОЧИСТКИ ИМЁН ОТ РЕЙТИНГОВ
+# ============================================================================
+def clean_name_for_api(name: str) -> str:
+    """
+    ✅ v46.1: Удаляет рейтинги типа (#10), (#2), (C) из имени.
+    Пример: "Марлон Вера (#10)" → "Марлон Вера"
+    """
+    if not name:
+        return ""
+    cleaned = re.sub(r'\s*\([^)]*\)', '', name)
+    return cleaned.strip()
+
+# ============================================================================
+# ЭТАП 1: ОЧИСТКА ВВОДА
 # ============================================================================
 def clear_input_buffer():
-    """
-    ✅ v44.3: БЕЗОПАСНАЯ очистка.
-    Агрессивная очистка (msvcrt.getch) УДАЛЕНА, так как она уничтожала
-    свежевставленный (Ctrl+V) текст в консоли Windows/IDE до того, как input() его считывал.
-    """
     try:
-        if not WIN32:  # Оставляем очистку только для Linux/Mac, где она работает корректно
+        if not WIN32:
             import termios
             termios.tcflush(sys.stdin, termios.TCIFLUSH)
+        else:
+            while msvcrt.kbhit():
+                msvcrt.getwch()
     except Exception:
         pass
+
 def sanitize_fighter_name(raw_name: str) -> str:
-    """Удаляет скобки с рейтингами/статусами и лишние пробелы."""
     if not raw_name:
         return ""
     cleaned = re.sub(r'\s*\([^)]*\)', '', raw_name)
@@ -94,37 +105,18 @@ def sanitize_fighter_name(raw_name: str) -> str:
     return cleaned.strip()
 
 def clean_user_input(raw_input: str) -> str:
-    """Очищает ввод пользователя от невидимых символов и пробелов между буквами."""
     if not raw_input:
         return ""
-
-    # Шаг 1: Удаление невидимых символов
     cleaned = ''.join(c for c in raw_input if ord(c) > 31 and c not in '\u200b\u200c\u200d\u00a0\ufeff\u200e\u200f\u202a-\u202e')
-
-    # Шаг 2: Нормализация тире
     cleaned = cleaned.replace('—', '-').replace('–', '-').replace('−', '-')
-
-    # Шаг 3: Удаление табов и возвратов каретки
     cleaned = cleaned.replace('\t', ' ').replace('\r', ' ')
-
-    # ✅ ШАГ 4: УДАЛЕНИЕ ПРОБЕЛОВ МЕЖДУ ОДИНОЧНЫМИ БУКВАМИ
-    # Паттерн: буква + пробел + буква (где обе буквы одиночные)
-    # 'А т е б а' → 'Атеба'
-    # 'Атеба Готье' → 'Атеба Готье' (пробел между словами остаётся!)
     import re as re_module
-
-    # Удаляем пробелы между одиночными буквами
-    # Ищем паттерн: (буква)(пробелы)(буква), где буква не является частью слова
-    for _ in range(10):  # Повторяем несколько раз для цепочек
-        # Удаляем пробелы между буквами, если после буквы следует пробел и ещё одна буква
+    for _ in range(10):
         new_cleaned = re_module.sub(r'([а-яёa-zA-Z])\s+([а-яёa-zA-Z])(?=\s|[^\wа-яёa-zA-Z]|$)', r'\1\2', cleaned, flags=re_module.IGNORECASE)
         if new_cleaned == cleaned:
             break
         cleaned = new_cleaned
-
-    # Шаг 5: Удаление множественных пробелов
     cleaned = re_module.sub(r'\s+', ' ', cleaned)
-
     return cleaned.strip()
 
 # ============================================================================
@@ -170,7 +162,7 @@ def increment_prediction_count(config: dict, hwid: str):
         save_config(config, hwid)
 
 # ============================================================================
-# ЭТАП 3: НОРМАЛИЗАЦИЯ ИМЁН (v43.11 — с ТРАНСЛИТЕРАЦИЕЙ!)
+# ЭТАП 3: НОРМАЛИЗАЦИЯ ИМЁН
 # ============================================================================
 TRANS_TABLE = {
     'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e',
@@ -181,13 +173,11 @@ TRANS_TABLE = {
 }
 
 def _transliterate(text: str) -> str:
-    """Простая транслитерация кириллицы в латиницу."""
     if not text:
         return ""
     return "".join(TRANS_TABLE.get(ch, ch) for ch in text.lower())
 
 def normalize_fighter_name(name: str) -> str:
-    """✅ v43.11: Полная нормализация с ТРАНСЛИТЕРАЦИЕЙ."""
     if not name:
         return ""
     latin = _transliterate(name)
@@ -195,47 +185,28 @@ def normalize_fighter_name(name: str) -> str:
     latin = re.sub(r',.*$', '', latin)
     return re.sub(r'[^a-z0-9]', '', latin)
 
-def normalize_winner_name(fact_winner: str, f1_clean: str, f2_clean: str, parser: UFCParser) -> str:
-    """✅ v43.15: Приводит имя победителя к тому же написанию, что и f1_clean/f2_clean."""
+def normalize_winner_name(fact_winner: str, f1_clean: str, f2_clean: str, parser=None) -> str:
     if not fact_winner:
         return fact_winner
-
-    # ✅ ИСПРАВЛЕНО: Защита от мусорных имён (конкатенация)
     if len(f1_clean) > 40 or f1_clean.count(' ') > 5:
         f1_clean = None
     if len(f2_clean) > 40 or f2_clean.count(' ') > 5:
         f2_clean = None
-
-    # Сначала пытаемся найти точное совпадение
-    if f1_clean:
-        try:
-            if parser._names_match(fact_winner, f1_clean):
-                return f1_clean
-        except Exception:
-            pass
-
-    if f2_clean:
-        try:
-            if parser._names_match(fact_winner, f2_clean):
-                return f2_clean
-        except Exception:
-            pass
-
-    # Если не нашли — используем каноническое имя
+    if f1_clean and names_match(fact_winner, f1_clean):
+        return f1_clean
+    if f2_clean and names_match(fact_winner, f2_clean):
+        return f2_clean
     from fighters_ids_manager import get_canonical_name
     canonical = get_canonical_name(fact_winner)
     if canonical and canonical != fact_winner:
         return canonical
-
     return fact_winner
 
 # ============================================================================
-# ЭТАП 4: ИИ-КОРРЕКЦИЯ ИМЁН
+# ЭТАП 4: ИИ-КОРРЕКЦИЯ ИМЁН (используется ТОЛЬКО в режиме ОБУЧЕНИЕ)
 # ============================================================================
 def canonicalize_names_with_db(raw_input: str, known_fighters: List[str]) -> Optional[Dict[str, str]]:
-    """ИИ сопоставляет ввод пользователя с реальным списком имен."""
     import difflib
-
     if not known_fighters:
         return None
 
@@ -253,16 +224,14 @@ def canonicalize_names_with_db(raw_input: str, known_fighters: List[str]) -> Opt
     except Exception as e:
         print(f"   ⚠️ Ошибка загрузки fighters_ids.json: {e}")
 
-    # ✅ v44.0: Ищем part-файлы в папке dataset/
-    # ✅ v44.3: Ищем part-файлы + кэш парсера в папке dataset/
     files_to_read = sorted(glob_module.glob(os.path.join(DATASET_DIR, "real_dataset_part*.json")))
     if os.path.exists(REAL_DATASET_FILE):
         files_to_read.append(REAL_DATASET_FILE)
 
-    # ✅ v44.3: КРИТИЧНО — добавляем кэш парсера (там есть ВСЕ имена с сайта!)
     cache_file = os.path.join(DATASET_DIR, "ufc_history_cache.json")
     if os.path.exists(cache_file):
         files_to_read.append(cache_file)
+
     for filename in files_to_read:
         try:
             with open(filename, 'r', encoding='utf-8') as f:
@@ -294,12 +263,11 @@ def canonicalize_names_with_db(raw_input: str, known_fighters: List[str]) -> Opt
 
     user_f1, user_f2 = parts[0].strip(), parts[1].strip()
 
-    # ✅ ИСПРАВЛЕНО: Защита от мусорных имён (конкатенация)
     if len(user_f1) > 40 or user_f1.count(' ') > 5:
-        print(f"   ⚠️ Первое имя слишком длинное ({len(user_f1)} символов). Возможно, мусор в буфере.")
+        print(f"   ⚠️ Первое имя слишком длинное ({len(user_f1)} символов).")
         return None
     if len(user_f2) > 40 or user_f2.count(' ') > 5:
-        print(f"   ⚠️ Второе имя слишком длинное ({len(user_f2)} символов). Возможно, мусор в буфере.")
+        print(f"   ⚠️ Второе имя слишком длинное ({len(user_f2)} символов).")
         return None
 
     unique_fighters = list(set(expanded_fighters))
@@ -327,30 +295,23 @@ def canonicalize_names_with_db(raw_input: str, known_fighters: List[str]) -> Opt
     best_f1_score = scored_f1[0][1] if scored_f1 else 0
     best_f2_score = scored_f2[0][1] if scored_f2 else 0
 
-    print(f"   🔍 Проверка наличия в кэше (после нормализации):")
+    print(f"   🔍 Проверка наличия в кэше:")
     print(f"      • '{user_f1}' → лучший матч: '{scored_f1[0][0]}' (сходство: {best_f1_score:.2f})")
     print(f"      • '{user_f2}' → лучший матч: '{scored_f2[0][0]}' (сходство: {best_f2_score:.2f})")
 
-    # ✅ ИСПРАВЛЕНО: Порог снижен до 0.70, чтобы избежать отказа в поиске бойцов с похожей фамилией
     if best_f1_score < 0.70 or best_f2_score < 0.07:
-        print(f"   ⚠️ Точное совпадение не найдено (сходство: {best_f1_score:.2f} / {best_f2_score:.2f}).")
-        print(f"   💡 Передаем исходные имена парсеру для поиска на сайте...")
+        print(f"   ⚠️ Точное совпадение не найдено.")
         return {"f1": user_f1, "f2": user_f2}
-
 
     top_similar = [f[0] for f in scored_f1[:50]] + [f[0] for f in scored_f2[:50]]
     top_similar = list(set(top_similar))[:100]
 
     fighters_list_str = ", ".join(top_similar)
 
-    print(f"   📊 Fuzzy-matching: оба бойца найдены в кэше")
-
     prompt = f"""Ты эксперт по ММА. Пользователь ввел строку: "{raw_input}".
-Вот официальный список имен бойцов из расписания: [{fighters_list_str}].
-Твоя задача: найти в этом списке РОВНО ДВА имени, которые соответствуют вводу пользователя (исправь опечатки, транслит, игнорируй отсутствие тире).
-Верни СТРОГО валидный JSON без markdown:
-{{"f1": "Точное имя из списка", "f2": "Точное имя из списка"}}
-Если не можешь найти два имени, верни: {{"f1": null, "f2": null}}"""
+Вот официальный список имен бойцов: [{fighters_list_str}].
+Найди РОВНО ДВА имени. Верни СТРОГО JSON без markdown:
+{{"f1": "Точное имя", "f2": "Точное имя"}}"""
 
     try:
         response = SecureNeuralChannel.query(prompt, "CanonicalizeNamesWithDB")
@@ -363,7 +324,6 @@ def canonicalize_names_with_db(raw_input: str, known_fighters: List[str]) -> Opt
             try:
                 data = json.loads(match.group()) if match else {}
             except json.JSONDecodeError:
-                print(f"   ⚠️ Ошибка парсинга JSON от ИИ")
                 data = {}
 
         f1 = data.get("f1")
@@ -376,40 +336,16 @@ def canonicalize_names_with_db(raw_input: str, known_fighters: List[str]) -> Opt
             fighters_lower = {f.lower(): f for f in top_similar}
 
             if f1_clean.lower() in fighters_lower and f2_clean.lower() in fighters_lower:
-                norm_f1_ai = normalize_fighter_name(f1_clean)
-                norm_f2_ai = normalize_fighter_name(f2_clean)
+                print(f"   ✅ ИИ вернул валидные имена: '{f1_clean}' vs '{f2_clean}'")
+                return {
+                    "f1": fighters_lower[f1_clean.lower()],
+                    "f2": fighters_lower[f2_clean.lower()]
+                }
 
-                score1_ai = difflib.SequenceMatcher(None, norm_f1, norm_f1_ai).ratio()
-                score2_ai = difflib.SequenceMatcher(None, norm_f2, norm_f2_ai).ratio()
-
-                score1_ai_rev = difflib.SequenceMatcher(None, norm_f2, norm_f1_ai).ratio()
-                score2_ai_rev = difflib.SequenceMatcher(None, norm_f1, norm_f2_ai).ratio()
-
-                direct_match = (score1_ai >= 0.70 and score2_ai >= 0.70)
-                reverse_match = (score1_ai_rev >= 0.70 and score2_ai_rev >= 0.70)
-
-                if direct_match or reverse_match:
-                    print(f"   ✅ ИИ вернул валидные имена: '{f1_clean}' vs '{f2_clean}'")
-                    return {
-                        "f1": fighters_lower[f1_clean.lower()],
-                        "f2": fighters_lower[f2_clean.lower()]
-                    }
-                else:
-                    print(f"   ⚠️ ИИ вернул имена с низким сходством:")
-                    print(f"      • '{f1_clean}' vs '{user_f1}': {score1_ai:.2f}")
-                    print(f"      • '{f2_clean}' vs '{user_f2}': {score2_ai:.2f}")
-                    print(f"   💡 Используем fuzzy-matching напрямую...")
-        else:
-            print(f"   ⚠️ ИИ вернул null или невалидные данные.")
-            # ✅ КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Запрет на подмену имен!
-            # Если сходство низкое и ИИ не помог, возвращаем исходные имена пользователя.
-            # Это позволит парсеру попробовать найти их на сайте по оригинальному написанию.
-            print(f"   💡 Используем исходные имена для поиска на сайте: '{user_f1}' vs '{user_f2}'")
-            return {"f1": user_f1, "f2": user_f2}
+        return {"f1": user_f1, "f2": user_f2}
 
     except Exception as e:
-        print(f"   ⚠️ Ошибка ИИ при коррекции имен: {e}")
-        print(f"   ✅ Fallback после ошибки: '{scored_f1[0][0]}' vs '{scored_f2[0][0]}'")
+        print(f"   ⚠️ Ошибка ИИ: {e}")
         return {"f1": scored_f1[0][0], "f2": scored_f2[0][0]}
 
 # ============================================================================
@@ -432,9 +368,8 @@ def extract_fighter_names(data) -> List[str]:
     return names
 
 def strict_out(pred: Prediction, res: Optional[Result], fd: FightData, mode: str,
-               matchup: dict, a: str, b: str,
+               matchup: dict, a: str, b: str, raw_prob: float,
                acc_win: float = 0.0, acc_rnd: float = 0.0, acc_mth: float = 0.0) -> str:
-    """✅ v44.0: Единый кириллический вывод для ВСЕХ полей таблицы."""
     from fighters_ids_manager import get_canonical_name, names_match_by_id
 
     try:
@@ -450,9 +385,7 @@ def strict_out(pred: Prediction, res: Optional[Result], fd: FightData, mode: str
         odds_a_str, odds_b_str, book_str = str(odds_a_val), str(odds_b_val), book
 
     pred_winner_canonical = get_canonical_name(pred.winner)
-
     win_txt = "НИЧЬЯ" if pred.method == FinishType.DRAW else pred_winner_canonical
-
     pred_rnd = getattr(pred, 'rnd', getattr(pred, 'round', '?'))
 
     if res:
@@ -463,8 +396,6 @@ def strict_out(pred: Prediction, res: Optional[Result], fd: FightData, mode: str
         pred_rnd_txt = f"{pred_rnd} (предпол.)"
         pred_mth_txt = f"{pred.method.value} (предпол.)"
         acc_win_display = real_win
-        acc_rnd_display = 0.0
-        acc_mth_display = 0.0
     else:
         res_w_canonical = 'Ожидание'
         res_r = 'Ожидание'
@@ -472,8 +403,6 @@ def strict_out(pred: Prediction, res: Optional[Result], fd: FightData, mode: str
         pred_rnd_txt = f"{pred_rnd} (предпол.)"
         pred_mth_txt = f"{pred.method.value} (предпол.)"
         acc_win_display = 0.0
-        acc_rnd_display = 0.0
-        acc_mth_display = 0.0
 
     a_canonical = get_canonical_name(a)
     b_canonical = get_canonical_name(b)
@@ -489,30 +418,89 @@ def strict_out(pred: Prediction, res: Optional[Result], fd: FightData, mode: str
         "-" * 78,
         "📊 СРАВНЕНИЕ: Прогноз vs Факт",
         f"| Параметр | Прогноз модели | Реальный Факт | Точность |",
-        f"|-|-|-|-|",
+        f"|{'-'*10}|{'-'*19}|{'-'*17}|{'-'*8}|",
         f"| Победитель | {win_txt:<19} | {res_w_canonical:<17} | {acc_win_display:>5.1f}% |",
-        f"| Раунд | {pred_rnd_txt:<19} | {res_r:<17} | — |",
-        f"| Способ | {pred_mth_txt:<19} | {res_m:<17} | — |",
+        f"| Раунд      | {pred_rnd_txt:<19} | {res_r:<17} | — |",
+        f"| Способ     | {pred_mth_txt:<19} | {res_m:<17} | — |",
         f"| Коэфф. {a_canonical:<10} | 1/{pred.prob:.2f} (Модель) | {odds_a_str} ({book_str}) |",
         f"| Коэфф. {b_canonical:<10} | 1/{1 - pred.prob:.2f} (Модель) | {odds_b_str} ({book_str}) |",
-        "=" * 78
-    ]
+        ]
 
     if high_dispersion_flag:
         lines.append("⚠️ СЦЕНАРНОЕ ДЕРЕВО (высокая неопределённость):")
         lines.append(f"   • Сценарий A (60%): {win_txt} побеждает решением")
         lines.append(f"   • Сценарий B (25%): {b_canonical if win_txt == a_canonical else a_canonical} побеждает нокаутом")
         lines.append(f"   • Сценарий C (15%): Ничья / нестандартный исход")
-        lines.append("=" * 78)
+
+    # =========================================================================
+    # ✅ v46.1: БИНАРНЫЙ ВЕРДИКТ С ЗАЩИТОЙ ОТ ДЕФОЛТНЫХ КОЭФФИЦИЕНТОВ
+    # =========================================================================
+    model_prob_a = raw_prob
+    model_prob_b = 1.0 - raw_prob
+
+    model_favored = a if model_prob_a >= 0.50 else b
+    model_favored_prob = model_prob_a if model_favored == a else model_prob_b
+
+    bk_favored = a if odds_a_val <= odds_b_val else b
+    bk_favored_odds = odds_a_val if bk_favored == a else odds_b_val
+
+    MIN_SAFE_ODDS = 1.10
+
+    is_default_odds = (abs(odds_a_val - 1.85) < 0.01 and abs(odds_b_val - 1.85) < 0.01)
+
+    if is_default_odds:
+        verdict = "⚠️ РЕШЕНИЕ: НЕТ ДАННЫХ БК"
+        reason = f"💡 Коэффициенты не найдены в API. Невозможно определить двойное подтверждение. Пропускаем."
+    elif model_favored == bk_favored:
+        if bk_favored_odds < MIN_SAFE_ODDS:
+            verdict = "⚠️ РЕШЕНИЕ: СЛИШКОМ МАЛО"
+            reason = f"💡 Модель и БК согласны на {model_favored}, но коэффициент {bk_favored_odds} слишком низкий."
+        else:
+            verdict = "✅ РЕШЕНИЕ: РЕКОМЕНДУЮ"
+            reason = f"💡 Двойное подтверждение: Модель и БК сходятся на фаворите ({model_favored})."
+    else:
+        verdict = "❌ РЕШЕНИЕ: ПРОПУСКАЕМ"
+        reason = f"💡 Расхождение мнений: Модель за {model_favored}, БК за {bk_favored}."
+
+    lines.extend([
+        "=" * 78,
+        f"📊 Мнение модели (сырое): {model_favored} {model_favored_prob*100:.0f}% | Коэф БК: {bk_favored_odds}",
+        verdict,
+        reason,
+        "=" * 78
+    ])
 
     return "\n".join(lines)
 
+def print_all_features(engine: MMAEngine, fighter_a: Fighter, fighter_b: Fighter,
+                       odds_a: float, odds_b: float, fighter_a_name: str) -> float:
+    """Выводит ВСЕ признаки и ВОЗВРАЩАЕТ сырую вероятность."""
+    features, feature_names = engine.model._extract_features(fighter_a, fighter_b, odds_a, odds_b)
+    raw_prob = engine.model.predict_proba(features)
+
+    print(f"   📊 Сырая вероятность победы {fighter_a_name}: {raw_prob:.3f}")
+
+    num_features = min(len(features), len(engine.model.weights))
+    contributions = []
+    for i in range(num_features):
+        name = feature_names[i] if i < len(feature_names) else f"feature_{i}"
+        val = engine.model.weights[i] * features[i]
+        if abs(val) > 0.0001:
+            contributions.append((name, val, features[i]))
+
+    contributions.sort(key=lambda x: abs(x[1]), reverse=True)
+
+    print(f"   📊 Всего значимых признаков: {len(contributions)} из {num_features}")
+    print("   📊 Признаки (вклад → значение признака):")
+    for name, val, raw_val in contributions:
+        print(f"      {name}: {val:+.4f} (raw={raw_val:.4f})")
+
+    return raw_prob
+
 def load_accuracy_metrics(engine: MMAEngine) -> Tuple[float, float, float]:
-    """✅ v44.0: Загружает метрики точности из всех part-файлов в dataset/"""
     try:
         dataset = []
         part_files = sorted(glob_module.glob(os.path.join(DATASET_DIR, "real_dataset_part*.json")))
-
         for part_file in part_files:
             try:
                 with open(part_file, "r", encoding="utf-8") as f:
@@ -544,54 +532,52 @@ def handle_calibration_command(subcommand: str, engine: MMAEngine):
         if subcommand == "3a":
             print("⏳ Проверка точности...")
             try:
-                dataset = engine.load_full_dataset()
+                dataset = []
+                part_files = sorted(glob_module.glob(os.path.join(DATASET_DIR, "real_dataset_part*.json")))
+                for part_file in part_files:
+                    try:
+                        with open(part_file, "r", encoding="utf-8") as f:
+                            dataset.extend(json.load(f))
+                    except Exception as e:
+                        print(f"   ⚠️ Ошибка чтения {part_file}: {e}")
+
                 if len(dataset) < 5:
                     print("⚠️ Недостаточно данных для проверки")
                 else:
                     acc_win, acc_rnd, acc_mth = engine.get_recent_accuracies(dataset)
-
-                    print(f"📊 ТОЧНОСТЬ (все бои):")
-                    print(f"   Победитель: {acc_win:.1f}%")
-                    print(f"   Раунд: {acc_rnd:.1f}%")
-                    print(f"   Метод: {acc_mth:.1f}%")
-
-                    print(f"📊 СРАВНЕНИЕ С ЭТАЛОНАМИ:")
-                    print(f"   🛡️ Эталон: {engine.baseline_accuracy * 100:.1f}%")
-                    print(f"   🏆 Лучшие веса: {engine.best_accuracy * 100:.1f}%")
+                    print(f"📊 ТОЧНОСТЬ (все бои): Победитель: {acc_win:.1f}%")
+                    print(f"📊 Лучшие веса: {engine.best_accuracy * 100:.1f}%")
 
                     acc_win_ratio = acc_win / 100.0
 
                     if acc_win_ratio < engine.best_accuracy - 0.03:
-                        print(f"⚠️ Деградация! Точность ниже лучших весов на {(engine.best_accuracy - acc_win_ratio) * 100:.1f}%!")
-                        print("   Рекомендуется откат к лучшим весам (команда 3b)")
-                    elif acc_win_ratio < engine.baseline_accuracy - 0.05:
-                        print(f"🔴 Критическая деградация!")
-                        print("   Рекомендуется откат к эталону (команда 3c)")
+                        print(f"⚠️ Деградация. Авто-возврат к best выполнится при следующем старте.")
                     else:
-                        print("✅ Модель в норме. Деградации не обнаружено.")
+                        print("✅ Модель в норме.")
             except Exception as e:
                 print(f"❌ Ошибка: {e}")
                 traceback.print_exc()
 
-        elif subcommand == "3b":
-            print("🔄 Откат к лучшим весам...")
-            engine.rollback_to_best()
-
-        elif subcommand == "3c":
-            print("🛡️ Откат к эталону...")
-            confirm = input("   ⚠️ Это сбросит все накопленные знания! Продолжить? (y/n): ").strip().lower()
-            if confirm == 'y':
-                engine.rollback_to_baseline()
-            else:
-                print("   ❌ Отменено")
+        # elif subcommand == "3b":
+        #     print("🔄 Откат к лучшим весам...")
+        #     engine.rollback_to_best()
+        #
+        # elif subcommand == "3c":
+        #     print("🛡️ Откат к эталону...")
+        #     confirm = input("   ⚠️ Это сбросит все накопленные знания! Продолжить? (y/n): ").strip().lower()
+        #     if confirm == 'y':
+        #         engine.rollback_to_baseline()
+        #     else:
+        #         print("   ❌ Отменено")
 
         elif subcommand == "3d":
             print(f"📊 СТАТУС ВЕСОВ:")
-            print(f"   🛡️ Эталон: {engine.baseline_accuracy * 100:.1f}% (weights_baseline.json)")
-            print(f"   🏆 Лучшие веса: {engine.best_accuracy * 100:.1f}% (weights_best.json)")
+
+            # print(f"   🛡️ Эталон: {engine.baseline_accuracy * 100:.1f}%")
+            print(f"   🏆 Лучшие веса (глоб.макс): {engine.best_accuracy * 100:.1f}%")
+
             print(f"   ⚙️ Стабильность: {engine.stability_score:.1f}")
-            print(f"   ✅ Успехи подряд: {engine.success_counter}")
-            print(f"   ❌ Ошибки подряд: {engine.fail_counter}")
+            print(f"   📦 Буфер: {len(engine.pending_fights)}/{engine.BATCH_TRAIN_SIZE}")
 
             print(f"📁 ФАЙЛЫ:")
             files_to_check = [
@@ -601,7 +587,6 @@ def handle_calibration_command(subcommand: str, engine: MMAEngine):
                 os.path.join(DATASET_DIR, "fighters_ids.json"),
                 REAL_DATASET_FILE
             ]
-
             for f in files_to_check:
                 exists = "✅" if os.path.exists(f) else "❌"
                 print(f"   {exists} {f}")
@@ -614,119 +599,76 @@ def handle_calibration_command(subcommand: str, engine: MMAEngine):
                     print(f"   ✅ {pf} ({size_mb:.2f} МБ)")
         else:
             print("❌ Неверная команда")
-
     except Exception as e:
         print(f"❌ Ошибка: {e}")
         traceback.print_exc()
 
 # ============================================================================
-# ЭТАП 7: ОБОГАЩЕНИЕ ДАННЫХ ЧЕРЕЗ YANDEXGPT 5.1
+# ЭТАП 7: ПОЛУЧЕНИЕ ДАННЫХ БОЙЦА (ОБОГАЩЕНИЕ)
 # ============================================================================
-def enrich_fighters_via_yandex(f1_clean: str, f2_clean: str, target_date: str, pwd: str,
-                               fighter_a_stats: Dict = None, fighter_b_stats: Dict = None) -> Tuple[Dict, Dict]:
-    protocol = ExchangeProtocol()
+def get_fighter_data(fighter_name: str, fight_date: str,
+                     opponent_name: str = None,
+                     opponent_record: str = None,
+                     fight_context: str = "regular",
+                     recent_form: List[str] = None,
+                     weight_class: str = None,
+                     fighter_dob: str = None) -> Fighter:
+    print(f"      🤖 Запрос полных данных для: {fighter_name}")
 
-    old_pending = protocol.get_pending_requests()
-    if old_pending:
-        print(f"   🧹 Очистка {len(old_pending)} старых запросов...")
-        for req in old_pending:
-            try:
-                protocol.cleanup_request(req['id'])
-            except Exception:
-                pass
-
-    req_id_a = protocol.create_request(
-        request_type="enrich",
-        data={"fighter_name": f1_clean, "fight_date": target_date, "fighter_stats": fighter_a_stats or {}},
-        priority=5
+    data = DeepAIAnalyst.enrich_fighter(
+        fighter_name=fighter_name,
+        fight_date=fight_date,
+        opponent_name=opponent_name,
+        opponent_record=opponent_record,
+        fight_context=fight_context,
+        recent_form=recent_form or [],
+        weight_class=weight_class
     )
 
-    req_id_b = protocol.create_request(
-        request_type="enrich",
-        data={"fighter_name": f2_clean, "fight_date": target_date, "fighter_stats": fighter_b_stats or {}},
-        priority=5
+    if not data:
+        print(f"      ⚠️ Нет данных для {fighter_name}, используем дефолты")
+        data = {}
+
+    mystic_result = calculate_mystic_factor(fighter_dob, fight_date)
+    mystic_factor = mystic_result.get('mystic_factor', 0.5)
+
+    camp_name = data.get('camp_name', data.get('camp', 'Independent'))
+    wins = data.get('wins', 0)
+    losses = data.get('losses', 0)
+    exp = data.get('exp', wins + losses)
+
+    fighter = Fighter(
+        name=fighter_name,
+        age=data.get('age', 30),
+        wins=wins,
+        losses=losses,
+        recent_wins=data.get('recent_wins', 0),
+        form=recent_form or [],
+        fin_rate=data.get('fin_rate', 0.5),
+        sub_rate=data.get('sub_rate', 0.0),
+        td_def=data.get('td_def', 0.5),
+        grap_def=data.get('grap_def', 0.5),
+        months_off=data.get('months_off', 0),
+        fights_12m=data.get('fights_12m', 0),
+        exp=exp,
+        reach_cm=data.get('reach_cm', 180),
+        height_cm=data.get('height_cm', 175),
+        stress_factor=data.get('stress_factor', 0.5),
+        motivation_index=data.get('motivation_index', 0.5),
+        biorythm_score=data.get('biorythm_score', 0.5),
+        camp_quality=data.get('camp_quality', 0.5),
+        camp_name=camp_name,
+        mystic_factor=mystic_factor,
+        mystic_v2=data.get('mystic_v2', 0.62)
     )
 
-    print(f"   📤 Созданы запросы: {req_id_a}, {req_id_b}")
+    print(f"      📥 {fighter_name}: {fighter.wins}-{fighter.losses}, "
+          f"reach={fighter.reach_cm}, stress={fighter.stress_factor:.2f}, "
+          f"mystic={fighter.mystic_factor:.2f}, mystic_v2={fighter.mystic_v2:.2f}, "
+          f"camp={camp_name}")
 
-    abs_responses_dir = os.path.abspath(protocol.RESPONSES_DIR)
-    print(f"   📂 Папка ответов (абс. путь): {abs_responses_dir}")
-
-    worker = ParserWorker(master_password=pwd)
-
-    pending = protocol.get_pending_requests()
-    our_requests = [r for r in pending if r['id'] in [req_id_a, req_id_b]]
-    print(f"   🔍 Найдено наших запросов: {len(our_requests)}")
-
-    for our_req in our_requests:
-        try:
-            fighter_name = our_req['data'].get('fighter_name')
-            print(f"   🔄 Обработка: {our_req['id']} ({fighter_name})")
-
-            result = worker._handle_enrich(our_req['data'])
-            result_data = result.get("data", {})
-
-            for k, v in result_data.items():
-                try:
-                    json.dumps({k: v})
-                except (TypeError, ValueError):
-                    result_data[k] = str(v)
-
-            protocol.write_response(
-                request_id=our_req['id'],
-                status=result.get("status", "error"),
-                data=result_data,
-                error=result.get("error"),
-                validation=result.get("validation", {"complete": False})
-            )
-
-            expected_file = os.path.join(protocol.RESPONSES_DIR, f"res_{our_req['id']}.json")
-            if os.path.exists(expected_file):
-                file_size = os.path.getsize(expected_file)
-                print(f"   ✅ Файл ответа создан: {os.path.basename(expected_file)} ({file_size} байт)")
-            else:
-                print(f"   🔴 КРИТИЧНО: Файл ответа НЕ СОЗДАН: {expected_file}")
-
-            if hasattr(protocol, 'cleanup_request_only'):
-                protocol.cleanup_request_only(our_req['id'])
-
-            print(f"   ✅ Обработано: {result.get('status')}")
-
-        except Exception as e:
-            print(f"   ❌ Ошибка обработки {our_req['id']}: {e}")
-            traceback.print_exc()
-            try:
-                protocol.cleanup_request_only(our_req['id'])
-            except Exception:
-                pass
-
-    print(f"   📥 Чтение ответов...")
-
-    def wait_for_response(req_id, timeout=30):
-        start = time.time()
-        while time.time() - start < timeout:
-            try:
-                response = protocol.get_response(req_id, timeout=1)
-                if response and response.get("status") == "success":
-                    return response
-            except Exception:
-                pass
-            time.sleep(0.5)
-        return None
-
-    response_a = wait_for_response(req_id_a, timeout=30)
-    response_b = wait_for_response(req_id_b, timeout=30)
-
-    enrichment_a = response_a.get("data", {}) if response_a and response_a.get("status") == "success" else {}
-    enrichment_b = response_b.get("data", {}) if response_b and response_b.get("status") == "success" else {}
-
-    try:
-        protocol.cleanup_request(req_id_a)
-        protocol.cleanup_request(req_id_b)
-    except Exception as e:
-        print(f"   ⚠️ Ошибка очистки: {e}")
-
-    return enrichment_a, enrichment_b
+    time.sleep(REQUEST_DELAY)
+    return fighter
 
 # ============================================================================
 # ЭТАП 8: ЗАГРУЗКА/СОХРАНЕНИЕ КЭША БОЙЦОВ
@@ -750,12 +692,396 @@ def save_known_fighters_cache(fighters_list: List[str]):
         print(f"   ⚠️ Не удалось сохранить кэш бойцов: {e}")
 
 # ============================================================================
-# ЭТАП 9: ГЛАВНЫЙ ЦИКЛ (v44.1 — с внедрением коэффициентов)
+# ✅ v47.0: ПОДРЕЖИМЫ РЕЖИМА ОБУЧЕНИЕ
+# ============================================================================
+def run_dataset_training():
+    """
+    Подрежим 2a: Запуск обучения на датасете (вызов direct_test_101.py)
+    """
+    print("\n" + "=" * 70)
+    print("🚀 ЗАПУСК ОБУЧЕНИЯ НА ДАТАСЕТЕ (100 боёв)")
+    print("=" * 70)
+
+    import subprocess
+
+    # Сохраняем снапшот весов ДО запуска
+    weights_before = None
+    weights_file = "mma_weights_v21.json"
+    if os.path.exists(weights_file):
+        try:
+            with open(weights_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                weights_before = data.get("weights", [])
+        except Exception:
+            pass
+
+    try:
+        result = subprocess.run(
+            [sys.executable, "direct_test_101.py"],
+            cwd=os.path.dirname(os.path.abspath(__file__))
+        )
+
+        if result.returncode == 0:
+            print("\n✅ Обучение завершено успешно")
+
+            # Сравниваем веса ПОСЛЕ обучения
+            if weights_before and os.path.exists(weights_file):
+                try:
+                    with open(weights_file, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                        weights_after = data.get("weights", [])
+
+                    # Ищем признаки, которые уперлись в лимит
+                    hit_limits = _check_weight_limits(weights_after)
+
+                    if hit_limits:
+                        print("\n" + "=" * 70)
+                        print("🔒 ПРИЗНАКИ, УПЕРШИЕСЯ В ЛИМИТ:")
+                        for name in hit_limits:
+                            print(f"   • {name}")
+                        print("=" * 70)
+                    else:
+                        print("\n✅ Ни один признак не упёрся в лимит")
+
+                except Exception as e:
+                    print(f"⚠️ Не удалось сравнить веса: {e}")
+        else:
+            print(f"\n⚠️ Обучение завершено с кодом {result.returncode}")
+
+    except Exception as e:
+        print(f"❌ Ошибка запуска: {e}")
+
+    input("\n[Нажмите Enter для возврата в меню...]")
+
+
+def _check_weight_limits(weights: List[float]) -> List[str]:
+    """
+    Проверяет, какие признаки достигли своих лимитов.
+    Возвращает список имён признаков (только имена, без значений).
+    """
+    feature_names = [
+        "a_recent_wins", "a_fin_rate", "a_sub_rate", "a_td_def", "a_grap_def",
+        "a_age", "a_exp", "a_fights_12m", "a_months_off", "a_wins", "a_losses",
+        "a_stress_factor", "a_motivation_index", "a_biorythm_score", "a_camp_quality",
+        "a_mystic_factor", "a_mystic_v2",
+        "b_recent_wins", "b_fin_rate", "b_sub_rate", "b_td_def", "b_grap_def",
+        "b_age", "b_exp", "b_fights_12m", "b_months_off", "b_wins", "b_losses",
+        "b_stress_factor", "b_motivation_index", "b_biorythm_score", "b_camp_quality",
+        "b_mystic_factor", "b_mystic_v2",
+        "fin_x_td_A", "sub_x_grap_A", "rust_x_exp_A", "stress_x_camp_A",
+        "a_reach_cm", "a_height_cm", "b_reach_cm", "b_height_cm",
+        "a_camp_name_encoded", "b_camp_name_encoded",
+        "a_children_factor", "b_children_factor"
+    ]
+
+    # Специфические лимиты из math_engine.py (v55.7)
+    specific_limits = {
+        17: 0.040,  # B_RECENT_WINS_MAX_ABS
+        32: 0.030,  # B_MYSTIC_FACTOR_MAX_ABS
+        10: 0.060,  # A_LOSSES_MAX_ABS
+        25: 0.060,  # B_MONTHS_OFF_MAX_ABS
+        27: 0.100,  # B_LOSSES_MAX_ABS
+    }
+
+    MAX_ABS_WEIGHT = 0.1
+    hit_limits = []
+
+    # Проверяем специфические лимиты
+    for idx, limit in specific_limits.items():
+        if idx < len(weights):
+            if abs(weights[idx]) >= limit - 0.0001:
+                if idx < len(feature_names):
+                    hit_limits.append(feature_names[idx])
+
+    # Проверяем общий лимит MAX_ABS_WEIGHT
+    for idx, weight in enumerate(weights):
+        if abs(weight) >= MAX_ABS_WEIGHT - 0.0001:
+            if idx < len(feature_names) and feature_names[idx] not in hit_limits:
+                hit_limits.append(feature_names[idx])
+
+    return hit_limits
+
+
+def run_backtest_session(engine: MMAEngine, known_fighters_training: List[str]):
+    """
+    Подрежим 2b: Проверка работы модели (бэктест по дате)
+    ТОЛЬКО парсинг сайта. Никаких датасетов.
+    """
+    print("\n" + "=" * 70)
+    print("🔍 ПРОВЕРКА РАБОТЫ МОДЕЛИ (БЭКТЕСТ ПО ДАТЕ)")
+    print("=" * 70)
+
+    # 1. Запрос даты с валидацией
+    print("\n📅 Введите дату турнира (ДД.ММ.ГГГГ):")
+    print("   ⚠️ Дата должна быть не позже, чем 30 дней назад")
+    clear_input_buffer()
+    date_input = input("> ").strip()
+
+    try:
+        target_date = datetime.strptime(date_input, "%d.%m.%Y")
+        max_date = datetime.now() - timedelta(days=30)
+
+        if target_date > max_date:
+            print(f"❌ Дата должна быть не позже {max_date.strftime('%d.%m.%Y')}")
+            input("\n[Нажмите Enter для продолжения...]")
+            return
+    except ValueError:
+        print("❌ Неверный формат даты. Используйте ДД.ММ.ГГГГ")
+        input("\n[Нажмите Enter для продолжения...]")
+        return
+
+    # 2. Парсим сайт для получения боёв на эту дату
+    print(f"\n⏳ Загрузка боёв из ESPN API на {date_input}...")
+    card_fights = espn.get_fights_by_date(date_input)
+
+    if not card_fights:
+        print(f"⚠️ Бои на {date_input} не найдены на сайте.")
+        input("\n[Нажмите Enter для продолжения...]")
+        return
+
+    print(f"✅ Найдено боев: {len(card_fights)}")
+
+    # 3. Цикл выбора боёв
+    predicted_indices = set()
+    session_stats = {"total": 0, "correct": 0, "incorrect": 0, "errors": []}
+
+    while True:
+        print("\n" + "=" * 70)
+        print(f"📋 БОИ НА {date_input}")
+        # ✅ v47.1: Название турнира и место проведения — из первого боя
+        if card_fights:
+            event_title = card_fights[0].get('event', '')
+            if event_title and event_title != 'UFC':
+                print(f"🏟️ {event_title}")
+        print("\n" + "=" * 70)
+        print(f"📋 БОИ НА {date_input}")
+        # ✅ v47.1: Название турнира и место проведения — из первого боя
+        if card_fights:
+            event_title = card_fights[0].get('event', '')
+            if event_title and event_title != 'UFC':
+                print(f"🏟️ {event_title}")
+        print("=" * 70)
+
+        for idx, fight in enumerate(card_fights, start=1):
+            status = "✅" if idx in predicted_indices else "  "
+            f1 = fight.get('fighter_a', 'Неизвестно')
+            f2 = fight.get('fighter_b', 'Неизвестно')
+            winner = fight.get('winner', 'Неизвестно')
+            method = fight.get('method', 'DEC')
+            rnd = fight.get('round', 3)
+            # ✅ v47.1: время НЕ выводим
+            print(f"[{status}] {idx:>2}. {f1} vs {f2}")
+
+
+        print("-" * 70)
+        print("Введите номер боя для проверки (или 0 для выхода):")
+
+
+        choice = input("> ").strip()
+        if not choice:
+            continue          # пустой/остаточный Enter — тихо перерисовать кард
+
+        if choice == '0':
+            # Показываем статистику сессии
+            print("\n" + "=" * 70)
+            print("📊 СТАТИСТИКА СЕССИИ")
+            print("=" * 70)
+            print(f"   Всего проверено: {session_stats['total']}")
+            print(f"   ✅ Верно: {session_stats['correct']}")
+            print(f"   ❌ Неверно: {session_stats['incorrect']}")
+
+            if session_stats['total'] > 0:
+                accuracy = (session_stats['correct'] / session_stats['total']) * 100
+                print(f"   🎯 Точность: {accuracy:.1f}%")
+
+            if session_stats['errors']:
+                print(f"\n   📋 Ошибки модели:")
+                for err in session_stats['errors'][:5]:
+                    print(f"      • {err['f1']} vs {err['f2']}: прогноз {err['pred']}, факт {err['fact']}")
+
+            print("=" * 70)
+            input("\n[Нажмите Enter для возврата в меню...]")
+            return
+
+        try:
+            fight_idx = int(choice) - 1
+            if 0 <= fight_idx < len(card_fights):
+                if (fight_idx + 1) in predicted_indices:
+                    print("⚠️ Этот бой уже был проверен.")
+                    clear_input_buffer()
+                    input("\n[Нажмите Enter для продолжения...]")
+                    continue
+
+                fight = card_fights[fight_idx]
+                f1_clean = fight['fighter_a']
+                f2_clean = fight['fighter_b']
+                fact_winner = fight['winner']
+                fact_method = fight.get('method', 'DEC')
+                fact_round = fight.get('round', 3)
+                fight_date = fight['date']
+
+                print(f"\n🥊 Проверка: {f1_clean} vs {f2_clean}")
+                #print(f"   Факт: {fact_winner} ({fact_method}, R{fact_round})")
+
+                # ✅ КРИТИЧНО: Дата обогащения = дата боя - 1 день
+                target_date_str = (fight_date - timedelta(days=1)).strftime("%Y-%m-%d")
+
+                # Обогащение данных
+                print(f"\n🧠 Сбор данных бойцов на {target_date_str}...")
+                fa = get_fighter_data(
+                    fighter_name=f1_clean,
+                    fight_date=target_date_str,
+                    opponent_name=f2_clean
+                )
+                fb = get_fighter_data(
+                    fighter_name=f2_clean,
+                    fight_date=target_date_str,
+                    opponent_name=f1_clean
+                )
+
+                if not fa or not fb:
+                    print("❌ Ошибка сбора данных. Пропускаем бой.")
+                    clear_input_buffer()
+                    input("\n[Нажмите Enter для продолжения...]")
+                    continue
+
+                # Прогноз БЕЗ коэффициентов
+                print("\n⚙️ Расчет вероятностей (Math Engine, БЕЗ коэффициентов)...")
+                fd = FightData(
+                    a=fa, b=fb,
+                    date=fight_date,
+                    wc="Auto",
+                    rounds=fact_round,
+                    location=fight.get('event', 'UFC'),
+                    odds_a=1.85,
+                    matchup_odds={"bookmaker": "Нейтрально", "odds_a": 1.85, "odds_b": 1.85}
+                )
+
+                pred = engine.predict(fd)
+
+                # ✅ Нормализация имени победителя
+                fact_winner_normalized = normalize_winner_name(fact_winner, f1_clean, f2_clean)
+                if fact_winner_normalized != fact_winner:
+                    print(f"   🔄 Имя победителя нормализовано: '{fact_winner}' → '{fact_winner_normalized}'")
+
+                # Сравнение с фактом
+                is_correct = names_match(pred.winner, fact_winner_normalized)
+
+                print("\n" + "=" * 78)
+                print(f"📊 РЕЗУЛЬТАТ ПРОВЕРКИ")
+                print("=" * 78)
+                print(f"   Прогноз модели: {pred.winner} ({pred.prob*100:.0f}%)")
+                print(f"   🔓 Факт (после расчёта): {fact_winner_normalized} ({fact_method}, R{fact_round})")
+                #print(f"   Реальный факт:  {fact_winner_normalized}")
+
+                if is_correct:
+                    print(f"   ✅ ВЕРНО!")
+                    session_stats['correct'] += 1
+                else:
+                    print(f"   ❌ НЕВЕРНО!")
+                    session_stats['incorrect'] += 1
+                    session_stats['errors'].append({
+                        'f1': f1_clean,
+                        'f2': f2_clean,
+                        'pred': pred.winner,
+                        'fact': fact_winner_normalized
+                    })
+
+                session_stats['total'] += 1
+                print("=" * 78)
+
+                # Добавление в буфер обучения
+                meth_map = {
+                    'UD': FinishType.DECISION_UNANIMOUS,
+                    'SD': FinishType.DECISION_SPLIT,
+                    'MD': FinishType.DECISION_UNANIMOUS,
+                    'DEC': FinishType.DECISION_UNANIMOUS,
+                    'TKO': FinishType.TKO,
+                    'KO': FinishType.KO,
+                    'SUB': FinishType.SUBMISSION
+                }
+
+                res = Result(
+                    winner=fact_winner_normalized,
+                    rnd=fact_round,
+                    method=meth_map.get(fact_method, FinishType.DECISION_UNANIMOUS)
+                )
+                print("\n🔄 Добавление в буфер обучения...")
+                train_result = engine.train_on_new_fight(fd, res, f1_clean, f2_clean)
+
+                # ✅ v47.2: НЕМЕДЛЕННО дописываем бой в part-файл.
+                # Факт реальный (ESPN) — не должен теряться при выходе.
+                # Буфер остаётся ТОЛЬКО для обучения (process_batch сделает dedup по ключу).
+                try:
+                    fight_dict = engine._fight_to_dict(fd, res, f1_clean, f2_clean)
+                    active_part = engine._get_active_part_file()
+                    with open(active_part, "r", encoding="utf-8") as f:
+                        existing = json.load(f)
+                    key = f"{fight_dict['fighter_a']}_{fight_dict['fighter_b']}_{fight_dict['date']}"
+                    if not any(
+                            f"{d.get('fighter_a')}_{d.get('fighter_b')}_{d.get('date')}" == key
+                            for d in existing
+                    ):
+                        existing.append(fight_dict)
+                        with open(active_part, "w", encoding="utf-8") as f:
+                            json.dump(existing, f, indent=2, ensure_ascii=False)
+                        print(f"   💾 Бой сохранён в {os.path.basename(active_part)}")
+                except Exception as e:
+                    print(f"   ⚠️ Ошибка сохранения боя в датасет: {e}")
+                # ✅ Детальная обработка статуса обучения
+                if train_result:
+                    status_val = train_result.get("status", "")
+                    if status_val == "buffered":
+                        print(f"   📦 {train_result.get('status_text')}")
+                    elif status_val == "trained":
+                        print(f"   ✅ {train_result.get('status_text')}")
+                        print(f"   📊 {train_result.get('accuracy_str')}")
+                        print("   💾 Веса и датасет сохранены.")
+                    elif status_val == "rollback_best":
+                        print(f"   ⚠️ Откат к лучшим весам: {train_result.get('accuracy', 0)*100:.1f}%")
+                    elif status_val == "rollback_baseline":
+                        print(f"   🔴 Откат к эталону: {train_result.get('accuracy', 0)*100:.1f}%")
+                    elif status_val == "predict_only":
+                        print("   ⏸️ Режим только прогноз")
+                    elif status_val == "empty":
+                        print("   ⚠️ Буфер пуст")
+
+                # ✅ Добавление ID в файлы памяти
+                fight_date_str = fd.date.strftime("%Y-%m-%d")
+                id_a, id_b = ensure_both_fighters_exist(f1_clean, f2_clean, fight_date_str)
+                if id_a and id_b:
+                    print(f"   🔗 Добавление ID в файлы памяти...")
+                    id_result = add_ids_to_fight_in_memory(f1_clean, f2_clean)
+                    if id_result.get("updated_files"):
+                        print(f"   ✅ ID добавлены в: {', '.join(id_result['updated_files'])}")
+
+                # ✅ Обновление кэша бойцов
+                updated = False
+                if f1_clean not in known_fighters_training:
+                    known_fighters_training.append(f1_clean)
+                    updated = True
+                if f2_clean not in known_fighters_training:
+                    known_fighters_training.append(f2_clean)
+                    updated = True
+                if updated:
+                    save_known_fighters_cache(known_fighters_training)
+                    print(f"   💾 Кэш бойцов обновлён ({len(known_fighters_training)} имён)")
+
+                predicted_indices.add(fight_idx + 1)
+                clear_input_buffer()
+                input("\n[Нажмите Enter для продолжения...]")
+            else:
+                print("❌ Неверный номер. Попробуйте снова.")
+        except ValueError:
+            print("❌ Введите число.")
+
+# ============================================================================
+# ЭТАП 9: ГЛАВНЫЙ ЦИКЛ (ЕДИНСТВЕННЫЙ!)
 # ============================================================================
 if __name__ == "__main__":
     try:
         print("=" * 70)
-        print("🔵 MMA PREDICTION v44.1 | SENIOR PRODUCTION")
+        print("🔵 MMA PREDICTION v47.0 | НОВОЕ ПОДМЕНЮ ОБУЧЕНИЯ")
         print("=" * 70)
 
         current_hwid = get_hwid()
@@ -765,33 +1091,29 @@ if __name__ == "__main__":
             print("\n" + "=" * 70)
             print("⚖️ ЮРИДИЧЕСКОЕ СОГЛАШЕНИЕ")
             print("1. Прогнозы носят исключительно информационный характер.")
-            print("2. Они не являются финансовой рекомендацией или призывом к ставкам.")
-            print("3. Используя модель, вы принимаете полную ответственность за свои решения.")
-            print("4. Ваш API-ключ будет зашифрован и привязан к этому устройству (HWID).")
+            print("2. Они не являются финансовой рекомендацией.")
+            print("3. Используя модель, вы принимаете ответственность за решения.")
+            print("4. Ваш API-ключ будет зашифрован и привязан к HWID.")
             print("=" * 70)
-
             clear_input_buffer()
             agree = input("Введите 'Y' для принятия соглашения: ").strip().upper()
-
             if agree == 'Y':
                 config["is_agreed"] = True
                 save_config(config, current_hwid)
                 print("✅ Соглашение принято.")
             else:
-                print("❌ Доступ запрещен. Выход.")
+                print("❌ Доступ запрещен.")
                 sys.exit(0)
 
         api_key, status = check_api_access(config)
-
         if status == "limit_reached":
-            print("⚠️ Лимит бесплатных прогнозов разработчика (100) исчерпан.")
+            print("⚠️ Лимит бесплатных прогнозов исчерпан.")
             clear_input_buffer()
-            new_key = input("🔑 Введите ваш личный API ключ DeepSeek (или Enter для выхода): ").strip()
-
+            new_key = input("🔑 Введите ваш API ключ (или Enter для выхода): ").strip()
             if new_key:
                 config["api_key"] = new_key
                 save_config(config, current_hwid)
-                print("✅ Ключ сохранен. Доступ восстановлен.")
+                print("✅ Ключ сохранен.")
             else:
                 sys.exit(0)
 
@@ -802,20 +1124,18 @@ if __name__ == "__main__":
         try:
             clear_input_buffer()
             pwd = input("🔐 Мастер-пароль: ")
-
             if not SecureNeuralChannel.init(pwd):
                 sys.exit(1)
 
-            # ✅ v2.0: Инициализация SecureKeys для The Odds API
             try:
                 from secure_keys import SecureKeys
                 if not SecureKeys.init(pwd):
-                    print("⚠️ SecureKeys не инициализирован. Коэффициенты будут недоступны.")
+                    print("⚠️ SecureKeys не инициализирован.")
             except ImportError:
-                print("⚠️ SecureKeys не найден. Коэффициенты будут недоступны.")
+                print("⚠️ SecureKeys не найден.")
 
         except Exception as e:
-            print(f"❌ Ошибка инициализации канала: {e}")
+            print(f"❌ Ошибка инициализации: {e}")
             sys.exit(1)
 
         print("⏳ Проверка ИИ...")
@@ -826,48 +1146,20 @@ if __name__ == "__main__":
             print("⚠️ ИИ не ответил, но продолжаем.")
 
         print("⚙️ Инициализация модулей...")
-
         engine = MMAEngine()
-        parser = UFCParser()
+        print("🔄 Перекалибровка нормализатора...")
+        engine.recalibrate_scaler()
         analyst = DeepAIAnalyst()
-        scheduler = SportsUFCScheduler()
-
-        print("   📥 Загрузка базы имён из sports.ru для ПРОГНОЗА...")
-        try:
-            all_fights = scheduler.parse_schedule()
-            known_fighters_forecast = []
-            for f in all_fights:
-                if f.get('fighter1'):
-                    known_fighters_forecast.append(f['fighter1'])
-                if f.get('fighter2'):
-                    known_fighters_forecast.append(f['fighter2'])
-            print(f"   ✅ Загружено {len(set(known_fighters_forecast))} уникальных имён для ПРОГНОЗА.")
-        except Exception as e:
-            print(f"   ❌ Не удалось загрузить расписание: {e}")
-            known_fighters_forecast = []
+        espn = ESPNParser()
 
         print("   📥 Загрузка базы имён для ОБУЧЕНИЯ...")
         known_fighters_training = load_known_fighters_cache()
-
         if not known_fighters_training:
-            print("   ⚠️ Кэш пуст, загрузка из championat.com...")
-            try:
-                known_fighters_training = parser.get_all_known_fighters()
-                save_known_fighters_cache(known_fighters_training)
-            except Exception as e:
-                print(f"   ❌ Не удалось загрузить историю: {e}")
-                known_fighters_training = []
-        else:
-            print(f"   ✅ Загружено {len(set(known_fighters_training))} уникальных имён из кэша.")
+            print(f"   ✅ Загружено {len(set(known_fighters_training))} имён из кэша.")
 
         if not known_fighters_training:
             print("   ⚠️ База бойцов пуста! Загрузка из резервных источников...")
-            backup_sources = [
-                REAL_DATASET_FILE,
-                FIGHTERS_IDS_FILE,
-                "ufc_fighters.json"
-            ]
-
+            backup_sources = [REAL_DATASET_FILE, FIGHTERS_IDS_FILE, "ufc_fighters.json"]
             for source in backup_sources:
                 if os.path.exists(source):
                     try:
@@ -892,20 +1184,21 @@ if __name__ == "__main__":
             fighters_ids_data = {}
 
         mode = "ПРОГНОЗ"
-
         print("✅ Готово к работе.")
 
-        # 4. Основной цикл
+        # =========================================================================
+        # ОСНОВНОЙ ЦИКЛ (ЕДИНСТВЕННЫЙ!)
+        # =========================================================================
         while True:
             try:
                 print(f"{'=' * 70}")
                 print(f"📊 Режим: {mode}")
-                print("Команды: 1 - Прогноз | 2 - Обучение | 3 - Калибровка | 3a/3b/3c/3d - Быстрые команды | 0 - Выход")
+                print("Команды: 1 - Прогноз | 2 - Обучение | 3 - Калибровка | 0 - Выход")
+                print("💡 Подсказка: введите дату (ДД.ММ.ГГГГ) для быстрого прогноза")
                 print(f"{'=' * 70}")
 
                 clear_input_buffer()
-                raw_input_str = input("📥 Введите бойцов (Имя1 - Имя2) или команду: ")
-
+                raw_input_str = input("📥 Введите команду: ")
                 user_in = clean_user_input(raw_input_str)
 
                 if not user_in:
@@ -923,313 +1216,234 @@ if __name__ == "__main__":
                 if user_in == "2":
                     mode = "ОБУЧЕНИЕ"
                     print("✅ Режим: ОБУЧЕНИЕ")
-                    continue
+                    # ✅ v47.0: НЕТ continue! Программа идет дальше к подменю
 
                 if user_in == "3":
                     print("\n" + "=" * 70)
                     print("📊 КАЛИБРОВКА И ЗАЩИТА МОДЕЛИ")
                     print("=" * 70)
-                    print("   3a - Быстрая проверка точности (2-3 сек)")
-                    print("   3b - Откат к лучшим весам (1 сек)")
-                    print("   3c - Откат к эталону (1 сек)")
+                    print("   3a - Быстрая проверка точности")
                     print("   3d - Показать статус весов")
-                    print("   0 - Назад в главное меню")
+                    print("   0 - Назад")
                     print("=" * 70)
-
                     clear_input_buffer()
                     subcommand = input("Ваш выбор: ").strip()
-
                     if subcommand == "0":
                         print("↩️ Возврат в главное меню")
                     else:
                         handle_calibration_command(subcommand, engine)
-
                     continue
 
                 if user_in in ["3a", "3b", "3c", "3d"]:
                     handle_calibration_command(user_in, engine)
                     continue
 
-                print(f"🔍 ИИ анализирует ввод: '{user_in}'...")
+                # =========================================================================
+                # ✅ v46.1: АВТООПРЕДЕЛЕНИЕ ДАТЫ В ГЛАВНОМ МЕНЮ
+                # =========================================================================
+                preselected_date = None
+                date_match = re.match(r'^(\d{1,2})[./](\d{1,2})[./](\d{4})$', user_in)
+                if date_match:
+                    preselected_date = f"{date_match.group(1).zfill(2)}.{date_match.group(2).zfill(2)}.{date_match.group(3)}"
+                    mode = "ПРОГНОЗ"
+                    print(f"✅ Автоматически выбран режим ПРОГНОЗ на дату {preselected_date}")
 
-                current_db = known_fighters_training if mode == "ОБУЧЕНИЕ" else known_fighters_forecast
+                # =================================================================
+                # ✅ v47.0: РЕЖИМ: ОБУЧЕНИЕ (НОВОЕ ПОДМЕНЮ)
+                # =================================================================
+                if mode == "ОБУЧЕНИЕ":
+                    print("\n" + "=" * 70)
+                    print("📊 РЕЖИМ: ОБУЧЕНИЕ")
+                    print("=" * 70)
+                    print("   2a - Обучение на датасете (100 боёв, ~10 минут)")
+                    print("   2b - Проверка работы модели (бэктест по дате)")
+                    print("   0  - Назад в главное меню")
+                    print("=" * 70)
+                    clear_input_buffer()
+                    sub_mode = input("Ваш выбор: ").strip()
 
-                names = canonicalize_names_with_db(user_in, current_db)
-
-                if not names:
-                    print("❌ Не верный ввод. Модель не может сопоставить имена с базой парсера.")
-                    continue
-
-                f1_clean = names["f1"]
-                f2_clean = names["f2"]
-
-                print(f"   ✅ ИИ успешно сопоставил: '{f1_clean}' vs '{f2_clean}'")
-
-                try:
-                    if mode == "ОБУЧЕНИЕ":
-                        print("📄 Шаг 1: Поиск исторического факта в локальном архиве...")
-
-                        fact = parser.get_fight_result(f1_clean, f2_clean)
-
-                        if not fact or 'winner' not in fact:
-                            print("   ❌ Бой не найден в архиве парсера.")
-                            print("   ⚠️ ИИ не используется для получения фактов боя (защита от галлюцинаций).")
-                            print("   💡 Проверьте правильность написания имен или используйте режим ПРОГНОЗ для будущих боев.")
-                            continue
-
-                        print(f"   ✅ ФАКТ найден: {fact['date'].strftime('%d.%m.%Y')} | {fact['winner']} ({fact['method']}, R{fact['round']})")
-
-                        target_date = (fact['date'] - timedelta(days=1)).strftime("%Y-%m-%d")
-
-                        fact_winner_normalized = normalize_winner_name(fact['winner'], f1_clean, f2_clean, parser)
-
-                        if fact_winner_normalized != fact['winner']:
-                            print(f"   🔄 v43.10: Имя победителя нормализовано: '{fact['winner']}' → '{fact_winner_normalized}'")
-
-                        print(f"   🧠 Шаг 2: ИИ собирает предматчевую статистику на {target_date}...")
-
-                        fa = analyst.get_fighter_deep_stats(f1_clean, target_date)
-                        fb = analyst.get_fighter_deep_stats(f2_clean, target_date)
-
-                        print(f"   🧠 Шаг 3: Обогащение данных через YandexGPT 5.1...")
-
-                        enrichment_a, enrichment_b = enrich_fighters_via_yandex(
-                            f1_clean, f2_clean, target_date, pwd,
-                            fighter_a_stats={
-                                "age": fa.age,
-                                "wins": fa.wins,
-                                "losses": fa.losses,
-                                "country": fa.flag,
-                                "opponent_name": f2_clean,
-                                "opponent_record": f"{fb.wins}-{fb.losses}",
-                                "fight_context": "regular",
-                                "recent_form": fa.form
-                            },
-                            fighter_b_stats={
-                                "age": fb.age,
-                                "wins": fb.wins,
-                                "losses": fb.losses,
-                                "country": fb.flag,
-                                "opponent_name": f1_clean,
-                                "opponent_record": f"{fa.wins}-{fa.losses}",
-                                "fight_context": "regular",
-                                "recent_form": fb.form
-                            }
-                        )
-
-                        print(f"   ✅ Обогащение получено:")
-                        if enrichment_a:
-                            print(f"      {f1_clean}: stress={enrichment_a.get('stress_factor', 0.5):.2f}, motivation={enrichment_a.get('motivation_index', 0.5):.2f}, mystic_v2={enrichment_a.get('mystic_v2', 0.5):.2f}")
-                        else:
-                            print(f"      {f1_clean}: ❌ Данные не получены!")
-
-                        if enrichment_b:
-                            print(f"      {f2_clean}: stress={enrichment_b.get('stress_factor', 0.5):.2f}, motivation={enrichment_b.get('motivation_index', 0.5):.2f}, mystic_v2={enrichment_b.get('mystic_v2', 0.5):.2f}")
-                        else:
-                            print(f"      {f2_clean}: ❌ Данные не получены!")
-
-                        # ✅ КРИТИЧЕСКИ ВАЖНО: Явное присвоение всех 6 параметров, включая mystic_v2
-                        if enrichment_a:
-                            fa.stress_factor = enrichment_a.get('stress_factor', fa.stress_factor)
-                            fa.motivation_index = enrichment_a.get('motivation_index', fa.motivation_index)
-                            fa.biorythm_score = enrichment_a.get('biorythm_score', fa.biorythm_score)
-                            fa.camp_quality = enrichment_a.get('camp_quality', fa.camp_quality)
-                            fa.mystic_factor = enrichment_a.get('mystic_factor', fa.mystic_factor)
-                            fa.mystic_v2 = enrichment_a.get('mystic_v2', getattr(fa, 'mystic_v2', 0.5))
-
-                        if enrichment_b:
-                            fb.stress_factor = enrichment_b.get('stress_factor', fb.stress_factor)
-                            fb.motivation_index = enrichment_b.get('motivation_index', fb.motivation_index)
-                            fb.biorythm_score = enrichment_b.get('biorythm_score', fb.biorythm_score)
-                            fb.camp_quality = enrichment_b.get('camp_quality', fb.camp_quality)
-                            fb.mystic_factor = enrichment_b.get('mystic_factor', fb.mystic_factor)
-                            fb.mystic_v2 = enrichment_b.get('mystic_v2', getattr(fb, 'mystic_v2', 0.5))
-
-                        matchup = {"bookmaker": "Нейтрально", "odds_a": 1.85, "odds_b": 1.85}
-
-                        fd = FightData(
-                            a=fa, b=fb,
-                            date=fact['date'],
-                            wc="Auto",
-                            rounds=int(fact.get('round', 3)),
-                            location=fact.get('tournament', 'UFC')
-                        )
-
-                        meth_map = {
-                            'UD': FinishType.DECISION_UNANIMOUS,
-                            'SD': FinishType.DECISION_SPLIT,
-                            'MD': FinishType.DECISION_UNANIMOUS,
-                            'DEC': FinishType.DECISION_UNANIMOUS,
-                            'TKO': FinishType.TKO,
-                            'KO': FinishType.KO,
-                            'SUB': FinishType.SUBMISSION
-                        }
-
-                        res = Result(
-                            winner=fact_winner_normalized,
-                            rnd=int(fact['round']),
-                            method=meth_map.get(str(fact['method']).upper(), FinishType.DECISION_UNANIMOUS)
-                        )
-
-                        print("\n⚙️ Шаг 4: Расчет прогноза моделью и инкрементальное обучение...")
-
-                        pred = engine.predict(fd)
-                        print("🔄 ДОБАВЛЕНИЕ НОВОГО БОЯ И ОБУЧЕНИЕ...")
-
-                        train_result = engine.train_on_new_fight(fd, res, f1_clean, f2_clean)
-
-                        if train_result and train_result.get("status") in ["updated", "trained"]:
-                            status_text = train_result.get("status_text", "✅ Обучение")
-                            print(f"   {status_text}")
-                            print(f"   ✅ {train_result.get('corrections', '0')}")
-                            print(f"   📊 {train_result.get('accuracy_str', 'Точность обновлена')}")
-                            print("   💾 Веса и датасет сохранены.")
-
-                            fight_date_str = fd.date.strftime("%Y-%m-%d")
-                            id_a, id_b = ensure_both_fighters_exist(f1_clean, f2_clean, fight_date_str)
-
-                            if id_a and id_b:
-                                print(f"   🔗 Добавление ID в файлы памяти...")
-                                id_result = add_ids_to_fight_in_memory(f1_clean, f2_clean)
-                                if id_result.get("updated_files"):
-                                    print(f"   ✅ ID добавлены в: {', '.join(id_result['updated_files'])}")
-
-                            updated = False
-                            if f1_clean not in known_fighters_training:
-                                known_fighters_training.append(f1_clean)
-                                updated = True
-                            if f2_clean not in known_fighters_training:
-                                known_fighters_training.append(f2_clean)
-                                updated = True
-
-                            if updated:
-                                save_known_fighters_cache(known_fighters_training)
-                                print(f"   💾 Кэш бойцов обновлён ({len(known_fighters_training)} имён)")
-
-                        elif train_result and train_result.get("status") == "rollback_best":
-                            print(f"   ⚠️ Откат к лучшим весам: {train_result.get('accuracy', 0)*100:.1f}%")
-                        elif train_result and train_result.get("status") == "rollback_baseline":
-                            print(f"   🔴 Откат к эталону: {train_result.get('accuracy', 0)*100:.1f}%")
-
-                        from fighters_ids_manager import names_match_by_id
-                        real_win = 100.0 if names_match_by_id(pred.winner, res.winner) else 0.0
-                        real_rnd = 100.0 if pred.rnd == res.rnd else 0.0
-                        real_mth = 100.0 if pred.method == res.method else 0.0
-
-                        print("\n" + strict_out(pred, res, fd, mode, matchup, f1_clean, f2_clean, real_win, real_rnd, real_mth))
-                        print("\n" + "=" * 70)
-                        print("✅ Операция завершена. Ожидание следующей команды...")
-                        print("=" * 70)
+                    if sub_mode == "0":
+                        print("↩️ Возврат в главное меню")
+                        mode = "ПРОГНОЗ"
                         continue
 
-                    else:  # РЕЖИМ ПРОГНОЗ
-                        print("🧠 Шаг 1: ИИ собирает текущую статистику бойцов...")
-                        target = datetime.now().strftime("%Y-%m-%d")
+                    elif sub_mode == "2a":
+                        run_dataset_training()
+                        continue
 
-                        f1_clean_for_ai = sanitize_fighter_name(f1_clean)
-                        f2_clean_for_ai = sanitize_fighter_name(f2_clean)
+                    elif sub_mode == "2b":
+                        run_backtest_session(engine, known_fighters_training)
+                        continue
 
-                        fa = analyst.get_fighter_deep_stats(f1_clean_for_ai, target)
-                        fb = analyst.get_fighter_deep_stats(f2_clean_for_ai, target)
+                    else:
+                        print("❌ Неверный выбор")
+                        continue
 
-                        if not fa or not fb:
-                            print("   ❌ ОШИБКА: ИИ-аналитик не смог собрать статистику (вернул None).")
-                            continue
+                # =================================================================
+                # РЕЖИМ: ПРОГНОЗ (КАРД ПО ДАТЕ + ВСЕ 6 ИСПРАВЛЕНИЙ)
+                # =================================================================
+                else:  # mode == "ПРОГНОЗ"
+                    # 1. Запрашиваем дату (или используем предвыбранную)
+                    if preselected_date:
+                        target_date = preselected_date
+                        print(f"📅 Используется дата: {target_date}")
+                    else:
+                        print("\n📅 Введите дату турнира (ДД.ММ.ГГГГ) или 'сегодня':")
+                        clear_input_buffer()
+                        date_input = input("> ").strip().lower()
 
-                        print("🧠 Шаг 1.5: Обогащение данных через YandexGPT 5.1...")
-                        enrichment_a, enrichment_b = enrich_fighters_via_yandex(
-                            f1_clean_for_ai, f2_clean_for_ai, target, pwd,
-                            fighter_a_stats={"age": fa.age, "wins": fa.wins, "losses": fa.losses, "country": fa.flag},
-                            fighter_b_stats={"age": fb.age, "wins": fb.wins, "losses": fb.losses, "country": fb.flag}
-                        )
-
-                        print(f"   ✅ Обогащение получено:")
-                        if enrichment_a:
-                            print(f"      {f1_clean_for_ai}: stress={enrichment_a.get('stress_factor', 0.5):.2f}, mystic_v2={enrichment_a.get('mystic_v2', 0.5):.2f}")
-                            fa.stress_factor = enrichment_a.get('stress_factor', fa.stress_factor)
-                            fa.motivation_index = enrichment_a.get('motivation_index', fa.motivation_index)
-                            fa.biorythm_score = enrichment_a.get('biorythm_score', fa.biorythm_score)
-                            fa.camp_quality = enrichment_a.get('camp_quality', fa.camp_quality)
-                            fa.mystic_factor = enrichment_a.get('mystic_factor', fa.mystic_factor)
-                            fa.mystic_v2 = enrichment_a.get('mystic_v2', getattr(fa, 'mystic_v2', 0.5))
+                        if date_input in ['сегодня', 'today', '']:
+                            target_date = datetime.now().strftime("%d.%m.%Y")
                         else:
-                            print(f"      {f1_clean_for_ai}: ❌ Данные не получены")
-
-                        if enrichment_b:
-                            print(f"      {f2_clean_for_ai}: stress={enrichment_b.get('stress_factor', 0.5):.2f}, mystic_v2={enrichment_b.get('mystic_v2', 0.5):.2f}")
-                            fb.stress_factor = enrichment_b.get('stress_factor', fb.stress_factor)
-                            fb.motivation_index = enrichment_b.get('motivation_index', fb.motivation_index)
-                            fb.biorythm_score = enrichment_b.get('biorythm_score', fb.biorythm_score)
-                            fb.camp_quality = enrichment_b.get('camp_quality', fb.camp_quality)
-                            fb.mystic_factor = enrichment_b.get('mystic_factor', fb.mystic_factor)
-                            fb.mystic_v2 = enrichment_b.get('mystic_v2', getattr(fb, 'mystic_v2', 0.5))
-                        else:
-                            print(f"      {f2_clean_for_ai}: ❌ Данные не получены")
-
-                        print("   📅 Шаг 2: Поиск боя в расписании sports.ru...")
-                        fight_info = scheduler.find_fight(f1_clean_for_ai, f2_clean_for_ai)
-
-                        if fight_info:
-                            print(f"   ✅ БОЙ ПОДТВЕРЖДЕН: {fight_info['event_name']} ({fight_info['event_date']})")
-                            ev_date = datetime.strptime(fight_info['event_date'], "%d.%m.%Y")
-                            rounds = int(fight_info.get('rounds', 3))
-                            event_name = fight_info['event_name']
-                            location = fight_info.get('location', 'UFC')
-                        else:
-                            print("   ⚠️ Бой не найден в расписании. Используем данные по умолчанию.")
-                            ev_date = datetime.now()
-                            rounds = 3
-                            event_name = 'UFC Fight Night'
-                            location = 'UFC'
-
-                        print("   💰 Шаг 3: Запрос реальных коэффициентов...")
-                        odds_a_num, odds_b_num, bookmaker = 1.85, 1.85, 'Нейтрально'
-
-                        if HAS_ODDS_API:
                             try:
-                                odds_client = OddsAPIClient()
-                                odds_result = odds_client.get_fight_odds(f1_clean_for_ai, f2_clean_for_ai)
-                                if odds_result:
-                                    print(f"   ✅ РЕАЛЬНЫЕ коэффициенты: {odds_result['odds_a']:.2f} / {odds_result['odds_b']:.2f} ({odds_result['bookmaker']})")
-                                    odds_a_num = odds_result['odds_a']
-                                    odds_b_num = odds_result['odds_b']
-                                    bookmaker = odds_result['bookmaker']
-                            except Exception as e:
-                                print(f"   ⚠️ Ошибка запроса коэффициентов: {e}")
+                                datetime.strptime(date_input, "%d.%m.%Y")
+                                target_date = date_input
+                            except ValueError:
+                                print("❌ Неверный формат. Используйте ДД.ММ.ГГГГ")
+                                continue
 
-                        matchup = {"bookmaker": bookmaker, "odds_a": odds_a_num, "odds_b": odds_b_num}
+                    print(f"\n⏳ Загрузка карда на {target_date}...")
+                    card_fights = espn.get_fights_by_date(target_date)
 
-                        fd = FightData(
-                            a=fa, b=fb, date=ev_date, wc="Auto", rounds=rounds, location=location,
-                            odds_a=odds_a_num, matchup_odds=matchup
-                        )
-                        res = None
-
-                        print(f"🥊 Контекст: {event_name} | {rounds} раунд(ов)")
-                        print("   ⚙️ Расчет вероятностей (Math Engine)...")
-                        pred = engine.predict(fd)
-                        acc_win, acc_rnd, acc_mth = load_accuracy_metrics(engine)
-
-                        print("\n" + strict_out(pred, res, fd, mode, matchup, f1_clean, f2_clean, acc_win, acc_rnd, acc_mth))
-                        increment_prediction_count(config, current_hwid)
-
-                        print("\n" + "=" * 70)
-                        print("✅ Операция завершена. Ожидание следующей команды...")
-                        print("=" * 70)
+                    if not card_fights:
+                        print(f"⚠️ Бои на {target_date} не найдены в расписании.")
+                        clear_input_buffer()
+                        input("\n[Нажмите Enter для продолжения...]")
                         continue
 
-                except Exception as e:
-                    print(f"❌ КРИТИЧЕСКАЯ ОШИБКА: {e}")
-                    traceback.print_exc()
-                    print("⚠️ Возврат в главное меню...")
+                    print(f"✅ Найдено боев: {len(card_fights)}")
+
+                    predicted_indices = set()
+
+                    while True:
+                        print("\n" + "=" * 70)
+                        print(f"📋 КАРД ТУРНИРА: {target_date}")
+                        print("=" * 70)
+
+                        for idx, fight in enumerate(card_fights, start=1):
+                            status = "✅" if idx in predicted_indices else "  "
+                            # ✅ v46.1: Очищаем имена от рейтингов для вывода
+                            f1 = clean_name_for_api(fight.get('fighter1', 'Неизвестно'))
+                            f2 = clean_name_for_api(fight.get('fighter2', 'Неизвестно'))
+                            rounds = fight.get('rounds', 3)
+                            is_me = "ME" if fight.get('is_main_event') else ""
+
+                            me_marker = f" [{is_me}]" if is_me else ""
+                            print(f"[{status}] {idx:>2}. {f1} vs {f2} ({rounds} раунд.{me_marker})")
+
+                        print("-" * 70)
+                        print("Введите номер боя для прогноза (или 0 для смены даты):")
+
+                        # ✅ v46.1: Очистка буфера перед вводом
+
+                        choice = input("> ").strip()
+                        if not choice:
+                            continue
+
+                        if choice == '0':
+                            print("↩️ Возврат к выбору даты...")
+                            break
+
+                        try:
+                            fight_idx = int(choice) - 1
+                            if 0 <= fight_idx < len(card_fights):
+                                if (fight_idx + 1) in predicted_indices:
+                                    print("⚠️ Этот бой уже был спрогнозирован.")
+                                    clear_input_buffer()
+                                    input("\n[Нажмите Enter для продолжения...]")
+                                    continue
+
+                                fight = card_fights[fight_idx]
+                                # ✅ v46.1: Очищаем имена от рейтингов ПЕРЕД использованием
+                                f1_clean = clean_name_for_api(fight['fighter1'])
+                                f2_clean = clean_name_for_api(fight['fighter2'])
+                                rounds = int(fight.get('rounds', 3))
+                                event_name = fight.get('event_name', 'UFC Event')
+                                location = fight.get('location', 'UFC')
+                                is_main_event = fight.get('is_main_event', False)
+
+                                print(f"\n🥊 Выбран бой: {f1_clean} vs {f2_clean}")
+                                print(f"🏟️ Турнир: {event_name} | {rounds} раунд(ов)")
+
+                                print("\n🧠 Шаг 1: Сбор данных бойцов...")
+                                fa = get_fighter_data(
+                                    fighter_name=f1_clean,
+                                    fight_date=target_date,
+                                    opponent_name=f2_clean,
+                                    fight_context="title" if is_main_event else "regular"
+                                )
+                                fb = get_fighter_data(
+                                    fighter_name=f2_clean,
+                                    fight_date=target_date,
+                                    opponent_name=f1_clean,
+                                    fight_context="title" if is_main_event else "regular"
+                                )
+
+                                if not fa or not fb:
+                                    print("❌ Ошибка сбора данных. Пропускаем бой.")
+                                    clear_input_buffer()
+                                    input("\n[Нажмите Enter для продолжения...]")
+                                    continue
+
+                                print("\n💰 Шаг 2: Запрос коэффициентов...")
+                                odds_a_num, odds_b_num, bookmaker = 1.85, 1.85, 'Нейтрально'
+
+                                if HAS_ODDS_API:
+                                    try:
+                                        odds_client = OddsAPIClient()
+                                        # ✅ v46.1: Передаём очищенные имена в API
+                                        odds_result = odds_client.get_fight_odds(f1_clean, f2_clean)
+                                        if odds_result:
+                                            print(f"   ✅ РЕАЛЬНЫЕ коэффициенты: {odds_result['odds_a']:.2f} / "
+                                                  f"{odds_result['odds_b']:.2f} ({odds_result['bookmaker']})")
+                                            odds_a_num = odds_result['odds_a']
+                                            odds_b_num = odds_result['odds_b']
+                                            bookmaker = odds_result['bookmaker']
+                                        else:
+                                            print(f"   ⚠️ Бой не найден в API. Используются дефолтные коэффициенты.")
+                                    except Exception as e:
+                                        print(f"   ⚠️ Ошибка запроса коэффициентов: {e}")
+
+                                matchup = {"bookmaker": bookmaker, "odds_a": odds_a_num, "odds_b": odds_b_num}
+
+                                try:
+                                    ev_date = datetime.strptime(target_date, "%d.%m.%Y")
+                                except ValueError:
+                                    ev_date = datetime.now()
+
+                                fd = FightData(
+                                    a=fa, b=fb, date=ev_date, wc="Auto", rounds=rounds,
+                                    location=location, odds_a=odds_a_num, matchup_odds=matchup
+                                )
+                                res = None
+
+                                print("\n⚙️ Шаг 3: Расчет вероятностей (Math Engine)...")
+                                pred = engine.predict(fd)
+
+                                odds_b_val_pred = fd.matchup_odds.get("odds_b", 1.85) if fd.matchup_odds else 1.85
+                                raw_prob_pred = print_all_features(engine, fa, fb, fd.odds_a, odds_b_val_pred, f1_clean)
+
+                                acc_win, acc_rnd, acc_mth = load_accuracy_metrics(engine)
+
+                                print("\n" + strict_out(pred, res, fd, mode, matchup, f1_clean, f2_clean, raw_prob_pred, acc_win, acc_rnd, acc_mth))
+
+                                predicted_indices.add(fight_idx + 1)
+                                increment_prediction_count(config, current_hwid)
+
+                                clear_input_buffer()
+                                input("\n[Нажмите Enter, чтобы вернуться к карду...]")
+                            else:
+                                print("❌ Неверный номер. Попробуйте снова.")
+                        except ValueError:
+                            print("❌ Введите число.")
                     continue
 
             except KeyboardInterrupt:
-                print("👋 Программа прервана пользователем.")
+                print("\n👋 Программа прервана пользователем.")
                 sys.exit(0)
 
     except KeyboardInterrupt:
-        print("👋 Программа прервана пользователем.")
+        print("\n👋 Программа прервана пользователем.")
         sys.exit(0)
     except Exception as e:
         print(f"❌ КРИТИЧЕСКАЯ ОШИБКА: {e}")

@@ -1353,7 +1353,8 @@
     "aliases": [
       "Присцила Кашоейра",
       "Присцила Кашоэйра",
-      "Присцилла Кашоэйра"
+      "Присцилла Кашоэйра",
+      "Priscila Cachoeira"
     ],
     "first_seen": "2018-02-03",
     "fights_count": 34
@@ -3157,7 +3158,8 @@
       "Benoît Saint-Denis",
       "Бенуа Сен Дени",
       "Бенуа Сен-Дени",
-      "Бенуа Сент-Дени"
+      "Бенуа Сент-Дени",
+      "Benoît Saint Denis"
     ],
     "first_seen": "2021-10-30",
     "fights_count": 31
@@ -3616,7 +3618,8 @@
     "normalized": "seanomalley",
     "aliases": [
       "Шон ОМэлли",
-      "Шон О'Мэлли"
+      "Шон О'Мэлли",
+      "Sean O'Malley"
     ],
     "first_seen": "2017-12-01",
     "fights_count": 35
@@ -27361,6 +27364,38 @@
       "Т а й К о у л М и л л е р А д а м Ф ь ю д ж и т Т а й К о у л л М и л л е р"
     ],
     "first_seen": "2026-01-25",
+    "fights_count": 1
+  },
+  "F_ba33c4db": {
+    "normalized": "farsziam",
+    "aliases": [
+      "Farés Ziam"
+    ],
+    "first_seen": "2026-06-07",
+    "fights_count": 1
+  },
+  "F_18a2a68c": {
+    "normalized": "iwobaraniewski",
+    "aliases": [
+      "Iwo Baraniewski"
+    ],
+    "first_seen": "2026-06-07",
+    "fights_count": 1
+  },
+  "F_ef308b73": {
+    "normalized": "tymiller",
+    "aliases": [
+      "Ty Miller"
+    ],
+    "first_seen": "2026-01-25",
+    "fights_count": 1
+  },
+  "F_112d8b96": {
+    "normalized": "camrowston",
+    "aliases": [
+      "Cam Rowston"
+    ],
+    "first_seen": "2026-02-01",
     "fights_count": 1
   }
 }
