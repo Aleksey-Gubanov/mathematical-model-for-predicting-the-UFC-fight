@@ -28,7 +28,7 @@ class SecureNeuralChannel:
     _api_key: str = ""
     _provider: str = "deepseek"
     _is_initialized: bool = False
-    _cache_file: str = "llm_cache.json"
+    _cache_file: str = "llm_cach_old.json"
     _cache: Dict = {}
     _config_file: str = "api_config.enc"
     _master_password: str = ""

@@ -5,7 +5,7 @@ MMA PREDICTION v47.0 | РЕЖИМ ПРОГНОЗ + НОВОЕ ПОДМЕНЮ О�
 ================================================================
 ИЗМЕНЕНИЯ v47.0:
 1. ✅ НОВОЕ подменю режима ОБУЧЕНИЕ (2a, 2b, 0)
-2. ✅ Подрежим 2a: Запуск обучения на датасете (direct_test_101.py)
+2. ✅ Подрежим 2a: Запуск обучения на датасете (direct_test_101.py_й)
 3. ✅ Подрежим 2b: Проверка работы модели (бэктест по дате)
 4. ✅ Анализ признаков, упершихся в лимит после обучения
 5. ✅ Удален старый блок ручного ввода
@@ -69,6 +69,16 @@ REAL_DATASET_FILE = os.path.join(DATASET_DIR, "real_dataset.json")
 FIGHTERS_IDS_FILE = os.path.join(DATASET_DIR, "fighters_ids.json")
 MAX_DATASET_SIZE_MB = 2.2
 REQUEST_DELAY = 2.5
+# ============================================================================
+# ✅ v49.1: КОНСТАНТЫ СЛЕПОГО ИИ И HOLDOUT (единая точка настройки)
+# ============================================================================
+AI_WEIGHT_AGREE = 1.50      # вес образца: слепой ИИ согласен с фактом
+AI_WEIGHT_DISAGREE = 0.50   # вес образца: слепой ИИ НЕ согласен с фактом
+BLIND_TILT_ZONE = 0.53      # зона неопределённости: prob победителя <= 0.55
+BLIND_MIN_CONF = 70         # мин. уверенность слепого ИИ для тилта
+BLIND_TILT = 0.03           # размер тилта (3 п.п.)
+HOLDOUT_EVERY = 3           # v55.13: каждый 3-й бой в holdout (33%) для стат. значимости
+HOLDOUT_MIN_FIGHTS = 10     # не резать holdout, если боёв меньше этого
 
 # ============================================================================
 # ✅ v46.1: ФУНКЦИЯ ОЧИСТКИ ИМЁН ОТ РЕЙТИНГОВ
@@ -369,7 +379,8 @@ def extract_fighter_names(data) -> List[str]:
 
 def strict_out(pred: Prediction, res: Optional[Result], fd: FightData, mode: str,
                matchup: dict, a: str, b: str, raw_prob: float,
-               acc_win: float = 0.0, acc_rnd: float = 0.0, acc_mth: float = 0.0) -> str:
+               acc_win: float = 0.0, acc_rnd: float = 0.0, acc_mth: float = 0.0,
+               ai_verdict: Dict = None) -> str:
     from fighters_ids_manager import get_canonical_name, names_match_by_id
 
     try:
@@ -433,40 +444,46 @@ def strict_out(pred: Prediction, res: Optional[Result], fd: FightData, mode: str
         lines.append(f"   • Сценарий C (15%): Ничья / нестандартный исход")
 
     # =========================================================================
-    # ✅ v46.1: БИНАРНЫЙ ВЕРДИКТ С ЗАЩИТОЙ ОТ ДЕФОЛТНЫХ КОЭФФИЦИЕНТОВ
+    # ✅ v48.5: ТРОЙНОЙ АРБИТРАЖ (ФИНАЛЬНОЕ РЕШЕНИЕ)
     # =========================================================================
-    model_prob_a = raw_prob
-    model_prob_b = 1.0 - raw_prob
-
-    model_favored = a if model_prob_a >= 0.50 else b
-    model_favored_prob = model_prob_a if model_favored == a else model_prob_b
+    model_favored = pred.winner
+    model_conf = int(pred.prob * 100)
 
     bk_favored = a if odds_a_val <= odds_b_val else b
     bk_favored_odds = odds_a_val if bk_favored == a else odds_b_val
 
-    MIN_SAFE_ODDS = 1.10
+    ai_winner = ai_verdict.get("winner", "Неизвестно") if ai_verdict else "Неизвестно"
+    ai_conf = ai_verdict.get("confidence", 50) if ai_verdict else 50
+    ai_reason = ai_verdict.get("reason", "ИИ-арбитр недоступен") if ai_verdict else "ИИ-арбитр недоступен"
 
-    is_default_odds = (abs(odds_a_val - 1.85) < 0.01 and abs(odds_b_val - 1.85) < 0.01)
-
-    if is_default_odds:
-        verdict = "⚠️ РЕШЕНИЕ: НЕТ ДАННЫХ БК"
-        reason = f"💡 Коэффициенты не найдены в API. Невозможно определить двойное подтверждение. Пропускаем."
-    elif model_favored == bk_favored:
-        if bk_favored_odds < MIN_SAFE_ODDS:
-            verdict = "⚠️ РЕШЕНИЕ: СЛИШКОМ МАЛО"
-            reason = f"💡 Модель и БК согласны на {model_favored}, но коэффициент {bk_favored_odds} слишком низкий."
-        else:
-            verdict = "✅ РЕШЕНИЕ: РЕКОМЕНДУЮ"
-            reason = f"💡 Двойное подтверждение: Модель и БК сходятся на фаворите ({model_favored})."
+    # Матрица вердиктов (3 арбитра)
+    if model_favored == ai_winner == bk_favored:
+        verdict = "🔥 РЕКОМЕНДУЮ (3 из 3)"
+        reason = f"Полное совпадение: Математика, ИИ и БК единогласны за {model_favored}."
+    elif model_favored == ai_winner and model_favored != bk_favored:
+        verdict = "💎 ВАЛУЙ (VALUE BET)"
+        reason = f"Математика и ИИ за {model_favored}, но БК за {bk_favored}. Рынок ошибается!"
+    elif model_favored == bk_favored and model_favored != ai_winner:
+        verdict = "⚠️ СЛАБАЯ РЕКОМЕНДАЦИЯ"
+        reason = f"Математика и БК за {model_favored}, но ИИ предупреждает о рисках ({ai_winner})."
+    elif ai_winner == bk_favored and ai_winner != model_favored:
+        verdict = "🛑 ПРОПУСКАЕМ"
+        reason = f"ИИ и БК за {ai_winner}, но наша Математика категорически против ({model_favored})."
     else:
-        verdict = "❌ РЕШЕНИЕ: ПРОПУСКАЕМ"
-        reason = f"💡 Расхождение мнений: Модель за {model_favored}, БК за {bk_favored}."
+        verdict = "🛑 ПРОПУСКАЕМ"
+        reason = "Нет консенсуса арбитров. Слишком высокая неопределённость."
 
     lines.extend([
         "=" * 78,
-        f"📊 Мнение модели (сырое): {model_favored} {model_favored_prob*100:.0f}% | Коэф БК: {bk_favored_odds}",
-        verdict,
-        reason,
+        "⚖️ ТРОЙНОЙ АРБИТРАЖ (ИТОГОВОЕ РЕШЕНИЕ)",
+        "-" * 78,
+        f"🧮 МАТЕМАТИКА:   {model_favored} ({model_conf}%)",
+        f"🤖 ИИ-АНАЛИТИК:  {ai_winner} ({ai_conf}%)",
+        f"💬 Причина ИИ:   {ai_reason}",
+        f"📈 БУКМЕКЕР:     {bk_favored} (Коэф: {bk_favored_odds})",
+        "-" * 78,
+        f"🎯 ВЕРДИКТ: {verdict}",
+        f"💡 {reason}",
         "=" * 78
     ])
 
@@ -523,6 +540,137 @@ def load_accuracy_metrics(engine: MMAEngine) -> Tuple[float, float, float]:
     except Exception as e:
         print(f"   ⚠️ Не удалось загрузить метрики точности: {e}")
         return 0.0, 0.0, 0.0
+# ============================================================================
+# ✅ v48.5: ТРОЙНОЙ АРБИТРАЖ (ИИ-АРБИТР)
+# ============================================================================
+def get_ai_arbitrator_prediction(fa: Fighter, fb: Fighter, fight_context: str) -> Dict:
+    """
+    ✅ v48.5: ИИ-Арбитр. Анализирует УЖЕ СОБРАННЫЕ данные бойцов.
+    ⚠️ ИИ НЕ видит коэффициенты букмекера! ИИ НЕ должен вспоминать факты.
+    """
+    form_a = ", ".join(fa.form[:5]) if fa.form else "нет данных"
+    form_b = ", ".join(fb.form[:5]) if fb.form else "нет данных"
+
+    prompt = f"""Ты — элитный аналитик ММА с 20-летним опытом. 
+Твоя задача — сделать ПРОГНОЗ на основе ТОЛЬКО тех данных, что я тебе дам.
+
+⚠️ КРИТИЧЕСКИ ВАЖНО:
+1. Ты НЕ знаешь коэффициенты букмекеров. Не пытайся их угадать.
+2. Ты НЕ должен вспоминать факты о бойцах — анализируй ТОЛЬКО данные ниже.
+3. Используй СВОЙ АНАЛИТИЧЕСКИЙ УМ: сравни стили, форму, физику, психологию.
+4. Дай краткое, но содержательное обоснование (1-2 предложения).
+
+═══════════════════════════════════════════════════
+📊 ДАННЫЕ БОЯ
+═══════════════════════════════════════════════════
+Контекст: {"🏆 ТИТУЛЬНЫЙ БОЙ (главное событие)" if "title" in fight_context.lower() else "🥊 Обычный бой"}
+
+🔵 БОЕЦ А: {fa.name}
+• Рекорд: {fa.wins}-{fa.losses} (побед в последних 5: {fa.recent_wins})
+• Форма (последние 5): [{form_a}]
+• Возраст: {fa.age} лет
+• Рост/Размах: {fa.height_cm}см / {fa.reach_cm}см
+• Лагерь: {fa.camp_name} (качество: {fa.camp_quality:.2f})
+• Защита от тейкдаунов: {fa.td_def*100:.0f}%
+• Защита в партере: {fa.grap_def*100:.0f}%
+• Процент финишей: {fa.fin_rate*100:.0f}%
+• Боёв за 12 мес: {fa.fights_12m} | Месяцев без боёв: {fa.months_off}
+• Психология: стресс={fa.stress_factor:.2f}, мотивация={fa.motivation_index:.2f}
+• Биоритм: {fa.biorythm_score:.2f}
+
+🔴 БОЕЦ Б: {fb.name}
+• Рекорд: {fb.wins}-{fb.losses} (побед в последних 5: {fb.recent_wins})
+• Форма (последние 5): [{form_b}]
+• Возраст: {fb.age} лет
+• Рост/Размах: {fb.height_cm}см / {fb.reach_cm}см
+• Лагерь: {fb.camp_name} (качество: {fb.camp_quality:.2f})
+• Защита от тейкдаунов: {fb.td_def*100:.0f}%
+• Защита в партере: {fb.grap_def*100:.0f}%
+• Процент финишей: {fb.fin_rate*100:.0f}%
+• Боёв за 12 мес: {fb.fights_12m} | Месяцев без боёв: {fb.months_off}
+• Психология: стресс={fb.stress_factor:.2f}, мотивация={fb.motivation_index:.2f}
+• Биоритм: {fb.biorythm_score:.2f}
+
+═══════════════════════════════════════════════════
+🎯 ТВОЯ ЗАДАЧА
+═══════════════════════════════════════════════════
+Проанализируй бой по следующим критериям:
+1. **Физическое преимущество** (reach, рост, возраст)
+2. **Текущая форма** (серии W/L, активность)
+3. **Стилевое matchup** (striker vs grappler, финишер vs decision-fighter)
+4. **Психология** (стресс, мотивация, опыт)
+5. **Лагерь и подготовка** (качество camp, свежесть)
+
+Верни СТРОГО JSON (без markdown, без пояснений вне JSON):
+{{
+  "winner": "ТОЧНОЕ ИМЯ победителя ({fa.name} или {fb.name})",
+  "confidence": число от 55 до 92,
+  "reason": "Краткое обоснование (1-2 предложения) на русском языке"
+}}
+
+⚠️ Если ты не уверен — ставь confidence ближе к 55. Не завышай уверенность!"""
+
+    try:
+        response = SecureNeuralChannel.query(
+            prompt,
+            "Ты строгий аналитик ММА. Отвечай ТОЛЬКО валидным JSON. Никаких пояснений вне JSON.",
+            use_cache=False
+        )
+
+        if isinstance(response, dict):
+            data = response
+        else:
+            clean = str(response).replace("```json", "").replace("```", "").strip()
+            match = re.search(r'\{.*\}', clean, re.DOTALL)
+            data = json.loads(match.group()) if match else {}
+
+        winner = data.get("winner", "")
+        if fa.name.lower() not in winner.lower() and fb.name.lower() not in winner.lower():
+            if fa.name.lower() in winner.lower(): winner = fa.name
+            elif fb.name.lower() in winner.lower(): winner = fb.name
+            else: winner = "Неизвестно"
+
+        confidence = max(55, min(92, int(data.get("confidence", 60))))
+        reason = str(data.get("reason", "Нет обоснования"))[:400]
+
+        return {"winner": winner, "confidence": confidence, "reason": reason}
+    except Exception as e:
+        return {"winner": "Ошибка", "confidence": 50, "reason": f"Сбой ИИ: {str(e)[:100]}"}
+
+
+def get_triple_arbitrage_verdict(model_winner: str, bk_favored: str, ai_winner: str, bk_odds: float) -> Dict:
+    """
+    ✅ v48.5: Логика Тройного Арбитража. Возвращает статус и причину.
+    """
+    if model_winner == ai_winner == bk_favored:
+        return {
+            "status": "🔥 РЕКОМЕНДУЮ",
+            "reason": f"Полное совпадение всех 3-х арбитров на {model_winner}. Максимальная уверенность.",
+            "confidence": "MAX"
+        }
+    if model_winner == ai_winner and model_winner != bk_favored:
+        return {
+            "status": "💎 ВАЛУЙ (VALUE BET)",
+            "reason": f"Модель и ИИ уверены в {model_winner}, но букмекер считает фаворитом {bk_favored} (коэф {bk_odds}). Рынок ошибается!",
+            "confidence": "HIGH (Value)"
+        }
+    if model_winner == bk_favored and model_winner != ai_winner:
+        return {
+            "status": "⚠️ СЛАБАЯ РЕКОМЕНДАЦИЯ",
+            "reason": f"Математика и рынок за {model_winner}, но ИИ-аналитик предупреждает о рисках ({ai_winner}).",
+            "confidence": "MEDIUM"
+        }
+    if ai_winner == bk_favored and ai_winner != model_winner:
+        return {
+            "status": "🛑 ПРОПУСКАЕМ",
+            "reason": f"ИИ и букмекер за {ai_winner}, но наша математическая модель категорически против ({model_winner}).",
+            "confidence": "NONE"
+        }
+    return {
+        "status": "🛑 ПРОПУСКАЕМ",
+        "reason": "Нет явного консенсуса арбитров. Слишком высокая неопределённость.",
+        "confidence": "NONE"
+    }
 
 # ============================================================================
 # ЭТАП 6: ОБРАБОТКА КОМАНД КАЛИБРОВКИ
@@ -550,8 +698,8 @@ def handle_calibration_command(subcommand: str, engine: MMAEngine):
 
                     acc_win_ratio = acc_win / 100.0
 
-                    if acc_win_ratio < engine.best_accuracy - 0.03:
-                        print(f"⚠️ Деградация. Авто-возврат к best выполнится при следующем старте.")
+                    if acc_win_ratio < engine.best_accuracy - 0.04:
+                        print(f"⚠️ Деградация - 4% и более. Авто-возврат к best выполнится при следующем старте.")
                     else:
                         print("✅ Модель в норме.")
             except Exception as e:
@@ -573,10 +721,10 @@ def handle_calibration_command(subcommand: str, engine: MMAEngine):
         elif subcommand == "3d":
             print(f"📊 СТАТУС ВЕСОВ:")
 
-            # print(f"   🛡️ Эталон: {engine.baseline_accuracy * 100:.1f}%")
+            print(f"   🛡️ Эталон: {engine.baseline_accuracy * 100:.1f}%")
             print(f"   🏆 Лучшие веса (глоб.макс): {engine.best_accuracy * 100:.1f}%")
 
-            print(f"   ⚙️ Стабильность: {engine.stability_score:.1f}")
+           # print(f"   ⚙️ Стабильность: {engine.stability_score:.1f}")
             print(f"   📦 Буфер: {len(engine.pending_fights)}/{engine.BATCH_TRAIN_SIZE}")
 
             print(f"📁 ФАЙЛЫ:")
@@ -606,6 +754,58 @@ def handle_calibration_command(subcommand: str, engine: MMAEngine):
 # ============================================================================
 # ЭТАП 7: ПОЛУЧЕНИЕ ДАННЫХ БОЙЦА (ОБОГАЩЕНИЕ)
 # ============================================================================
+def _verify_dob_by_age(dob: str, age, fight_date) -> str:
+    """
+    ✅ v55.15: проверяет доб от ИИ по возрасту.
+    Возвращает:
+      - полный доб (YYYY-MM-DD) если прошёл проверку,
+      - только год (YYYY) если доб плохой,
+      - пустую строку если возраста нет.
+    """
+    try:
+        age_int = int(age) if age is not None else None
+    except (ValueError, TypeError):
+        age_int = None
+
+    # Определяем год боя
+    try:
+        if isinstance(fight_date, str):
+            if '-' in fight_date:
+                fight_year = int(fight_date.split('-')[0])
+            elif '.' in fight_date:
+                fight_year = int(fight_date.split('.')[-1])
+            else:
+                fight_year = None
+        elif hasattr(fight_date, 'year'):
+            fight_year = fight_date.year
+        else:
+            fight_year = None
+    except Exception:
+        fight_year = None
+
+    fallback_year = (fight_year - age_int) if (fight_year and age_int is not None) else None
+
+    # Если доб нет — возвращаем только год
+    if not dob or not isinstance(dob, str) or len(dob) < 4:
+        return str(fallback_year) if fallback_year else ""
+
+    # Если доб — только год (4 цифры)
+    if len(dob) == 4 and dob.isdigit():
+        return dob
+
+    # Проверяем полный доб по возрасту
+    try:
+        from datetime import datetime
+        dob_date = datetime.strptime(dob[:10], "%Y-%m-%d")
+        dob_year = dob_date.year
+        # Допускаем разницу ±1 год (возраст мог считаться на разные даты)
+        if fallback_year and abs(dob_year - fallback_year) <= 1:
+            return dob[:10]
+        else:
+            # Не совпадает — возвращаем только год
+            return str(fallback_year) if fallback_year else str(dob_year)
+    except Exception:
+        return str(fallback_year) if fallback_year else ""
 def get_fighter_data(fighter_name: str, fight_date: str,
                      opponent_name: str = None,
                      opponent_record: str = None,
@@ -628,6 +828,12 @@ def get_fighter_data(fighter_name: str, fight_date: str,
     if not data:
         print(f"      ⚠️ Нет данных для {fighter_name}, используем дефолты")
         data = {}
+    # ✅ v48.2: Фолбэк — если из парсера не пришло, берём из обогащения DeepSeek
+    if not fighter_dob:
+        fighter_dob = data.get('dob', '')
+
+    # ✅ v55.15: проверка доб от ИИ по возрасту и фолбэк на год
+    fighter_dob = _verify_dob_by_age(fighter_dob, data.get('age'), fight_date)
 
     mystic_result = calculate_mystic_factor(fighter_dob, fight_date)
     mystic_factor = mystic_result.get('mystic_factor', 0.5)
@@ -639,6 +845,8 @@ def get_fighter_data(fighter_name: str, fight_date: str,
 
     fighter = Fighter(
         name=fighter_name,
+        dob=fighter_dob if fighter_dob else None,
+        dob_quality=1 if fighter_dob else 0,
         age=data.get('age', 30),
         wins=wins,
         losses=losses,
@@ -690,70 +898,342 @@ def save_known_fighters_cache(fighters_list: List[str]):
             json.dump(fighters_list, f, ensure_ascii=False, indent=2)
     except Exception as e:
         print(f"   ⚠️ Не удалось сохранить кэш бойцов: {e}")
+# ============================================================================
+# ✅ v49.0: СЛЕПОЙ ИИ-АРБИТР (обезличенные профили X/Y)
+# ============================================================================
+def get_blind_ai_verdict(fa: Fighter, fb: Fighter) -> Dict:
+    """
+    Запрос DeepSeek по обезличенным профилям: без имён, коэфов и факта.
+    Возврат: {"pick": "X"|"Y"|None, "conf": 55-92, "why": str}. X = боец A, Y = боец B.
+    """
+    def profile(f: Fighter, tag: str) -> str:
+        form = ", ".join(f.form[:5]) if f.form else "нет данных"
+        return (f"{tag}: рекорд {f.wins}-{f.losses}, побед в посл.5: {f.recent_wins}, форма [{form}], "
+                f"рост {f.height_cm}см, reach {f.reach_cm}см, "
+                f"защита от тейкдаунов {f.td_def*100:.0f}%, защита в партере {f.grap_def*100:.0f}%, "
+                f"финиши {f.fin_rate*100:.0f}%, сабмишены {f.sub_rate*100:.0f}%, "
+                f"активность: {f.fights_12m} боёв/12мес, простой {f.months_off} мес, "
+                f"психология: стресс {f.stress_factor:.2f}, мотивация {f.motivation_index:.2f}, "
+                f"качество лагеря {f.camp_quality:.2f}, возраст {f.age}")
+
+    prompt = (
+        "Ты элитный аналитик ММА. Даны два ОБЕЗЛИЧЕННЫХ профиля бойцов X и Y на бой.\n"
+        "⚠️ КРИТИЧЕСКИ ВАЖНО: имена скрыты — НЕ пытайся угадать, кто это. Решай ТОЛЬКО по цифрам.\n"
+        f"{profile(fa, 'X')}\n{profile(fb, 'Y')}\n"
+        "Проанализируй: физика, форма, стилевое matchup, активность, психология, подготовка.\n"
+        'Верни СТРОГО JSON без markdown: {"pick": "X" или "Y", "conf": число 55-92, "why": "одна фраза"}'
+    )
+    try:
+        resp = SecureNeuralChannel.query(
+            prompt,
+            "Ты строгий аналитик ММА. Отвечай ТОЛЬКО валидным JSON.",
+            use_cache=True
+        )
+        if isinstance(resp, str):
+            match = re.search(r'\{.*\}', resp, re.DOTALL)
+            resp = json.loads(match.group()) if match else {}
+        if not isinstance(resp, dict):
+            return {"pick": None, "conf": 50, "why": "ошибка LLM"}
+        pick = str(resp.get("pick", "")).strip().upper()
+        if pick not in ("X", "Y"):
+            return {"pick": None, "conf": 50, "why": "LLM не вернула пик"}
+        conf = max(55, min(92, int(float(resp.get("conf", 60)))))
+        return {"pick": pick, "conf": conf, "why": str(resp.get("why", ""))[:200]}
+    except Exception as e:
+        return {"pick": None, "conf": 50, "why": f"ошибка: {str(e)[:80]}"}
+
+def apply_blind_tilt(pred, blind, f1_name: str, f2_name: str):
+    """
+    ✅ v49.2: витринный тилт — в зоне неопределённости корректируем прогноз
+    модели в сторону пика слепого ИИ (если уверенность ИИ >= BLIND_MIN_CONF).
+    Возвращает (pred, tilted: bool).
+    """
+    if not blind or blind.get("pick") not in ("X", "Y"):
+        return pred, False
+    if blind.get("conf", 0) < BLIND_MIN_CONF:
+        return pred, False
+    if pred.prob > BLIND_TILT_ZONE:
+        return pred, False
+    # ✅ v49.3: ограниченный тилт — сдвигаем вероятность бойца A к пику ИИ;
+    # переворот ТОЛЬКО если сдвиг пересёк 0.5 (истинная монетка), иначе модель держит пик
+    pA = pred.prob if pred.winner == f1_name else 1.0 - pred.prob
+    if blind["pick"] == "X":
+        pA += BLIND_TILT
+    else:
+        pA -= BLIND_TILT
+    pA = max(0.10, min(0.90, pA))
+    if pA >= 0.5:
+        new_winner, new_prob = f1_name, pA
+    else:
+        new_winner, new_prob = f2_name, 1.0 - pA
+    tilted = (new_winner != pred.winner)
+    pred.winner = new_winner
+    pred.prob = new_prob
+    pred.ci_lo = max(0.0, new_prob - 0.15)
+    pred.ci_hi = min(1.0, new_prob + 0.15)
+    return pred, tilted
 
 # ============================================================================
 # ✅ v47.0: ПОДРЕЖИМЫ РЕЖИМА ОБУЧЕНИЕ
 # ============================================================================
-def run_dataset_training():
+def run_month_training(engine, espn):
     """
-    Подрежим 2a: Запуск обучения на датасете (вызов direct_test_101.py)
+    ✅ v48.4 Подрежим 2a: Обучение на свежих боях из ESPN за выбранный месяц ИЛИ диапазон месяцев.
+    Бои НЕ сохраняются в датасет — только обновление весов.
     """
     print("\n" + "=" * 70)
-    print("🚀 ЗАПУСК ОБУЧЕНИЯ НА ДАТАСЕТЕ (100 боёв)")
+    print("🚀 ОБУЧЕНИЕ НА СВЕЖИХ БОЯХ ИЗ ESPN (по месяцу или диапазону)")
     print("=" * 70)
 
-    import subprocess
-
-    # Сохраняем снапшот весов ДО запуска
-    weights_before = None
-    weights_file = "mma_weights_v21.json"
-    if os.path.exists(weights_file):
-        try:
-            with open(weights_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                weights_before = data.get("weights", [])
-        except Exception:
-            pass
+    print("\n📅 Введите месяц или диапазон для обучения:")
+    print("   Примеры: '04' (только апрель) или '01-06' (январь-июнь)")
+    print("   ⚠️ Год >= 2022, месяц не может быть будущим")
 
     try:
-        result = subprocess.run(
-            [sys.executable, "direct_test_101.py"],
-            cwd=os.path.dirname(os.path.abspath(__file__))
-        )
+        clear_input_buffer()
+        period_input = input("   Период (ММ или ММ-ММ): ").strip()
+        year_input = input("   Год (2022-...): ").strip()
 
-        if result.returncode == 0:
-            print("\n✅ Обучение завершено успешно")
+        year = int(year_input)
+        if year < 2022:
+            print("❌ Год должен быть >= 2022")
+            input("\n[Нажмите Enter для возврата в меню...]")
+            return
 
-            # Сравниваем веса ПОСЛЕ обучения
-            if weights_before and os.path.exists(weights_file):
-                try:
-                    with open(weights_file, "r", encoding="utf-8") as f:
-                        data = json.load(f)
-                        weights_after = data.get("weights", [])
+        now = datetime.now()
+        if year > now.year:
+            print("❌ Нельзя обучаться на будущих годах")
+            input("\n[Нажмите Enter для возврата в меню...]")
+            return
 
-                    # Ищем признаки, которые уперлись в лимит
-                    hit_limits = _check_weight_limits(weights_after)
-
-                    if hit_limits:
-                        print("\n" + "=" * 70)
-                        print("🔒 ПРИЗНАКИ, УПЕРШИЕСЯ В ЛИМИТ:")
-                        for name in hit_limits:
-                            print(f"   • {name}")
-                        print("=" * 70)
-                    else:
-                        print("\n✅ Ни один признак не упёрся в лимит")
-
-                except Exception as e:
-                    print(f"⚠️ Не удалось сравнить веса: {e}")
+        if '-' in period_input:
+            parts = period_input.split('-')
+            start_month = int(parts[0])
+            end_month = int(parts[1])
+            if start_month < 1 or start_month > 12 or end_month < 1 or end_month > 12 or start_month > end_month:
+                print("❌ Неверный диапазон месяцев")
+                input("\n[Нажмите Enter для возврата в меню...]")
+                return
+            months_to_process = list(range(start_month, end_month + 1))
         else:
-            print(f"\n⚠️ Обучение завершено с кодом {result.returncode}")
+            month = int(period_input)
+            if month < 1 or month > 12:
+                print("❌ Месяц должен быть от 01 до 12")
+                input("\n[Нажмите Enter для возврата в меню...]")
+                return
+            if year == now.year and month > now.month:
+                print("❌ Нельзя обучаться на будущих месяцах")
+                input("\n[Нажмите Enter для возврата в меню...]")
+                return
+            months_to_process = [month]
 
-    except Exception as e:
-        print(f"❌ Ошибка запуска: {e}")
+    except ValueError:
+        print("❌ Неверный формат. Введите числа.")
+        input("\n[Нажмите Enter для возврата в меню...]")
+        return
+
+    # Сбор всех боёв за выбранный период
+    all_fights = []
+    for m in months_to_process:
+        if year == now.year and m > now.month:
+            continue
+        print(f"\n⏳ Загрузка боёв за {m:02d}.{year} из ESPN API...")
+        fights = espn.get_fights_by_month(year, m)
+        all_fights.extend(fights)
+
+    if not all_fights:
+        print(f"⚠️ Завершённых боёв за выбранный период не найдено.")
+        input("\n[Нажмите Enter для возврата в меню...]")
+        return
+
+    print(f"\n✅ Всего найдено завершённых боёв за период: {len(all_fights)}")
+    if len(all_fights) < 10:
+        print("⚠️ Слишком мало боёв для эффективного обучения (нужно >= 10).")
+        input("\n[Нажмите Enter для возврата в меню...]")
+        return
+
+    # ── 3. Запоминаем состояние part-файлов (для восстановления после обучения) ──
+    part_files_before = set(glob_module.glob(os.path.join(DATASET_DIR, "real_dataset_part*.json")))
+
+    # Ключи боёв, которые будут добавлены (для удаления после обучения)
+    added_keys = set()
+    for fight in all_fights:
+        fd_date = fight.get('date')
+        date_str = fd_date.strftime('%Y-%m-%d') if hasattr(fd_date, 'strftime') else str(fd_date)
+        added_keys.add(f"{fight.get('fighter_a', '')}_{fight.get('fighter_b', '')}_{date_str}")
+
+    # ✅ v55.19: УБРАН holdout — обучаемся на ВСЕХ боях периода
+    # Обучение не работает на 115 боях, откладывать 57 в контроль — абсурд
+    holdout_fights = []
+    train_fights = list(all_fights)
+
+    # ✅ v55.19: holdout убран — реестр не нужен
+    if holdout_fights:
+        print(f"🧪 HOLDOUT: {len(holdout_fights)} боёв отложены для контроля, обучение на {len(train_fights)}")
+
+        # ── 4. Обучение на каждом бою ──
+    print(f"\n{'=' * 70}")
+    print(f"🧠 ОБУЧЕНИЕ НА {len(train_fights)} БОЯХ")
+    print(f"{'=' * 70}")
+
+    correct = 0
+    incorrect = 0
+    errors = 0
+    interrupted = False
+    blind_stats = {"total": 0, "answered": 0, "agree": 0}   # ✅ v49.0
+
+    for idx, fight in enumerate(train_fights, 1):
+        f1 = fight.get('fighter_a', 'Unknown')
+        f2 = fight.get('fighter_b', 'Unknown')
+        fact_winner = fight.get('winner', 'Unknown')
+        fact_method = fight.get('method', 'DEC')
+        fact_round = fight.get('round', 3)
+        fight_date = fight.get('date')
+
+        print(f"\n[{idx}/{len(train_fights)}] 🔍 {f1} vs {f2}")
+
+        try:
+            target_date_str = (fight_date - timedelta(days=1)).strftime("%Y-%m-%d")
+
+            fa = get_fighter_data(
+                fighter_name=f1,
+                fight_date=target_date_str,
+                opponent_name=f2,
+                fighter_dob=fight.get('dob_a')
+            )
+            fb = get_fighter_data(
+                fighter_name=f2,
+                fight_date=target_date_str,
+                opponent_name=f1,
+                fighter_dob=fight.get('dob_b')
+            )
+            if not fa or not fb:
+                print(f"   ⚠️ Ошибка обогащения. Пропускаем.")
+                errors += 1
+                continue
+
+            fd = FightData(
+                a=fa, b=fb,
+                date=fight_date,
+                wc="Auto",
+                rounds=fact_round,
+                location=fight.get('event_name', 'UFC'),
+                odds_a=1.85,
+                matchup_odds={"bookmaker": "Нейтрально", "odds_a": 1.85, "odds_b": 1.85}
+            )
+
+            pred = engine.predict(fd)
+
+            # ✅ v55.13: в 2a тилт ОТКЛЮЧЁН — чистая оценка модели
+            blind = get_blind_ai_verdict(fa, fb)
+            blind_stats["total"] += 1
+            if blind["pick"] is not None:
+                blind_stats["answered"] += 1
+            # Тилт НЕ применяется в 2a — только сбор статистики слепого ИИ
+
+            fact_winner_normalized = normalize_winner_name(fact_winner, f1, f2)
+            is_correct = names_match(pred.winner, fact_winner_normalized)
+            if is_correct:
+                correct += 1
+                print(f"   ✅ Верно: {pred.winner} ({pred.prob*100:.0f}%)")
+            else:
+                incorrect += 1
+                print(f"   ❌ Неверно: прогноз {pred.winner}, факт {fact_winner_normalized}")
+
+            meth_map = {
+                'UD': FinishType.DECISION_UNANIMOUS,
+                'SD': FinishType.DECISION_SPLIT,
+                'MD': FinishType.DECISION_UNANIMOUS,
+                'DEC': FinishType.DECISION_UNANIMOUS,
+                'TKO': FinishType.TKO,
+                'KO': FinishType.KO,
+                'SUB': FinishType.SUBMISSION
+            }
+            res = Result(
+                winner=fact_winner_normalized,
+                rnd=fact_round,
+                method=meth_map.get(fact_method, FinishType.DECISION_UNANIMOUS)
+            )
+
+            # ✅ v49.0: слепой ИИ → вес образца
+            if blind["pick"] is None:
+                ai_factor = 1.0
+                print(f"   🧠 Слепой ИИ: нет пика → вес образца 1.0 (нейтрально)")
+            else:
+                ai_pick_fighter = f1 if blind["pick"] == "X" else f2
+                ai_agree = (ai_pick_fighter == fact_winner_normalized)
+                if ai_agree:
+                    blind_stats["agree"] += 1
+                ai_factor = AI_WEIGHT_AGREE if ai_agree else AI_WEIGHT_DISAGREE
+                print(f"   🧠 Слепой ИИ: {blind['pick']} ({blind['conf']}%) — "
+                      f"{'согласен с фактом' if ai_agree else 'НЕ согласен с фактом'} → вес образца {ai_factor}")
+
+            # ✅ v55.16: передаём и ai_factor, и blind_conf
+            blind_conf_val = blind.get("conf") if blind and blind.get("pick") else None
+            train_result = engine.train_on_new_fight(fd, res, f1, f2, ai_factor, blind_conf_val)
+            if train_result and train_result.get("status") == "trained":
+                print(f"   📊 {train_result.get('accuracy_str', '')}")
+
+        except KeyboardInterrupt:
+            print(f"\n⚠️ Обучение прервано на бое [{idx}]")
+            interrupted = True
+            break
+        except Exception as e:
+            print(f"   ⚠️ Ошибка: {e}")
+            errors += 1
+            continue
+
+    # ✅ v55.19: holdout убран — оценка не нужна
+    holdout_pre_results = []
+
+    # ── 5. Принудительное обучение на остатке буфера ──
+    if len(engine.pending_fights) > 0:
+        print(f"\n{'=' * 70}")
+        print(f"🔄 ПРИНУДИТЕЛЬНОЕ ОБУЧЕНИЕ НА {len(engine.pending_fights)} БОЯХ...")
+        print(f"{'=' * 70}")
+        try:
+            flush_result = engine.flush_buffer()
+            status = flush_result.get("status", "")
+            if status == "trained":
+                print(f"   ✅ {flush_result.get('status_text', '')}")
+                print(f"   📊 {flush_result.get('accuracy_str', '')}")
+            elif status == "buffered":
+                print(f"   📦 {flush_result.get('status_text', '')}")
+                print(f"   ℹ️ Обучение отложено до накопления {flush_result.get('min_required', 150)} боёв.")
+                print(f"   ℹ️ Текущий буфер: {flush_result.get('buffer_size', 0)}/{flush_result.get('min_required', 150)}")
+            elif status == "empty":
+                print(f"   ⚠️ {flush_result.get('status_text', 'Буфер пуст')}")
+            else:
+                print(f"   ⚠️ Неизвестный статус flush_buffer: {status}")
+        except Exception as e:
+            print(f"   ❌ Ошибка flush_buffer: {e}")
+            traceback.print_exc()
+
+    # ✅ v55.19: holdout убран — оценка после обучения не нужна
+
+    # ── 6. v55.13: Новые бои ОСТАЮТСЯ в датасете для накопления знаний ──
+    print(f"\n💾 Новые бои сохранены в датасете для накопления знаний.")
+    # ── 7. Итоговый отчёт ──
+    print(f"\n{'=' * 70}")
+    print(f"📊 ИТОГИ ОБУЧЕНИЯ")
+    print(f"{'=' * 70}")
+    period_str = f"{months_to_process[0]:02d}-{months_to_process[-1]:02d}.{year}" if len(months_to_process) > 1 else f"{months_to_process[0]:02d}.{year}"
+    print(f"   📅 Период: {period_str}")
+    print(f"   📊 Всего боёв: {len(all_fights)} (обучение: {len(train_fights)}, holdout: {len(holdout_fights)})")
+    print(f"   ✅ Верно: {correct}")
+    print(f"   ❌ Неверно: {incorrect}")
+    print(f"   ⚠️ Ошибок: {errors}")
+    if correct + incorrect > 0:
+        acc = correct / (correct + incorrect) * 100
+        print(f"   🎯 Точность на тесте: {acc:.1f}%")
+    if blind_stats["answered"] > 0:   # ✅ v49.0
+        blind_acc = 100.0 * blind_stats["agree"] / blind_stats["answered"]
+        print(f"   🧠 Слепой ИИ: {blind_acc:.1f}% ({blind_stats['agree']}/{blind_stats['answered']}) — его самостоятельная точность")
+    print(f"   🏆 Лучшие веса модели: {engine.best_accuracy * 100:.1f}%")
+    print(f"   📦 Буфер: {len(engine.pending_fights)}/{engine.BATCH_TRAIN_SIZE}")
+    print(f"{'=' * 70}")
 
     input("\n[Нажмите Enter для возврата в меню...]")
-
-
 def _check_weight_limits(weights: List[float]) -> List[str]:
     """
     Проверяет, какие признаки достигли своих лимитов.
@@ -843,8 +1323,8 @@ def run_backtest_session(engine: MMAEngine, known_fighters_training: List[str]):
 
     # 3. Цикл выбора боёв
     predicted_indices = set()
-    session_stats = {"total": 0, "correct": 0, "incorrect": 0, "errors": []}
-
+    session_stats = {"total": 0, "correct": 0, "incorrect": 0, "errors": [],
+                     "blind_answered": 0, "blind_agree": 0}   # ✅ v49.0
     while True:
         print("\n" + "=" * 70)
         print(f"📋 БОИ НА {date_input}")
@@ -893,6 +1373,9 @@ def run_backtest_session(engine: MMAEngine, known_fighters_training: List[str]):
             if session_stats['total'] > 0:
                 accuracy = (session_stats['correct'] / session_stats['total']) * 100
                 print(f"   🎯 Точность: {accuracy:.1f}%")
+            if session_stats['blind_answered'] > 0:   # ✅ v49.0
+                blind_acc = 100.0 * session_stats['blind_agree'] / session_stats['blind_answered']
+                print(f"   🧠 Слепой ИИ: {blind_acc:.1f}% ({session_stats['blind_agree']}/{session_stats['blind_answered']}) — его самостоятельная точность")
 
             if session_stats['errors']:
                 print(f"\n   📋 Ошибки модели:")
@@ -931,14 +1414,15 @@ def run_backtest_session(engine: MMAEngine, known_fighters_training: List[str]):
                 fa = get_fighter_data(
                     fighter_name=f1_clean,
                     fight_date=target_date_str,
-                    opponent_name=f2_clean
+                    opponent_name=f2_clean,
+                    fighter_dob=fight.get('dob_a')       # ✅ v48.1
                 )
                 fb = get_fighter_data(
                     fighter_name=f2_clean,
                     fight_date=target_date_str,
-                    opponent_name=f1_clean
+                    opponent_name=f1_clean,
+                    fighter_dob=fight.get('dob_b')       # ✅ v48.1
                 )
-
                 if not fa or not fb:
                     print("❌ Ошибка сбора данных. Пропускаем бой.")
                     clear_input_buffer()
@@ -958,6 +1442,12 @@ def run_backtest_session(engine: MMAEngine, known_fighters_training: List[str]):
                 )
 
                 pred = engine.predict(fd)
+
+                # ✅ v49.2: витрина — слепой ИИ ДО вывода, тилт прогноза
+                blind = get_blind_ai_verdict(fa, fb)
+                pred, tilted = apply_blind_tilt(pred, blind, f1_clean, f2_clean)
+                if tilted:
+                    print(f"   ⚖️ Тилт слепого ИИ: прогноз скорректирован → {pred.winner} ({pred.prob*100:.0f}%)")
 
                 # ✅ Нормализация имени победителя
                 fact_winner_normalized = normalize_winner_name(fact_winner, f1_clean, f2_clean)
@@ -1006,8 +1496,23 @@ def run_backtest_session(engine: MMAEngine, known_fighters_training: List[str]):
                     rnd=fact_round,
                     method=meth_map.get(fact_method, FinishType.DECISION_UNANIMOUS)
                 )
+
+                # ✅ v49.0: слепой ИИ в 2b (витрина: модель → ИИ → факт)
+                if blind["pick"] is None:
+                    ai_factor = 1.0
+                    blind_name = None
+                    print(f"   🧠 Слепой ИИ: нет пика → вес образца 1.0 (нейтрально)")
+                else:
+                    blind_name = f1_clean if blind["pick"] == "X" else f2_clean
+                    session_stats["blind_answered"] += 1
+                    ai_agree = (blind_name == fact_winner_normalized)
+                    if ai_agree:
+                        session_stats["blind_agree"] += 1
+                ai_factor = AI_WEIGHT_AGREE if ai_agree else AI_WEIGHT_DISAGREE
+                print(f"   🧠 Слепой ИИ: {blind_name} ({blind['conf']}%) — "
+                      f"{'согласен с фактом' if ai_agree else 'НЕ согласен с фактом'} → вес образца {ai_factor}")
                 print("\n🔄 Добавление в буфер обучения...")
-                train_result = engine.train_on_new_fight(fd, res, f1_clean, f2_clean)
+                train_result = engine.train_on_new_fight(fd, res, f1_clean, f2_clean, ai_factor)
 
                 # ✅ v47.2: НЕМЕДЛЕННО дописываем бой в part-файл.
                 # Факт реальный (ESPN) — не должен теряться при выходе.
@@ -1147,6 +1652,36 @@ if __name__ == "__main__":
 
         print("⚙️ Инициализация модулей...")
         engine = MMAEngine()
+
+        # ✅ v55.18: функция ленивого обогащения для обучения
+        def _lazy_enrich(fighter_name, fight_date):
+            try:
+                data = DeepAIAnalyst.enrich_fighter(
+                    fighter_name=fighter_name,
+                    fight_date=fight_date,
+                    opponent_name=None,
+                    fight_context="regular"
+                )
+                if not data:
+                    return {}
+                dob = data.get('dob', '')
+                mf = calculate_mystic_factor(dob, fight_date).get('mystic_factor', 0.5)
+                return {
+                    'dob': dob,
+                    'dob_quality': 1 if dob else 0,
+                    'camp_name': data.get('camp_name', 'Independent'),
+                    'reach_cm': data.get('reach_cm', 180),
+                    'height_cm': data.get('height_cm', 175),
+                    'mystic_v2': data.get('mystic_v2', 0.5),
+                    'mystic_factor': mf,
+                    'exp': data.get('exp') or ((data.get('wins', 0) or 0) + (data.get('losses', 0) or 0)),
+                    'fin_rate': data.get('fin_rate', 0.5),
+                }
+            except Exception:
+                return {}
+
+        engine._enrich_fn = _lazy_enrich
+
         print("🔄 Перекалибровка нормализатора...")
         engine.recalibrate_scaler()
         analyst = DeepAIAnalyst()
@@ -1206,6 +1741,7 @@ if __name__ == "__main__":
 
                 if user_in == "0":
                     print("👋 Выход.")
+                    engine.save_pending_buffer()
                     break
 
                 if user_in == "1":
@@ -1255,7 +1791,7 @@ if __name__ == "__main__":
                     print("\n" + "=" * 70)
                     print("📊 РЕЖИМ: ОБУЧЕНИЕ")
                     print("=" * 70)
-                    print("   2a - Обучение на датасете (100 боёв, ~10 минут)")
+                    print("   2a - Обучение на свежих боях с 2022 года")
                     print("   2b - Проверка работы модели (бэктест по дате)")
                     print("   0  - Назад в главное меню")
                     print("=" * 70)
@@ -1268,7 +1804,7 @@ if __name__ == "__main__":
                         continue
 
                     elif sub_mode == "2a":
-                        run_dataset_training()
+                        run_month_training(engine, espn)
                         continue
 
                     elif sub_mode == "2b":
@@ -1370,13 +1906,15 @@ if __name__ == "__main__":
                                     fighter_name=f1_clean,
                                     fight_date=target_date,
                                     opponent_name=f2_clean,
-                                    fight_context="title" if is_main_event else "regular"
+                                    fight_context="title" if is_main_event else "regular",
+                                    fighter_dob=fight.get('dob_a')       # ✅ v48.1
                                 )
                                 fb = get_fighter_data(
                                     fighter_name=f2_clean,
                                     fight_date=target_date,
                                     opponent_name=f1_clean,
-                                    fight_context="title" if is_main_event else "regular"
+                                    fight_context="title" if is_main_event else "regular",
+                                    fighter_dob=fight.get('dob_b')       # ✅ v48.1
                                 )
 
                                 if not fa or not fb:
@@ -1423,9 +1961,17 @@ if __name__ == "__main__":
                                 odds_b_val_pred = fd.matchup_odds.get("odds_b", 1.85) if fd.matchup_odds else 1.85
                                 raw_prob_pred = print_all_features(engine, fa, fb, fd.odds_a, odds_b_val_pred, f1_clean)
 
+                                # ✅ v48.5: ТРОЙНОЙ АРБИТРАЖ (ИИ-Арбитр)
+                                print("\n⚖️ Шаг 4: Мнение ИИ-Арбитра (независимый анализ)...")
+                                ai_verdict = get_ai_arbitrator_prediction(fa, fb, "title" if is_main_event else "regular")
+
+                                print(f"   🤖 ИИ-Аналитик: {ai_verdict.get('winner', 'Ошибка')} ({ai_verdict.get('confidence', 50)}%)")
+                                print(f"   💬 {ai_verdict.get('reason', '')}")
+
                                 acc_win, acc_rnd, acc_mth = load_accuracy_metrics(engine)
 
-                                print("\n" + strict_out(pred, res, fd, mode, matchup, f1_clean, f2_clean, raw_prob_pred, acc_win, acc_rnd, acc_mth))
+                                # Передаём ai_verdict в strict_out для красивого финального вывода
+                                print("\n" + strict_out(pred, res, fd, mode, matchup, f1_clean, f2_clean, raw_prob_pred, acc_win, acc_rnd, acc_mth, ai_verdict))
 
                                 predicted_indices.add(fight_idx + 1)
                                 increment_prediction_count(config, current_hwid)
@@ -1440,6 +1986,10 @@ if __name__ == "__main__":
 
             except KeyboardInterrupt:
                 print("\n👋 Программа прервана пользователем.")
+                try:
+                    engine.save_pending_buffer()
+                except Exception:
+                    pass
                 sys.exit(0)
 
     except KeyboardInterrupt:

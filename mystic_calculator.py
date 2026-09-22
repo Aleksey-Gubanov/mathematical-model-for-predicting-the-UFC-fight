@@ -70,43 +70,35 @@ def reduce_to_digit(n: int) -> int:
 # ФУНКЦИЯ 2: ЧИСЛО СУДЬБЫ (из даты рождения)
 # ============================================================================
 def calculate_destiny_number(fighter_dob: str) -> Optional[int]:
-    """
-    Рассчитывает число судьбы бойца по дате рождения.
-
-    :param fighter_dob: Дата рождения в формате "YYYY-MM-DD" или "DD.MM.YYYY"
-    :return: Число 1-9 или None если дата невалидна
-    """
     if not fighter_dob:
         return None
     try:
         digits = [int(d) for d in fighter_dob if d.isdigit()]
+        # ✅ v1.1: поддержка формата "только год" (для старых боёв)
+        if len(digits) == 4:
+            return reduce_to_digit(sum(digits))
         if len(digits) < 8:
             return None
         return reduce_to_digit(sum(digits))
     except Exception:
         return None
-
 
 # ============================================================================
 # ФУНКЦИЯ 3: ЧИСЛО ДНЯ БОЯ
 # ============================================================================
 def calculate_day_number(fight_date: str) -> Optional[int]:
-    """
-    Рассчитывает число дня боя.
-
-    :param fight_date: Дата боя в формате "YYYY-MM-DD" или "DD.MM.YYYY"
-    :return: Число 1-9 или None если дата невалидна
-    """
     if not fight_date:
         return None
     try:
         digits = [int(d) for d in fight_date if d.isdigit()]
+        # ✅ v1.1: поддержка формата "только год"
+        if len(digits) == 4:
+            return reduce_to_digit(sum(digits))
         if len(digits) < 8:
             return None
         return reduce_to_digit(sum(digits))
     except Exception:
         return None
-
 
 # ============================================================================
 # ФУНКЦИЯ 4: СОВМЕСТИМОСТЬ ЧИСЕЛ
@@ -147,14 +139,15 @@ def calculate_moon_phase_value(fight_date: str) -> float:
         return 0.5
 
     try:
-        # Парсим дату
-        if '-' in fight_date:
+        # ✅ v1.1: поддержка формата "только год" — используем 1 января
+        if fight_date and len(fight_date) == 4 and fight_date.isdigit():
+            dt = datetime(int(fight_date), 1, 1)
+        elif '-' in fight_date:
             dt = datetime.strptime(fight_date, "%Y-%m-%d")
         elif '.' in fight_date:
             dt = datetime.strptime(fight_date, "%d.%m.%Y")
         else:
             return 0.5
-
         # Известное новолуние: 6 января 2000, 18:14 UTC
         known_new_moon = datetime(2000, 1, 6, 18, 14)
         synodic_month = 29.530588853  # Синодический месяц в днях
@@ -207,7 +200,10 @@ def get_moon_phase_name(fight_date: str) -> str:
         return "Неизвестно"
 
     try:
-        if '-' in fight_date:
+        # ✅ v1.1: поддержка формата "только год" — используем 1 января
+        if fight_date and len(fight_date) == 4 and fight_date.isdigit():
+            dt = datetime(int(fight_date), 1, 1)
+        elif '-' in fight_date:
             dt = datetime.strptime(fight_date, "%Y-%m-%d")
         elif '.' in fight_date:
             dt = datetime.strptime(fight_date, "%d.%m.%Y")
@@ -253,6 +249,15 @@ def calculate_mystic_factor(fighter_dob: str, fight_date: str) -> Dict:
     :param fight_date: Дата боя ("YYYY-MM-DD" или "DD.MM.YYYY")
     :return: dict с компонентами и итоговым значением
     """
+    # ✅ v1.1: определяем режим доб (полная дата / только год / нет)
+    dob_digits_len = len([d for d in (fighter_dob or '') if d.isdigit()])
+    if dob_digits_len == 4:
+        dob_mode = "year"   # только год — для старых боёв
+    elif dob_digits_len >= 8:
+        dob_mode = "full"   # полная дата — для свежих боёв от ИИ
+    else:
+        dob_mode = "none"   # нет доб
+
     # 1. Число судьбы
     destiny_number = calculate_destiny_number(fighter_dob)
     if destiny_number is None:
@@ -300,8 +305,10 @@ def calculate_mystic_factor(fighter_dob: str, fight_date: str) -> Dict:
             moon_value * 0.25
     )
 
+
     return {
         "mystic_factor": round(mystic_factor, 2),
+        "dob_mode": dob_mode,  # ✅ v1.1: режим доб для диагностики
         "components": {
             "destiny_number": destiny_number,
             "destiny_value": round(destiny_value, 2),

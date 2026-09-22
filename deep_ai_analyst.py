@@ -109,6 +109,11 @@ class DeepAIAnalyst:
    - Формат: ["W", "W", "L", "W", "W"] где W = победа, L = поражение.
    - Если боец недавно дебютировал, верни ["W", "W", "W", "W", "W"].
    - Это КРИТИЧЕСКИ ВАЖНО для анализа формы!
+6. ✅ ДАТА РОЖДЕНИЯ (dob):
+- Верни РЕАЛЬНУЮ дату рождения бойца в формате "ГГГГ-ММ-ДД".
+- Примеры: "1987-07-19" для Джона Джонса, "1988-09-20" для Хабиба.
+- Если боец малоизвестен — оцени по возрасту и верни приблизительную.
+- Это КРИТИЧЕСКИ ВАЖНО для мистического анализа (зодиак, нумерология)!
 
 Верни ТОЛЬКО валидный JSON (без markdown-обёрток) со следующей структурой.
 ВСЕ поля обязательны:
@@ -132,7 +137,8 @@ class DeepAIAnalyst:
   "biorythm_score": число (0.35-0.95),
   "camp_quality": число (0.30-0.95),
   "mystic_v2": число (0.30-0.90),
-  "form": ["W", "W", "L", "W", "W"]
+  "form": ["W", "W", "L", "W", "W"],
+  "dob": "ГГГГ-ММ-ДД" (реальная дата рождения)
 }}"""
 
         required_keys = [
@@ -140,7 +146,8 @@ class DeepAIAnalyst:
             "td_def", "grap_def", "months_off", "fights_12m", "reach_cm",
             "height_cm", "camp_name", "stress_factor", "motivation_index",
             "biorythm_score", "camp_quality", "mystic_v2",
-            "form"  # ✅ v5.7: ДОБАВЛЕН
+            "form",  # ✅ v5.7: ДОБАВЛЕН
+            "dob"    # ✅ v5.8: ДОБАВЛЕН — дата рождения для мистики
         ]
 
         try:
@@ -221,6 +228,52 @@ class DeepAIAnalyst:
                     # Генерируем на основе recent_wins
                     rw = result.get('recent_wins', 3)
                     result['form'] = ['W'] * min(rw, 5) + ['L'] * max(0, 5 - min(rw, 5))
+            # ✅ v5.8: ОБРАБОТКА ДАТЫ РОЖДЕНИЯ (dob)
+            dob_raw = str(res.get('dob', '')).strip()
+            result['dob'] = ''
+            if dob_raw and len(dob_raw) == 10 and '-' in dob_raw:
+                try:
+                    datetime.strptime(dob_raw, "%Y-%m-%d")
+                    result['dob'] = dob_raw
+                except ValueError:
+                    result['dob'] = ''
+
+            # ✅ v5.9: АНТИ-ШАБЛОН dob — сверка с возрастом + детектор кластера «март 12-15»
+            if result['dob']:
+                dob_suspect = False
+                try:
+                    dob_dt = datetime.strptime(result['dob'], "%Y-%m-%d")
+                    fight_dt = datetime.strptime(fight_date, "%Y-%m-%d")
+                    computed_age = fight_dt.year - dob_dt.year - ((fight_dt.month, fight_dt.day) < (dob_dt.month, dob_dt.day))
+                    if abs(computed_age - result['age']) > 3:
+                        dob_suspect = True
+                    if dob_dt.month == 3 and dob_dt.day in (12, 13, 14, 15):
+                        dob_suspect = True
+                except ValueError:
+                    result['dob'] = ''
+                    dob_suspect = False
+
+                if dob_suspect:
+                    res2 = DeepAIAnalyst._robust_query(
+                        prompt + "\n\n⚠️ ТЫ ВЕРНУЛ ШАБЛОННУЮ ДАТУ РОЖДЕНИЯ (март 12-15 или возраст не сходится с dob). ВЕРНИ РЕАЛЬНУЮ dob, согласованную с возрастом!",
+                        "КРИТИЧЕСКИ ВАЖНО: dob должна совпадать с возрастом бойца на дату боя и НЕ быть 12-15 марта!",
+                        required_keys, max_retries=2, use_cache=False
+                    )
+                    dob2 = str(res2.get('dob', '')).strip()
+                    if dob2 and len(dob2) == 10:
+                        try:
+                            d2 = datetime.strptime(dob2, "%Y-%m-%d")
+                            f2dt = datetime.strptime(fight_date, "%Y-%m-%d")
+                            age2 = f2dt.year - d2.year - ((f2dt.month, f2dt.day) < (d2.month, d2.day))
+                            if abs(age2 - result['age']) <= 3 and not (d2.month == 3 and d2.day in (12, 13, 14, 15)):
+                                result['dob'] = dob2
+                            else:
+                                result['dob'] = ''
+                        except ValueError:
+                            result['dob'] = ''
+                    else:
+                        result['dob'] = ''
+
 
             banned_camps = [
                 'профессиональный клуб', 'неизвестно', 'не указано', 'unknown',
@@ -245,11 +298,10 @@ class DeepAIAnalyst:
 
             if fight_context and fight_context.lower() in ['title', 'чемпионский', 'титульный']:
                 result['motivation_index'] = max(result['motivation_index'], 0.80)
-
             print(f"      ✅ {fighter_name}: {result['wins']}-{result['losses']}, "
                   f"reach={result['reach_cm']}, stress={result['stress_factor']:.2f}, "
-                  f"mystic_v2={result['mystic_v2']:.2f}, camp={result['camp_name']}, "
-                  f"form={result['form']}")
+                  f"mystic_v2={result['mystic_v2']:.2f}, dob={result['dob']}, "
+                  f"camp={result['camp_name']}, form={result['form']}")
 
             return result
 
@@ -287,7 +339,8 @@ class DeepAIAnalyst:
             'biorythm_score': round(0.50 + (name_hash % 4) * 0.07, 2),
             'camp_quality': round(0.50 + (name_hash % 4) * 0.08, 2),
             'mystic_v2': round(0.50 + (name_hash % 4) * 0.07, 2),
-            'form': ['W'] * min(rw, 5) + ['L'] * max(0, 5 - min(rw, 5))
+            'form': ['W'] * min(rw, 5) + ['L'] * max(0, 5 - min(rw, 5)),
+            'dob': f"{1985 + (name_hash % 12)}-{(name_hash % 12) + 1:02d}-{(name_hash % 28) + 1:02d}"
         }
 
     @staticmethod

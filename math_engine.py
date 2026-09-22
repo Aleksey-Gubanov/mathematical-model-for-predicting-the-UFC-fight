@@ -26,6 +26,7 @@ from dataclasses import dataclass, field, fields
 from enum import Enum
 
 DATASET_DIR = "dataset"
+PENDING_BUFFER_FILE = os.path.join(DATASET_DIR, "pending_buffer.json")
 MAX_DATASET_SIZE_BYTES = 10 * 1024 * 1024
 VALID_ROUNDS = [3, 5]
 TARGET_FEATURES = 46
@@ -83,6 +84,7 @@ class ModelConstants:
     ALPHA = 0.1
     ROLLBACK_THRESHOLD_BEST = 0.05
     ROLLBACK_THRESHOLD_BASELINE = 0.07
+    ROLLBACK_THRESHOLD_STARTUP = 0.04  # ✅ v55.9: авто-возврат при старте ТОЛЬКО при деградации 4% и более
     DAMPENING_FACTOR = 0.85
     MYSTIC_WEIGHT = 0.05
     BATCH_SIZE = 50
@@ -90,8 +92,9 @@ class ModelConstants:
     STEP_RATIO = 0.70      # оставлено для совместимости
     TEMPORAL_WEIGHT_NEW = 1.2
     TEMPORAL_WEIGHT_OLD = 1.0
-    WP_DAMPENING = 0.60
-    BATCH_TRAIN_SIZE = 200
+    WP_DAMPENING = 0.75   # ✅ v55.16: поднято с 0.60, плавно (+25%)
+    BATCH_TRAIN_SIZE = 150
+    TRAIN_SEED = 42   # ✅ v55.12: фикс-сид воспроизводимости батча (sampling+dropout); None = в
 
 
 class Mode(Enum):
@@ -116,6 +119,7 @@ class VerificationStatus(Enum):
 class Fighter:
     name: str
     dob: str = None
+    dob_quality: int = 0   # ✅ v55.18: 1 если доб подтверждён, 0 если нет
     flag: str = "🏳️"
     wins: int = 0
     losses: int = 0
@@ -193,7 +197,7 @@ def _names_match_by_id(name1: str, name2: str) -> bool:
         return names_match(name1, name2)
 
 
-def make_fighter_from_dict(data: dict, name: str) -> Fighter:
+def make_fighter_from_dict(data: dict, name: str, fight_date: str = None) -> Fighter:
     allowed_keys = {f.name for f in fields(Fighter)}
     filtered = {k: v for k, v in data.items() if k in allowed_keys}
 
@@ -233,6 +237,13 @@ def make_fighter_from_dict(data: dict, name: str) -> Fighter:
             except (ValueError, TypeError):
                 filtered[field_name] = 0
 
+    # ✅ v55.18: восстановление exp из wins + losses (в памяти, без записи в файлы)
+    if filtered.get("exp") is None or filtered.get("exp") == 0:
+        _w = filtered.get("wins", 0) or 0
+        _l = filtered.get("losses", 0) or 0
+        if _w + _l > 0:
+            filtered["exp"] = int(_w + _l)
+
     filtered["name"] = name
     return Fighter(**filtered)
 
@@ -242,6 +253,34 @@ def safe_val(val, default=0.0):
         return default
     return float(val)
 
+# ============================================================================
+# ✅ v55.18: ЕДИНЫЙ КЛЮЧ БОЯ И ХОЛДАУТ-РЕЕСТР
+# ============================================================================
+def fight_key(fight: dict) -> str:
+    d = fight.get('date')
+    if hasattr(d, 'strftime'):
+        d = d.strftime('%Y-%m-%d')
+    return f"{fight.get('fighter_a','')}_{fight.get('fighter_b','')}_{d}"
+
+def load_holdout_registry() -> dict:
+    path = os.path.join(DATASET_DIR, "holdout_registry.json")
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+def save_holdout_registry(data: dict) -> bool:
+    path = os.path.join(DATASET_DIR, "holdout_registry.json")
+    try:
+        os.makedirs(DATASET_DIR, exist_ok=True)
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception:
+        return False
 
 class FeaturePairConstraints:
     PAIR_BOUNDS: Dict[Tuple[int, int], Tuple[float, float]] = {
@@ -416,8 +455,9 @@ class AdvancedMathEngine:
             ("a_motivation_index", safe_val(a.motivation_index)),
             ("a_biorythm_score", safe_val(a.biorythm_score)),
             ("a_camp_quality", safe_val(a.camp_quality)),
-            ("a_mystic_factor", safe_val(a.mystic_factor)),
-            ("a_mystic_v2", safe_val(a.mystic_v2)),
+            # ✅ v55.15: мистика маскируется при отсутствии подтверждённого доб
+            ("a_mystic_factor", safe_val(a.mystic_factor) if getattr(a, 'dob_quality', 0) > 0 else 0.5),
+            ("a_mystic_v2", safe_val(a.mystic_v2) if getattr(a, 'dob_quality', 0) > 0 else 0.5),
         ]
 
         b_features = [
@@ -436,8 +476,9 @@ class AdvancedMathEngine:
             ("b_motivation_index", safe_val(b.motivation_index)),
             ("b_biorythm_score", safe_val(b.biorythm_score)),
             ("b_camp_quality", safe_val(b.camp_quality)),
-            ("b_mystic_factor", safe_val(b.mystic_factor)),
-            ("b_mystic_v2", safe_val(b.mystic_v2)),
+            # ✅ v55.15: мистика маскируется при отсутствии подтверждённого доб
+            ("b_mystic_factor", safe_val(b.mystic_factor) if getattr(b, 'dob_quality', 0) > 0 else 0.5),
+            ("b_mystic_v2", safe_val(b.mystic_v2) if getattr(b, 'dob_quality', 0) > 0 else 0.5),
         ]
 
         fin_x_td_a = safe_val(a.fin_rate) * safe_val(a.td_def)
@@ -554,7 +595,7 @@ class AdvancedMathEngine:
 
         return result
 
-    def fit(self, X, y, names=None, warm_start=False, sample_weights=None):
+    def fit(self, X, y, names=None, warm_start=False, sample_weights=None, rng=None):
         if not X:
             return
 
@@ -592,6 +633,10 @@ class AdvancedMathEngine:
             if normalized and len(normalized) == n_samples:
                 X = normalized
 
+        # ✅ v55.14: используем переданный rng или глобальный random
+        if rng is None:
+            rng = random
+
         dropout_rate = ModelConstants.DROPOUT_RATE
         MYSTIC_INDICES = [15, 32]
         ENRICHED_INDICES = [11, 12, 13, 14, 15, 28, 29, 30, 31, 32]
@@ -617,11 +662,11 @@ class AdvancedMathEngine:
             for j in range(n_features):
                 gradients[j] /= n_samples
 
-            dropout_mask = [1.0 if random.random() > dropout_rate else 0.0 for _ in range(n_features)]
+            dropout_mask = [1.0 if rng.random() > dropout_rate else 0.0 for _ in range(n_features)]
 
             for j in ENRICHED_INDICES:
                 if j < n_features:
-                    if random.random() > ENRICHED_DROPOUT_RATE:
+                    if rng.random() > ENRICHED_DROPOUT_RATE:
                         dropout_mask[j] = 1.0
                     else:
                         dropout_mask[j] = 0.0
@@ -701,11 +746,11 @@ class MMAEngine:
         self.baseline_accuracy = 0.0
         self._recalibrated_this_cycle = False
         self.trained_on_fights = 0
-
         self._load_weights()
         self.load_baseline_weights()
         self.load_best_weights()
         self.load_recent_features()
+        self.load_pending_buffer()
 
     def _load_weights(self):
         TARGET_FEATURES = 46
@@ -842,7 +887,7 @@ class MMAEngine:
 
                 if acc > 0.001:
                     print(f"✅ Веса загружены (боёв: {data.get('trained_on_fights', '?')}, "
-                          f"точность: {acc * 100:.1f}%, стабильность: {self.stability_score})")
+                          f"точность: {acc * 100:.1f}%)")
                     self.best_accuracy = acc
 
                 self.previous_run_accuracy = data.get('previous_run_accuracy', None)
@@ -959,7 +1004,9 @@ class MMAEngine:
                 best_acc = data.get('loocv_accuracy', 0.0)
                 self.best_accuracy = max(self.best_accuracy, best_acc)
                 working_acc = self.previous_run_accuracy if self.previous_run_accuracy is not None else 0.0
-                if best_acc > working_acc and best_acc > 0.001:
+                degradation = best_acc - working_acc
+                # ✅ v55.9: сброс ТОЛЬКО при деградации >= 4%, иначе рабочие веса продолжают учиться
+                if degradation > ModelConstants.ROLLBACK_THRESHOLD_STARTUP and best_acc > 0.001:
                     self.model.weights = data.get("weights", self.model.weights)
                     self.model.bias = data.get("bias", self.model.bias)
                     self.model.feature_means = data.get("feature_means", self.model.feature_means)
@@ -969,10 +1016,15 @@ class MMAEngine:
                         self.model.feature_names = [n.strip() if isinstance(n, str) else n for n in raw_names]
                     if abs(self.model.bias) > 0.3:
                         self.model.bias = 0.0
-                    print(f"✅ АВТО-ВОЗВРАТ: best {best_acc * 100:.1f}% > рабочие {working_acc * 100:.1f}%")
+                    print(f"✅ АВТО-ВОЗВРАТ (деградация {degradation * 100:.1f}% > 4%): "
+                          f"best {best_acc * 100:.1f}% > рабочие {working_acc * 100:.1f}%")
                 else:
-                    print(f"✅ Лучшие веса: {self.best_accuracy * 100:.1f}% "
-                          f"(рабочие: {working_acc * 100:.1f}%)")
+                    if 0 < degradation <= ModelConstants.ROLLBACK_THRESHOLD_STARTUP:
+                        print(f"✅ Рабочие веса сохранены (деградация {degradation * 100:.1f}% <= 4%): "
+                              f"best {self.best_accuracy * 100:.1f}%, рабочие {working_acc * 100:.1f}% — обучение продолжается")
+                    else:
+                        print(f"✅ Лучшие веса: {self.best_accuracy * 100:.1f}% "
+                              f"(рабочие: {working_acc * 100:.1f}%)")
             except Exception as e:
                 print(f"⚠️ Ошибка загрузки лучших весов: {e}")
         else:
@@ -988,6 +1040,36 @@ class MMAEngine:
                 print(f"✅ Загружено {len(self.recent_features)} последних боёв для нормализатора")
             except Exception as e:
                 print(f"⚠️ Ошибка загрузки recent_features: {e}")
+    def save_pending_buffer(self):
+        """Сохраняет pending_fights в файл."""
+        try:
+            os.makedirs(DATASET_DIR, exist_ok=True)
+            with open(PENDING_BUFFER_FILE, "w", encoding="utf-8") as f:
+                json.dump(self.pending_fights, f, ensure_ascii=False, indent=2)
+            print(f"💾 Буфер сохранён: {len(self.pending_fights)} боёв → {PENDING_BUFFER_FILE}")
+        except Exception as e:
+            print(f"⚠️ Ошибка сохранения буфера: {e}")
+
+    def load_pending_buffer(self):
+        """Загружает pending_fights из файла с дедупликацией."""
+        if not os.path.exists(PENDING_BUFFER_FILE):
+            return
+        try:
+            with open(PENDING_BUFFER_FILE, "r", encoding="utf-8") as f:
+                loaded = json.load(f)
+            if not isinstance(loaded, list):
+                return
+            seen = set()
+            unique = []
+            for fight in loaded:
+                key = fight_key(fight)
+                if key not in seen:
+                    seen.add(key)
+                    unique.append(fight)
+            self.pending_fights = unique
+            print(f"✅ Буфер загружен: {len(self.pending_fights)} боёв из {PENDING_BUFFER_FILE}")
+        except Exception as e:
+            print(f"⚠️ Ошибка загрузки буфера: {e}")
 
     def update_recent_features(self, features: List[float]):
         self.recent_features.append(features)
@@ -1116,8 +1198,9 @@ class MMAEngine:
         if len(dataset) < 5:
             return 0.0, 0.0, 0.0
 
-        eval_start = max(0, len(dataset) - 500)
-        eval_end = max(0, len(dataset) - 400)
+        # ✅ v55.13: свежий срез оценки, не пересекающийся с батчем
+        eval_start = max(0, len(dataset) - 200)
+        eval_end = max(0, len(dataset) - 100)
         eval_fights = dataset[eval_start:eval_end]
 
         if len(eval_fights) < 10:
@@ -1129,9 +1212,8 @@ class MMAEngine:
 
         for fight in eval_fights:
             try:
-                a = make_fighter_from_dict(fight.get("stats_a", {}), fight.get("fighter_a", "Unknown"))
-                b = make_fighter_from_dict(fight.get("stats_b", {}), fight.get("fighter_b", "Unknown"))
-
+                a = make_fighter_from_dict(fight.get("stats_a", {}), fight.get("fighter_a", "Unknown"), fight_date=fight.get("date"))
+                b = make_fighter_from_dict(fight.get("stats_b", {}), fight.get("fighter_b", "Unknown"), fight_date=fight.get("date"))
                 try:
                     odds_a = float(fight.get("odds_a", 1.85))
                 except (ValueError, TypeError):
@@ -1157,26 +1239,92 @@ class MMAEngine:
         win_acc = (correct_win / total * 100) if total else 0.0
         return win_acc, 0.0, 0.0
 
-    def _incremental_fit(self, new_fight_data: dict, all_dataset: list) -> Tuple[int, int]:
+    def _incremental_fit(self, new_fight_data: dict, all_dataset: list, enrich_fn=None) -> Tuple[int, int]:
         batch_size = 200
+
+        # ✅ v55.18: локальный rng вместо глобального random.seed
+        rng = random.Random(ModelConstants.TRAIN_SEED) if ModelConstants.TRAIN_SEED is not None else random
+
+        # ✅ v55.18: исключаем холдаут-бои из обучения
+        registry = load_holdout_registry()
+        holdout_keys = set()
+        for period, keys in registry.items():
+            if isinstance(keys, list):
+                holdout_keys.update(keys)
+        if holdout_keys:
+            all_dataset = [f for f in all_dataset if fight_key(f) not in holdout_keys]
 
         recent_fights = all_dataset[-300:] if len(all_dataset) >= 300 else all_dataset
         historical_fights = all_dataset[:-300] if len(all_dataset) > 300 else []
 
-        sampled_fresh = random.sample(recent_fights, min(139, len(recent_fights)))
-        sampled_hist = random.sample(historical_fights, min(60, len(historical_fights))) if historical_fights else []
+        pending_count = len(self.pending_fights)
+        if pending_count > 0:
+            new_fights = recent_fights[-pending_count:]
+            remaining_recent = recent_fights[:-pending_count] if pending_count < len(recent_fights) else []
+            extra_needed = max(0, 139 - pending_count)
+            if extra_needed > 0 and remaining_recent:
+                sampled_fresh = new_fights + rng.sample(remaining_recent, min(extra_needed, len(remaining_recent)))
+            else:
+                sampled_fresh = new_fights
+        else:
+            sampled_fresh = rng.sample(recent_fights, min(139, len(recent_fights)))
 
+        sampled_hist = rng.sample(historical_fights, min(60, len(historical_fights))) if historical_fights else []
         micro_batch = sampled_fresh + sampled_hist
 
-        weights_batch = [ModelConstants.TEMPORAL_WEIGHT_NEW] * len(sampled_fresh)
-        weights_batch.extend([0.7] * len(sampled_hist))
+        # ✅ v55.16: вес образца по уверенности слепого ИИ (без согласия с фактом)
+        def _conf_factor(d):
+            conf = d.get('blind_conf')
+            if conf is None:
+                return 1.0
+            try:
+                conf = float(conf)
+            except (TypeError, ValueError):
+                return 1.0
+            conf = max(60.0, min(85.0, conf))
+            if conf < 70.0:
+                return 1.0
+            return 1.0 + (conf - 70.0) / 50.0  # 70→1.0, 85→1.30
+
+        # ✅ Уточнение 1: _conf_factor вызывается ОДИН раз на бой
+        conf_factors_fresh = [_conf_factor(d) for d in sampled_fresh]
+        conf_factors_hist = [_conf_factor(d) for d in sampled_hist]
+
+        weights_batch = [ModelConstants.TEMPORAL_WEIGHT_NEW * cf for cf in conf_factors_fresh]
+        weights_batch.extend([0.7 * cf for cf in conf_factors_hist])
+        ai_weighted = sum(1 for cf in (conf_factors_fresh + conf_factors_hist) if cf > 1.0)
+
+        # ✅ v55.18: ленивое обогащение исторических боёв
+        if enrich_fn is not None:
+            _need = ('exp', 'dob', 'dob_quality', 'camp_name', 'reach_cm', 'height_cm')
+            _enriched = 0
+            for d in micro_batch:
+                for side in ('stats_a', 'stats_b'):
+                    st = d.get(side)
+                    if not isinstance(st, dict):
+                        continue
+                    if not any(st.get(k) is None or st.get(k) == 0 for k in _need):
+                        continue
+                    fn = d.get('fighter_a' if side == 'stats_a' else 'fighter_b', '')
+                    fd_date = d.get('date', '')
+                    if not fn or not fd_date:
+                        continue
+                    extra = enrich_fn(fn, fd_date)
+                    if extra:
+                        for k, v in extra.items():
+                            if st.get(k) is None or st.get(k) == 0:
+                                st[k] = v
+                        d[side] = st
+                        _enriched += 1
+            if _enriched > 0:
+                print(f" 🔄 Ленивое обогащение: {_enriched} сторон дополнены из LLM")
 
         X, y, names, sample_weights = [], [], [], []
 
         for d, w in zip(micro_batch, weights_batch):
             try:
-                a = make_fighter_from_dict(d.get("stats_a", {}), d.get("fighter_a", "Unknown"))
-                b = make_fighter_from_dict(d.get("stats_b", {}), d.get("fighter_b", "Unknown"))
+                a = make_fighter_from_dict(d.get("stats_a", {}), d.get("fighter_a", "Unknown"), fight_date=d.get("date"))
+                b = make_fighter_from_dict(d.get("stats_b", {}), d.get("fighter_b", "Unknown"), fight_date=d.get("date"))
 
                 odds_a = float(d.get("odds_a", 1.85))
                 odds_b = float(d.get("odds_b", 1.85))
@@ -1201,15 +1349,26 @@ class MMAEngine:
 
         temp_model.weights = self.model.weights.copy() if self.model.weights else [0.0] * len(X[0])
         temp_model.bias = self.model.bias
-        temp_model.feature_means = self.model.feature_means.copy() if self.model.feature_means else []
-        temp_model.feature_stds = self.model.feature_stds.copy() if self.model.feature_stds else []
+
+        # ✅ v55.18: пересчёт нормализации на ТЕКУЩЕМ батче (устраняет дрейф)
+        n_feat = len(X[0])
+        fresh_means = [0.0] * n_feat
+        fresh_stds = [1.0] * n_feat
+        for i in range(n_feat):
+            vals = [row[i] for row in X]
+            fresh_means[i] = sum(vals) / len(vals)
+            var = sum((v - fresh_means[i]) ** 2 for v in vals) / len(vals)
+            fresh_stds[i] = max(var ** 0.5, 1e-8)
+        temp_model.feature_means = fresh_means
+        temp_model.feature_stds = fresh_stds
+
         temp_model.feature_names = self.model.feature_names.copy() if self.model.feature_names else []
 
         old_dropout = ModelConstants.DROPOUT_RATE
         ModelConstants.DROPOUT_RATE = 0.05
 
         try:
-            temp_model.fit(X, y, names, warm_start=True, sample_weights=sample_weights)
+            temp_model.fit(X, y, names, warm_start=True, sample_weights=sample_weights, rng=rng)
         finally:
             ModelConstants.DROPOUT_RATE = old_dropout
 
@@ -1224,12 +1383,12 @@ class MMAEngine:
             print(f" ⚠️ Bias ограничен: {self.model.bias:.4f} → 0.0")
             self.model.bias = 0.0
 
-        # ✅ v55.6: дополнительное ограничение bias ±0.003 (для стабильности)
-        BIAS_MAX_ABS = 0.003
+        # ✅ v55.13: ограничение bias ±0.05 (поднято с 0.003 для лучшей адаптации)
+        BIAS_MAX_ABS = 0.05
         if abs(self.model.bias) > BIAS_MAX_ABS:
             old_bias = self.model.bias
             self.model.bias = max(-BIAS_MAX_ABS, min(BIAS_MAX_ABS, self.model.bias))
-            print(f" ⚠️ Bias ограничен (v55.6): {old_bias:.4f} → {self.model.bias:.4f}")
+            print(f" ⚠️ Bias ограничен (v55.13): {old_bias:.4f} → {self.model.bias:.4f}")
 
         # ========= ИЗМЕНЕНИЯ v55.7 =========
         # 1. Упрощённая логика обновления весов (единый step_ratio)
@@ -1395,14 +1554,28 @@ class MMAEngine:
         else:
             print(f" ✅ Все пары в границах")
 
-        print(f" 🔄 Обучение: {corrections_made} весов, батч={len(micro_batch)} "
-              f"(свежие={len(sampled_fresh)}, исторические={len(sampled_hist)})")
+        # ============================================================================
+        # ✅ v55.14: ДИАГНОСТИКА (frozen weights + dataset_hash по ключам)
+        # ============================================================================
+        frozen = [i for i in range(len(self.model.weights))
+                  if i < len(temp_model.weights)
+                  and abs(temp_model.weights[i] - self.model.weights[i]) < 0.00001]
 
+        # Хэш только по составу (ключам), игнорируем дрейф LLM-признаков
+        import hashlib as _hashlib
+        keys_only = sorted([fight_key(f) for f in all_dataset])
+        serialized = json.dumps(keys_only, ensure_ascii=False)
+        dataset_hash = _hashlib.md5(serialized.encode('utf-8')).hexdigest()[:16]
+
+        print(f" 🔒 Заморожено весов: {len(frozen)}" + (f", индексы: {frozen[:15]}{'...' if len(frozen) > 15 else ''}" if frozen else ""))
+        print(f" 🔎 dataset_len={len(all_dataset)}, dataset_hash={dataset_hash}")
+        print(f" 🔄 Обучение: {corrections_made} весов, батч={len(micro_batch)} "
+              f"(свежие={len(sampled_fresh)}, исторические={len(sampled_hist)}, ai-взвешено={ai_weighted})")
         return corrections_made, len(self.model.weights)
 
-    def _fight_to_dict(self, fd: FightData, res: Result, orig_a: str, orig_b: str) -> dict:
+    def _fight_to_dict(self, fd: FightData, res: Result, orig_a: str, orig_b: str,
+                       ai_factor: float = 1.0, blind_conf: float = None) -> dict:
         odds_b_value = fd.matchup_odds.get("odds_b", 1.85) if fd.matchup_odds else 1.85
-
         return {
             "event": fd.location.split('(')[0].strip() if '(' in fd.location else fd.location,
             "date": fd.date.strftime("%Y-%m-%d"),
@@ -1413,25 +1586,31 @@ class MMAEngine:
             "method": res.method.name,
             "odds_a": fd.odds_a,
             "odds_b": odds_b_value,
+            "ai_factor": ai_factor,
+            "blind_conf": blind_conf,   # ✅ v55.16: верхний уровень, не в stats
             "stats_a": {
                 k: getattr(fd.a, k) for k in
                 ["age", "wins", "losses", "fin_rate", "sub_rate", "td_def", "grap_def",
                  "recent_wins", "months_off", "fights_12m", "stress_factor",
                  "motivation_index", "biorythm_score", "camp_quality", "camp_name",
-                 "mystic_factor", "mystic_v2", "reach_cm", "height_cm"]
+                 "mystic_factor", "mystic_v2", "reach_cm", "height_cm", "exp",
+                 "dob", "dob_quality"]  # ✅ v55.14: сохраняем dob и его качество
             },
             "stats_b": {
                 k: getattr(fd.b, k) for k in
                 ["age", "wins", "losses", "fin_rate", "sub_rate", "td_def", "grap_def",
                  "recent_wins", "months_off", "fights_12m", "stress_factor",
                  "motivation_index", "biorythm_score", "camp_quality", "camp_name",
-                 "mystic_factor", "mystic_v2", "reach_cm", "height_cm"]
-            }
+                 "mystic_factor", "mystic_v2", "reach_cm", "height_cm", "exp",
+                 "dob", "dob_quality"]  # ✅ v55.14: сохраняем dob и его качество
+            },
         }
 
-    def add_fight_to_buffer(self, fd: FightData, res: Result, orig_a: str, orig_b: str) -> dict:
-        fight_dict = self._fight_to_dict(fd, res, orig_a, orig_b)
+    def add_fight_to_buffer(self, fd: FightData, res: Result, orig_a: str, orig_b: str,
+                            ai_factor: float = 1.0, blind_conf: float = None) -> dict:
+        fight_dict = self._fight_to_dict(fd, res, orig_a, orig_b, ai_factor, blind_conf)
         self.pending_fights.append(fight_dict)
+        self.save_pending_buffer()
 
         buffer_status = f"{len(self.pending_fights)}/{self.BATCH_TRAIN_SIZE}"
         print(f" 📦 Буфер: {buffer_status} боёв")
@@ -1520,6 +1699,10 @@ class MMAEngine:
             if key not in seen:
                 dataset.append(fight)
                 new_fights_to_save.append(fight)
+            else:
+                # ✅ v55.19: обновляем И ai_factor, И blind_conf
+                seen[key]['ai_factor'] = fight.get('ai_factor', 1.0)
+                seen[key]['blind_conf'] = fight.get('blind_conf')
 
         old_acc = 0.0
 
@@ -1530,13 +1713,14 @@ class MMAEngine:
                 pass
 
         last_fight = self.pending_fights[-1]
-        corrections, total_weights = self._incremental_fit(last_fight, dataset)
-
-        # ✅ v55.7: обновление статистик нормализации после обучения
-        self.recalibrate_scaler()
+        enrich_fn = getattr(self, '_enrich_fn', None)
+        corrections, total_weights = self._incremental_fit(last_fight, dataset, enrich_fn)
 
         acc_win, acc_rnd, acc_mth = self.get_recent_accuracies(dataset)
         acc_win_ratio = acc_win / 100.0
+
+        # ✅ v55.14: накопительный счётчик обученных боёв
+        self.trained_on_fights = getattr(self, 'trained_on_fights', 0) + len(self.pending_fights)
 
         print(f" 💾 Сохранение текущих весов...")
 
@@ -1552,7 +1736,7 @@ class MMAEngine:
                 "feature_means": self.model.feature_means,
                 "feature_stds": self.model.feature_stds,
                 "feature_names": self.model.feature_names,
-                "trained_on_fights": len(dataset),
+                "trained_on_fights": self.trained_on_fights,
                 "loocv_accuracy": acc_win_ratio,
                 "previous_run_accuracy": acc_win_ratio,
                 "stability_score": self.stability_score
@@ -1630,6 +1814,17 @@ class MMAEngine:
         if len(self.pending_fights) == 0:
             return {"status": "empty", "status_text": "⚠️ Буфер пуст"}
 
+        # ✅ v55.19: не обучаться на малых батчах (восстановлен порог)
+        MIN_TRAIN_SIZE = 150
+        if len(self.pending_fights) < MIN_TRAIN_SIZE:
+            print(f"📦 Буфер {len(self.pending_fights)}/{MIN_TRAIN_SIZE}. Обучение отложено до накопления.")
+            return {
+                "status": "buffered",
+                "status_text": f"📦 Буфер {len(self.pending_fights)}/{MIN_TRAIN_SIZE}. Обучение отложено до накопления.",
+                "buffer_size": len(self.pending_fights),
+                "min_required": MIN_TRAIN_SIZE
+            }
+
         print(f"🔄 Принудительное обучение на {len(self.pending_fights)} боях...")
         return self.process_batch()
 
@@ -1641,12 +1836,18 @@ class MMAEngine:
             "fights_remaining": self.BATCH_TRAIN_SIZE - len(self.pending_fights)
         }
 
-    def train_on_new_fight(self, fd: FightData, res: Result, orig_a: str, orig_b: str) -> dict:
+    def train_on_new_fight(self, fd: FightData, res: Result, orig_a: str, orig_b: str,
+                           ai_factor: float = 1.0, blind_conf: float = None) -> dict:
+
         if not self.is_training_mode:
             print(" ⏸️ Режим только прогноз — обучение отключено")
             return {"status": "predict_only"}
 
-        return self.add_fight_to_buffer(fd, res, orig_a, orig_b)
+        if ai_factor is None:
+            ai_factor = getattr(self, "_ai_factor_next", 1.0)
+        self._ai_factor_next = 1.0
+
+        return self.add_fight_to_buffer(fd, res, orig_a, orig_b, ai_factor, blind_conf)
 
     def predict(self, fd: FightData) -> Prediction:
         odds_b = fd.matchup_odds.get("odds_b", 1.85) if fd.matchup_odds else 1.85
@@ -1667,7 +1868,7 @@ class MMAEngine:
         else:
             implied_prob_a = 1.0 / max(fd.odds_a, 1.01)
             delta = dampened_prob - implied_prob_a
-            final_prob_a = dampened_prob - (delta * 0.25)
+            final_prob_a = dampened_prob - (delta * 0.15)  # ✅ v55.16: было 0.25
             final_prob_a = max(0.30, min(0.90, final_prob_a))
 
         if final_prob_a > 0.50:
