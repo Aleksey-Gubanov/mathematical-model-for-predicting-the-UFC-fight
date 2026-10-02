@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MMA Predictor AI</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0e27;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        .container { max-width: 600px; margin: 0 auto; padding: 10px; }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .header h1 { font-size: 16px; color: white; }
+        .header-controls { display: flex; gap: 8px; }
+        .control-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        .user-bar {
+            background: rgba(0,0,0,0.3);
+            padding: 8px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .user-bar label { color: rgba(255,255,255,0.8); font-size: 12px; }
+        .user-bar input {
+            flex: 1;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 6px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .tabs { display: flex; gap: 5px; margin-bottom: 15px; }
+        .tab {
+            flex: 1;
+            padding: 10px;
+            background: #1a1f3a;
+            border: none;
+            color: #a0a0a0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .tab.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+
+        .content { background: #1a1f3a; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; margin-bottom: 5px; font-size: 12px; color: #a0a0a0; }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            background: #0a0e27;
+            border: 1px solid #2a2f4a;
+            border-radius: 8px;
+            color: white;
+            font-size: 13px;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .btn-secondary { background: #2a2f4a; }
+
+        .fight-card {
+            background: #0a0e27;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 3px solid #2a2f4a;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .fight-card:hover { border-left-color: #667eea; }
+        .fight-card.recommended { border-left-color: #4caf50; background: rgba(76, 175, 80, 0.1); }
+        .fight-card.skip { border-left-color: #f44336; background: rgba(244, 67, 54, 0.1); }
+        .fight-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .fight-number { background: #2a2f4a; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        .fight-verdict { font-size: 11px; font-weight: bold; }
+        .fight-verdict.recommend { color: #4caf50; }
+        .fight-verdict.skip { color: #f44336; }
+        .fight-fighters { font-size: 14px; font-weight: bold; margin-bottom: 4px; }
+        .fight-meta { font-size: 11px; color: #a0a0a0; }
+
+        .process-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .process-overlay.active { display: flex; }
+        .process-container {
+            background: #1a1f3a;
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .process-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .stage-box {
+            background: #0a0e27;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 3px solid #ffd700;
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .stage-title { font-size: 14px; font-weight: bold; color: #ffd700; margin-bottom: 8px; }
+        .stage-lines { font-size: 12px; color: #e0e0e0; line-height: 1.6; }
+        .stage-lines div { margin-bottom: 4px; }
+
+        .result-card {
+            background: linear-gradient(135deg, #1a1f3a, #2a2f4a);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+            border: 2px solid #667eea;
+        }
+        .result-card.recommend { border-color: #4caf50; }
+        .result-card.value { border-color: #ff9800; }
+        .result-card.skip { border-color: #f44336; }
+        .result-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; text-align: center; }
+
+        .result-section {
+            background: #0a0e27;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        .section-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+        .section-content { font-size: 12px; color: #e0e0e0; line-height: 1.6; }
+
+        .result-fighters { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .result-fighter { flex: 1; text-align: center; padding: 10px; }
+        .result-fighter.winner { background: rgba(76, 175, 80, 0.2); border-radius: 8px; }
+        .fighter-name { font-size: 13px; font-weight: bold; margin-bottom: 5px; }
+        .fighter-prob { font-size: 24px; font-weight: bold; color: #667eea; }
+
+        .detail-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #2a2f4a; font-size: 12px; }
+        .detail-row:last-child { border-bottom: none; }
+
+        .verdict { text-align: center; padding: 12px; background: rgba(102, 126, 234, 0.2); border-radius: 8px; font-weight: bold; font-size: 14px; }
+        .close-btn {
+            width: 100%;
+            padding: 12px;
+            background: #2a2f4a;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        .loading { text-align: center; padding: 20px; color: #a0a0a0; }
+        .spinner {
+            border: 3px solid #2a2f4a;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .error { background: rgba(244, 67, 54, 0.2); border: 1px solid #f44336; border-radius: 8px; padding: 12px; margin-top: 10px; color: #f44336; font-size: 13px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="header-top">
+            <h1>🥊 MMA Predictor AI</h1>
+            <div class="header-controls">
+                <button class="control-btn" onclick="toggleLang()">RU/EN</button>
+                <button class="control-btn" onclick="toggleLayout()">📱/💻</button>
+            </div>
+        </div>
+        <div class="user-bar">
+            <label>Device ID:</label>
+            <input type="text" id="device-id" value="TEST_USER_001" readonly>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('predict')">Прогноз</button>
+        <button class="tab" onclick="switchTab('train2a')">Обучение 2a</button>
+        <button class="tab" onclick="switchTab('train2b')">Обучение 2b</button>
+        <button class="tab" onclick="switchTab('status')">Статус</button>
+    </div>
+
+    <div class="tab-content active" id="tab-predict">
+        <div class="content" id="predict-date-form">
+            <div class="form-group">
+                <label>Дата турнира</label>
+                <input type="date" id="predict-date">
+            </div>
+            <button class="btn" onclick="loadCard()">Загрузить кард</button>
+        </div>
+
+        <div id="predict-card" style="display: none;">
+            <h3 style="margin-bottom: 12px; font-size: 14px;">Кард турнира</h3>
+            <div id="fights-list"></div>
+            <button class="btn btn-secondary" onclick="backToDate()">Назад к выбору даты</button>
+        </div>
+    </div>
+
+    <div class="tab-content" id="tab-train2a">
+        <div class="content">
+            <div class="form-group">
+                <label>Период (ММ или ММ-ММ)</label>
+                <input type="text" id="train2a-period" placeholder="01-06">
+            </div>
+            <div class="form-group">
+                <label>Год</label>
+                <input type="number" id="train2a-year" placeholder="2024" min="2022" max="2026">
+            </div>
+            <button class="btn" onclick="startTraining2a()">Запустить обучение</button>
+        </div>
+        <div id="train2a-result"></div>
+    </div>
+
+    <div class="tab-content" id="tab-train2b">
+        <div class="content">
+            <div class="form-group">
+                <label>Дата карда</label>
+                <input type="date" id="train2b-date">
+            </div>
+            <button class="btn" onclick="loadCardForTraining()">Загрузить кард</button>
+        </div>
+        <div id="train2b-card" style="display: none;">
+            <h3 style="margin-bottom: 12px; font-size: 14px;">Выберите бои для проверки</h3>
+            <div id="train2b-fights-list"></div>
+            <button class="btn" onclick="startTraining2b()">Запустить проверку</button>
+            <button class="btn btn-secondary" onclick="backToTrain2bForm()">Назад</button>
+        </div>
+        <div id="train2b-result"></div>
+    </div>
+
+    <div class="tab-content" id="tab-status">
+        <button class="btn" onclick="checkStatus()">Проверить статус</button>
+        <div id="status-result"></div>
+    </div>
+</div>
+
+<div id="process-overlay" class="process-overlay">
+    <div class="process-container">
+        <div class="process-title" id="process-title">Анализ боя</div>
+        <div id="process-stages"></div>
+        <div id="process-result"></div>
+        <button class="close-btn" onclick="closeProcess()">Закрыть</button>
+    </div>
+</div>
+
+<script>
+    const API_URL = 'http://localhost:8000';
+    let currentLang = 'ru';
+    let currentCard = [];
+    let predictedFights = new Map();
+    let selectedFightsForTraining = new Set();
+
+    function toggleLang() { currentLang = currentLang === 'ru' ? 'en' : 'ru'; }
+    function toggleLayout() {
+        const container = document.querySelector('.container');
+        container.style.maxWidth = container.style.maxWidth === '100%' ? '600px' : '100%';
+    }
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        event.target.classList.add('active');
+        document.getElementById('tab-' + tabName).classList.add('active');
+    }
+    function getDeviceId() { return document.getElementById('device-id').value; }
+
+    async function loadCard() {
+        const date = document.getElementById('predict-date').value;
+        if (!date) { alert('Выберите дату'); return; }
+
+        const deviceId = getDeviceId();
+        const fightsList = document.getElementById('fights-list');
+        fightsList.innerHTML = '<div class="loading"><div class="spinner"></div>Загрузка карда...</div>';
+
+        try {
+            const response = await fetch(`${API_URL}/api/card?date=${date}&device_id=${deviceId}`);
+            const data = await response.json();
+
+            if (data.status === 'error' || !data.fights || data.fights.length === 0) {
+                fightsList.innerHTML = `<div class="error">❌ ${data.message || 'Бои не найдены'}</div>`;
+                return;
+            }
+
+            currentCard = data.fights;
+            predictedFights.clear();
+            renderFights();
+
+            document.getElementById('predict-date-form').style.display = 'none';
+            document.getElementById('predict-card').style.display = 'block';
+        } catch (error) {
+            fightsList.innerHTML = `<div class="error"> Ошибка сети: ${error.message}</div>`;
+        }
+    }
+
+    function renderFights() {
+        const fightsList = document.getElementById('fights-list');
+        fightsList.innerHTML = '';
+
+        currentCard.forEach((fight, idx) => {
+            const predicted = predictedFights.get(idx);
+            const card = document.createElement('div');
+            card.className = 'fight-card';
+            if (predicted) {
+                card.classList.add(predicted.verdict === 'ПРОПУСТИТЬ' ? 'skip' : 'recommended');
+            }
+            card.onclick = () => selectFight(idx);
+
+            let verdictHTML = '';
+            if (predicted) {
+                const verdictClass = predicted.verdict === 'ПРОПУСТИТЬ' ? 'skip' : 'recommend';
+                verdictHTML = `<span class="fight-verdict ${verdictClass}">${predicted.verdict} • ${predicted.winner} (${predicted.probability}%)</span>`;
+            }
+
+            card.innerHTML = `
+                <div class="fight-card-header">
+                    <span class="fight-number">#${idx + 1}</span>
+                    ${verdictHTML}
+                </div>
+                <div class="fight-fighters">${fight.fighter_a} vs ${fight.fighter_b}</div>
+                <div class="fight-meta">${fight.rounds} раунд(ов) ${fight.is_main_event ? '• МЕ' : ''}</div>
+            `;
+
+            fightsList.appendChild(card);
+        });
+    }
+
+    async function selectFight(fightIdx) {
+        if (predictedFights.has(fightIdx)) return;
+
+        const fight = currentCard[fightIdx];
+        const deviceId = getDeviceId();
+        const date = document.getElementById('predict-date').value;
+
+        document.getElementById('process-title').textContent = `Анализ: ${fight.fighter_a} vs ${fight.fighter_b}`;
+        document.getElementById('process-stages').innerHTML = '';
+        document.getElementById('process-result').innerHTML = '<div class="loading"><div class="spinner"></div>Инициализация...</div>';
+        document.getElementById('process-overlay').classList.add('active');
+
+        try {
+            const response = await fetch(`${API_URL}/api/predict`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    device_id: deviceId,
+                    fighter_a: fight.fighter_a,
+                    fighter_b: fight.fighter_b,
+                    date: date,
+                    lang: currentLang
+                })
+            });
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            const stagesContainer = document.getElementById('process-stages');
+            const resultContainer = document.getElementById('process-result');
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n\n');
+                buffer = lines.pop();
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const data = JSON.parse(line.slice(6));
+
+                        if (data.type === 'stage') {
+                            stagesContainer.innerHTML = `
+                                <div class="stage-box">
+                                    <div class="stage-title">${data.title}</div>
+                                    <div class="stage-lines">
+                                        ${data.lines.map(l => `<div>${l}</div>`).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        } else if (data.type === 'stage_complete') {
+                            stagesContainer.innerHTML = `
+                                <div class="stage-box">
+                                    <div class="stage-title">${data.title}</div>
+                                    <div class="stage-lines">
+                                        ${data.lines.map(l => `<div>${l}</div>`).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        } else if (data.type === 'final_result') {
+                            stagesContainer.innerHTML = '';
+                            resultContainer.innerHTML = '';
+
+                            const cardClass = data.verdict.includes('РЕКОМЕНДУЮ') ? 'recommend' : (data.verdict.includes('ВАЛУЙ') ? 'value' : 'skip');
+
+                            resultContainer.innerHTML = `
+                                <div class="result-card ${cardClass}">
+                                    <div class="result-title">🎯 ИТОГОВЫЙ ПРОГНОЗ</div>
+
+                                    <div class="result-section">
+                                        <div class="section-title">🤖 РЕЗУЛЬТАТ МОДЕЛИ</div>
+                                        <div class="result-fighters">
+                                            <div class="result-fighter ${data.winner === data.fighters_data.fighter_a ? 'winner' : ''}">
+                                                <div class="fighter-name">${data.fighters_data.fighter_a}</div>
+                                                <div class="fighter-prob">${data.winner === data.fighters_data.fighter_a ? data.probability : 100 - data.probability}%</div>
+                                            </div>
+                                            <div class="result-fighter ${data.winner === data.fighters_data.fighter_b ? 'winner' : ''}">
+                                                <div class="fighter-name">${data.fighters_data.fighter_b}</div>
+                                                <div class="fighter-prob">${data.winner === data.fighters_data.fighter_b ? data.probability : 100 - data.probability}%</div>
+                                            </div>
+                                        </div>
+                                        <div class="detail-row"><span>Метод:</span><span>${data.method}</span></div>
+                                        <div class="detail-row"><span>Раунд:</span><span>${data.round}</span></div>
+                                        <div class="detail-row"><span>Доверительный интервал:</span><span>${data.confidence_interval}</span></div>
+                                    </div>
+
+                                    <div class="result-section">
+                                        <div class="section-title"> АНАЛИЗ ИИ-АРБИТРА</div>
+                                        <div class="section-content">
+                                            <div>📊 ${data.fighters_data.fighter_a}: ${data.fighters_data.stats_a}</div>
+                                            <div>📊 ${data.fighters_data.fighter_b}: ${data.fighters_data.stats_b}</div>
+                                            <div style="margin-top: 8px;">🤖 ИИ выбирает: ${data.ai_winner} (${data.ai_confidence}%)</div>
+                                            <div>💬 Причина: ${data.ai_reason}</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="result-section">
+                                        <div class="section-title">💰 КОЭФФИЦИЕНТЫ БУКМЕКЕРОВ</div>
+                                        <div class="section-content">
+                                            <div>📈 ${data.fighters_data.fighter_a}: ${data.odds_a} (${data.bookmaker})</div>
+                                            <div>📈 ${data.fighters_data.fighter_b}: ${data.odds_b} (${data.bookmaker})</div>
+                                            <div style="margin-top: 8px;">⚖️ Рынок оценивает бой как: ${data.market_assessment}</div>
+                                        </div>
+                                    </div>
+
+                                        <div class="verdict">
+                                            ${data.verdict}${data.agreements === 2 ? ' (3 из 3)' : ''}<br>
+                                            <small>${data.verdict_reason}</small>
+                                        </div>
+                            `;
+
+                            predictedFights.set(fightIdx, {
+                                winner: data.winner,
+                                verdict: data.verdict,
+                                probability: data.probability
+                            });
+                            renderFights();
+                        } else if (data.type === 'error') {
+                            resultContainer.innerHTML = `<div class="error">❌ ${data.message}</div>`;
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            document.getElementById('process-result').innerHTML = `<div class="error">❌ Ошибка сети: ${error.message}</div>`;
+        }
+    }
+
+    function closeProcess() {
+        document.getElementById('process-overlay').classList.remove('active');
+    }
+
+    function backToDate() {
+        document.getElementById('predict-date-form').style.display = 'block';
+        document.getElementById('predict-card').style.display = 'none';
+        predictedFights.clear();
+    }
+
+    async function startTraining2a() {
+        const period = document.getElementById('train2a-period').value;
+        const year = document.getElementById('train2a-year').value;
+        const deviceId = getDeviceId();
+
+        if (!period || !year) { alert('Заполните все поля'); return; }
+
+        const resultContainer = document.getElementById('train2a-result');
+        resultContainer.innerHTML = '<div class="loading"><div class="spinner"></div>Запуск обучения...</div>';
+
+        try {
+            const response = await fetch(`${API_URL}/api/train/2a`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ device_id: deviceId, period: period, year: parseInt(year), lang: currentLang })
+            });
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n\n');
+                buffer = lines.pop();
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const data = JSON.parse(line.slice(6));
+
+                        if (data.type === 'stage') {
+                            resultContainer.innerHTML = `<div class="stage-box"><div class="stage-title">${data.title}</div><div class="stage-lines">${data.lines.join('<br>')}</div></div>`;
+                        } else if (data.type === 'final_result') {
+                            const d = data.data;
+                            resultContainer.innerHTML = `
+                                <div class="result-card recommend">
+                                    <div class="result-title">✅ Обучение завершено</div>
+                                    <div class="detail-row"><span>Период:</span><span>${d.period}.${d.year}</span></div>
+                                    <div class="detail-row"><span>Всего боёв:</span><span>${d.total_fights}</span></div>
+                                    <div class="detail-row"><span>Обработано:</span><span>${d.trained_fights}</span></div>
+                                    <div class="detail-row"><span>Точность на тесте:</span><span>${d.accuracy.toFixed(1)}%</span></div>
+                                    <div class="detail-row"><span>Лучшая точность модели:</span><span>${d.new_best_accuracy.toFixed(1)}%</span></div>
+                                    <div style="margin-top: 10px; font-size: 12px; color: #a0a0a0;">${d.message}</div>
+                                </div>
+                            `;
+                        } else if (data.type === 'error') {
+                            resultContainer.innerHTML = `<div class="error">❌ ${data.message}</div>`;
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            resultContainer.innerHTML = `<div class="error">❌ ${error.message}</div>`;
+        }
+}
+    async function loadCardForTraining() {
+        const date = document.getElementById('train2b-date').value;
+        if (!date) { alert('Выберите дату'); return; }
+
+        const deviceId = getDeviceId();
+        const fightsList = document.getElementById('train2b-fights-list');
+        fightsList.innerHTML = '<div class="loading"><div class="spinner"></div>Загрузка...</div>';
+
+        try {
+            const response = await fetch(`${API_URL}/api/card?date=${date}&device_id=${deviceId}`);
+            const data = await response.json();
+
+            if (data.status === 'error' || !data.fights || data.fights.length === 0) {
+                fightsList.innerHTML = `<div class="error">❌ ${data.message || 'Бои не найдены'}</div>`;
+                return;
+            }
+
+            currentCard = data.fights;
+            renderTrainingFights();
+
+           document.querySelector('#tab-train2b > .content').style.display = 'none';
+           document.getElementById('train2b-card').style.display = 'block';
+        } catch (error) {
+            fightsList.innerHTML = `<div class="error"> ${error.message}</div>`;
+        }
+    }
+
+    function renderTrainingFights() {
+        const fightsList = document.getElementById('train2b-fights-list');
+        fightsList.innerHTML = '';
+
+        currentCard.forEach((fight, idx) => {
+            const card = document.createElement('div');
+            card.className = 'fight-card';
+            card.onclick = () => toggleFightSelection(idx, card);
+
+            card.innerHTML = `
+                <div class="fight-card-header">
+                    <span class="fight-number">#${idx + 1}</span>
+                    <span class="fight-result" style="display: none; color: #4caf50; font-size: 11px; font-weight: bold;">✅</span>
+                </div>
+                <div class="fight-fighters">${fight.fighter_a} vs ${fight.fighter_b}</div>
+            `;
+
+            fightsList.appendChild(card);
+        });
+    }
+
+    function toggleFightSelection(idx, card) {
+        if (selectedFightsForTraining.has(idx)) {
+            selectedFightsForTraining.delete(idx);
+            card.querySelector('.fight-result').style.display = 'none';
+        } else {
+            selectedFightsForTraining.add(idx);
+            card.querySelector('.fight-result').style.display = 'block';
+        }
+    }
+    async function startTraining2b() {
+        if (selectedFightsForTraining.size === 0) { alert('Выберите хотя бы один бой'); return; }
+
+        const date = document.getElementById('train2b-date').value;
+        const deviceId = getDeviceId();
+        const fightIndices = Array.from(selectedFightsForTraining);
+        const resultContainer = document.getElementById('train2b-result');
+
+        resultContainer.innerHTML = '<div class="loading"><div class="spinner"></div>Проверка модели...</div>';
+
+        try {
+            const response = await fetch(`${API_URL}/api/train/2b`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ device_id: deviceId, date: date, fight_indices: fightIndices, lang: currentLang })
+            });
+            const data = await response.json();
+
+            if (data.status === 'ok' && data.details) {
+                let detailsHtml = data.details.map(d => {
+                    const color = d.is_correct ? '#4caf50' : '#f44336';
+                    const icon = d.is_correct ? '✅ ВЕРНО' : '❌ НЕВЕРНО';
+                    const errorMsg = d.error ? `<div style="color: #f44336; font-size: 11px; margin-top: 5px; border-top: 1px solid #2a2f4a; padding-top: 5px;">⚠️ Ошибка расчета: ${d.error}</div>` : '';
+
+                    return `
+                        <div class="result-section" style="border-left: 3px solid ${color};">
+                            <div class="section-title" style="color: ${color};">${d.f1} vs ${d.f2}</div>
+                            <div class="detail-row"><span>🤖 Прогноз модели:</span><span>${d.pred} (${d.pred_prob}%)</span></div>
+                            <div class="detail-row"><span>🏆 Реальный факт:</span><span>${d.fact}</span></div>
+                            <div style="margin-top: 8px; font-weight: bold; color: ${color}; text-align: center; font-size: 13px;">${icon}</div>
+                            ${errorMsg}
+                        </div>
+                    `;
+                }).join('');
+
+                resultContainer.innerHTML = `
+                    <div class="result-card recommend" style="margin-top: 15px;">
+                        <div class="result-title">📊 ИТОГИ ПРОВЕРКИ МОДЕЛИ</div>
+                        <div class="detail-row"><span>Всего проверено боёв:</span><span>${data.total_fights}</span></div>
+                        <div class="detail-row"><span>✅ Верных прогнозов:</span><span style="color: #4caf50;">${data.correct}</span></div>
+                        <div class="detail-row"><span>❌ Неверных прогнозов:</span><span style="color: #f44336;">${data.incorrect}</span></div>
+                        <div class="detail-row" style="font-size: 16px; font-weight: bold; border-top: 1px solid #2a2f4a; padding-top: 10px; margin-top: 10px;">
+                            <span>🎯 Точность модели:</span><span>${data.accuracy.toFixed(1)}%</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        ${detailsHtml}
+                    </div>
+                    <button class="btn btn-secondary" onclick="backToTrain2bForm()" style="margin-top: 15px;">Назад к выбору даты</button>
+                `;
+            } else {
+                resultContainer.innerHTML = `<div class="error">❌ ${data.message || 'Ошибка проверки'}</div>`;
+            }
+        } catch (error) {
+            resultContainer.innerHTML = `<div class="error">❌ ${error.message}</div>`;
+        }
+    }
+
+    function backToTrain2bForm() {
+    document.querySelector('#tab-train2b > .content').style.display = 'block';
+    document.getElementById('train2b-card').style.display = 'none';
+    selectedFightsForTraining.clear();
+    }
+
+    async function checkStatus() {
+        const deviceId = getDeviceId();
+        try {
+            const response = await fetch(`${API_URL}/api/status?device_id=${deviceId}`);
+            const data = await response.json();
+
+            document.getElementById('status-result').innerHTML = `
+                <div style="background: #0a0e27; border-radius: 8px; padding: 15px; margin-top: 15px;">
+                    <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #2a2f4a; font-size: 13px;"><span style="color: #a0a0a0;">Device ID:</span><span style="font-weight: bold;">${data.device_id}</span></div>
+                    <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #2a2f4a; font-size: 13px;"><span style="color: #a0a0a0;">Баланс:</span><span style="font-weight: bold;">${data.balance} прогнозов</span></div>
+                    <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #2a2f4a; font-size: 13px;"><span style="color: #a0a0a0;">Тариф:</span><span style="font-weight: bold;">${data.plan}</span></div>
+                    <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #2a2f4a; font-size: 13px;"><span style="color: #a0a0a0;">Действует до:</span><span style="font-weight: bold;">${data.expires_at}</span></div>
+                    <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 13px;"><span style="color: #a0a0a0;">Активен:</span><span style="font-weight: bold;">${data.is_active ? '✅ Да' : ' Нет'}</span></div>
+                </div>
+            `;
+        } catch (error) {
+            document.getElementById('status-result').innerHTML = `<div class="error">❌ ${error.message}</div>`;
+        }
+    }
+
+    document.getElementById('predict-date').valueAsDate = new Date();
+</script>
+</body>
+</html>
