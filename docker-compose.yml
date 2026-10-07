@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: mma_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mma_network
+
+  api:
+    build: .
+    container_name: mma_api
+    restart: always
+    env_file:
+      - .env.production
+    volumes:
+      - ./mma_weights_v21.json:/app/mma_weights_v21.json
+      - ./weights_best.json:/app/weights_best.json
+      - ./dataset:/app/dataset
+      - ./api_config.enc:/app/api_config.enc
+      - ./secure_keys.enc:/app/secure_keys.enc
+    depends_on:
+      - db
+    networks:
+      - mma_network
+
+  nginx:
+    image: nginx:alpine
+    container_name: mma_nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api
+    networks:
+      - mma_network
+
+volumes:
+  postgres_data:
+
+networks:
+  mma_network:
+    driver: bridge
