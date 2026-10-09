@@ -5,3 +5,5 @@ fastapi~=0.137.1
 pydantic~=2.13.4
 urllib3~=2.7.0
 sqlalchemy
+
+python-dotenv==1.0.1
