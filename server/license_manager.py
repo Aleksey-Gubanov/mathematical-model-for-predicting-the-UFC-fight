@@ -196,3 +196,20 @@ def get_user_status(db: Session, device_id: str) -> Dict[str, Any]:
         "expires_at": license_obj.expires_at.strftime("%Y-%m-%d") if license_obj and license_obj.expires_at else "Бессрочно",
         "is_active": license_obj.is_active if license_obj else False
     }
+def refund_balance(db: Session, device_id: str) -> Dict[str, Any]:
+    """Возвращает 1 прогноз, если эталонный расчёт не состоялся."""
+    user = db.query(User).filter(User.device_id == device_id).first()
+    if not user:
+        return {"success": False, "balance": 0}
+
+    license_obj = db.query(License).filter(License.user_id == user.id).first()
+    if not license_obj:
+        return {"success": False, "balance": 0}
+
+    # -1 = безлимит, возвращать нечего
+    if license_obj.balance == -1:
+        return {"success": True, "balance": -1}
+
+    license_obj.balance += 1
+    db.commit()
+    return {"success": True, "balance": license_obj.balance}
