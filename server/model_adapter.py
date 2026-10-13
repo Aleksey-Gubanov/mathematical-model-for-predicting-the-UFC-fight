@@ -150,24 +150,47 @@ def run_training_2a_stream(period: str, year: str):
         yield f"data: {json.dumps({'type': 'error', 'message': str(e)}, ensure_ascii=False)}\n\n"
 
 
-def run_training_2b(date_str: str, fight_indices: list) -> Dict[str, Any]:
-    """Режим 2b: Бэктест по дате"""
-    print(f"🔍 Запуск обучения 2b: дата {date_str}, бои {fight_indices}")
+def run_training_2b_stream(date_str: str, fight_indices: list):
+    """Режим 2b: Бэктест по дате (SSE стриминг с детальными этапами)."""
+    try:
+        env = os.environ.copy()
+        env['PYTHONIOENCODING'] = 'utf-8'
 
-    res = _run_bridge(['--train2b', date_str, json.dumps(fight_indices)])
-    if not res["success"]:
-        return res
+        process = subprocess.Popen(
+            [sys.executable, BRIDGE_PATH, '--train2b', date_str, json.dumps(fight_indices)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            cwd=ROOT_DIR,
+            env=env,
+            encoding='utf-8',
+            stdin=subprocess.DEVNULL,
+            creationflags=CREATE_NO_WINDOW
+        )
 
-    d = res["data"]
-    print(f"✅ Обучение 2b завершено: {d.get('message', '')}")
+        for line in iter(process.stdout.readline, ''):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                data = json.loads(line)
+                if data.get("type") == "stage":
+                    # Передаём stage как есть (с title из моста)
+                    title = data.get("title", "Обработка...")
+                    lines = data.get("lines", [])
+                    if not lines:
+                        lines = ["⏳ Выполняется..."]
+                    payload = {"type": "stage", "title": title, "lines": lines}
+                    yield f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
+                elif data.get("status") == "success":
+                    payload = {"type": "final_result", "data": data}
+                    yield f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
+            except json.JSONDecodeError:
+                continue
+            except Exception as e:
+                print(f"⚠️ Ошибка обработки строки 2b: {e}")
+                continue
 
-    return {
-        "success": True,
-        "message": d.get("message", ""),
-        "date": d.get("date", ""),
-        "total_fights": d.get("total_fights", 0),
-        "correct": d.get("correct", 0),
-        "incorrect": d.get("incorrect", 0),
-        "accuracy": d.get("accuracy", 0.0),
-        "details": d.get("details", [])   # ← ДОБАВЛЕНО: передача деталей по каждому бою
-    }
+        process.wait()
+    except Exception as e:
+        yield f"data: {json.dumps({'type': 'error', 'message': str(e)}, ensure_ascii=False)}\n\n"

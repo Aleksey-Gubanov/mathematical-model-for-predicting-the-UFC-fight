@@ -273,7 +273,7 @@ async def api_train_2a(req: Train2aRequest, db: Session = Depends(get_db)):
 
 @app.post("/api/train/2b")
 async def api_train_2b(req: Train2bRequest, db: Session = Depends(get_db)):
-    """Проверка модели (бэктест) с возвратом детального JSON."""
+    """Проверка модели (бэктест) с SSE-стримингом."""
     status = get_user_status(db, req.device_id)
     if not status.get("exists"):
         raise HTTPException(404, "Пользователь не найден")
@@ -282,24 +282,9 @@ async def api_train_2b(req: Train2bRequest, db: Session = Depends(get_db)):
     if not limit_check["allowed"]:
         raise HTTPException(403, limit_check["reason"])
 
-    try:
-        from .model_adapter import run_training_2b
-        result = run_training_2b(req.date, req.fight_indices)
+    async def generate_stream():
+        from .model_adapter import run_training_2b_stream
+        for chunk in run_training_2b_stream(req.date, req.fight_indices):
+            yield chunk
 
-        if not result.get("success"):
-            raise HTTPException(500, result.get("error", "Ошибка обучения"))
-
-        return {
-            "status": "ok",
-            "message": result["message"],
-            "date": result["date"],
-            "total_fights": result["total_fights"],
-            "correct": result["correct"],
-            "incorrect": result["incorrect"],
-            "accuracy": result["accuracy"],
-            "details": result.get("details", [])
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(500, f"Ошибка обучения: {str(e)}")
+    return StreamingResponse(generate_stream(), media_type="text/event-stream")

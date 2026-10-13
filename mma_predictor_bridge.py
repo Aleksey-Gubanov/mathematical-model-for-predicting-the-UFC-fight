@@ -178,12 +178,28 @@ def run_train_2b(date_str: str, fight_indices: list) -> dict:
         result["total_fights"] = len(selected)
         correct, incorrect = 0, 0
 
-        for fight in selected:
+        for idx, fight in enumerate(selected, 1):
             f1, f2 = fight.get('fighter_a', 'Unknown'), fight.get('fighter_b', 'Unknown')
+
+            # ЭТАП 1: Начало обработки боя
+            stage = {"type": "stage", "current": idx, "total": len(selected),
+                     "title": f"🥊 Бой {idx}/{len(selected)}: {f1} vs {f2}"}
+            print(json.dumps(stage, ensure_ascii=False))
+            sys.stdout.flush()
+
             detail = {"f1": f1, "f2": f2, "fact": "Ошибка", "pred": "Ошибка", "is_correct": False}
             try:
                 target_date_str = (fight.get('date') - timedelta(days=1)).strftime("%Y-%m-%d")
+
+                # ЭТАП 2: Загрузка данных бойцов
+                stage = {"type": "stage", "title": f"📊 Загрузка данных для {f1}..."}
+                print(json.dumps(stage, ensure_ascii=False))
+                sys.stdout.flush()
                 fa = get_fighter_data(fighter_name=f1, fight_date=target_date_str, opponent_name=f2, fighter_dob=fight.get('dob_a'))
+
+                stage = {"type": "stage", "title": f"📊 Загрузка данных для {f2}..."}
+                print(json.dumps(stage, ensure_ascii=False))
+                sys.stdout.flush()
                 fb = get_fighter_data(fighter_name=f2, fight_date=target_date_str, opponent_name=f1, fighter_dob=fight.get('dob_b'))
 
                 if not fa or not fb:
@@ -191,8 +207,18 @@ def run_train_2b(date_str: str, fight_indices: list) -> dict:
                     result["details"].append(detail)
                     continue
 
+                # ЭТАП 3: Математический расчёт
+                stage = {"type": "stage", "title": "⚙️ Математическая модель: расчёт вероятностей..."}
+                print(json.dumps(stage, ensure_ascii=False))
+                sys.stdout.flush()
+
                 fd = FightData(a=fa, b=fb, date=fight.get('date'), wc="Auto", rounds=fight.get('round', 3), location=fight.get('event', 'UFC'), odds_a=1.85, matchup_odds={"bookmaker": "Нейтрально", "odds_a": 1.85, "odds_b": 1.85})
                 pred = engine.predict(fd)
+
+                # ЭТАП 4: Сравнение с фактом
+                stage = {"type": "stage", "title": "🔍 Сравнение прогноза с реальным результатом..."}
+                print(json.dumps(stage, ensure_ascii=False))
+                sys.stdout.flush()
 
                 fact_winner_norm = normalize_winner_name(fight.get('winner', 'Unknown'), f1, f2)
                 is_correct = names_match(pred.winner, fact_winner_norm)
