@@ -1,0 +1,5 @@
+# Зависимости ДЕСКТОП-клиента (Windows).
+# НЕ входят в серверный requirements.txt, чтобы не раздувать Docker-образ.
+PyQt6
+pyinstaller
+requests

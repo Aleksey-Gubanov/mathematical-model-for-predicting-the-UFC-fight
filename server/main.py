@@ -14,7 +14,9 @@ import asyncio
 from datetime import datetime, timedelta
 from typing import Optional, List
 
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Request
+from pydantic import BaseModel
+from datetime import datetime
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -102,6 +104,12 @@ class Train2bRequest(BaseModel):
     date: str
     fight_indices: List[int]
     lang: str = "ru"
+
+
+class SmsWebhookRequest(BaseModel):
+    text: str
+    sender: str = ""
+
 
 # --- События ---
 @app.on_event("startup")
@@ -288,3 +296,19 @@ async def api_train_2b(req: Train2bRequest, db: Session = Depends(get_db)):
             yield chunk
 
     return StreamingResponse(generate_stream(), media_type="text/event-stream")
+
+
+# === ВЕБХУК SMS-ОПЛАТ (MacroDroid → сервер) ===
+WEBHOOK_SECRET = "mma_sms_webhook_2026_secret"
+
+@app.post("/webhook/sms-payment")
+async def sms_webhook(req: SmsWebhookRequest, request: Request):
+    """Принимает текст SMS от MacroDroid. Пока только логирует."""
+    secret = request.headers.get("X-Webhook-Secret", "")
+    if secret != WEBHOOK_SECRET:
+        raise HTTPException(403, "Неверный секрет вебхука")
+    line = f"{datetime.now().isoformat()} | sender={req.sender} | {req.text}"
+    with open("/app/sms_log.txt", "a", encoding="utf-8") as f:
+        f.write(line + "\n")
+    print(f"📩 SMS-вебхук: {line}")
+    return {"status": "logged"}
