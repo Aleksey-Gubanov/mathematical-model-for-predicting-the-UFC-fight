@@ -220,6 +220,19 @@ LOCALES = {
         "ai_selects": "🤖 ИИ выбирает:",
         "reason": "💬 Причина:",
         "main_event": "МЕ",
+        "topup": "Пополнить",
+        "topup_title": "Пополнение баланса",
+        "choose_tariff": "Выберите тариф",
+        "predictions_count": "прогнозов",
+        "days_count": "дней",
+        "pay_instruction": "Переведите точную сумму по СБП на номер:",
+        "exact_amount": "Точная сумма:",
+        "time_left": "Осталось времени:",
+        "i_paid": "Я оплатил",
+        "cancel": "Отмена",
+        "payment_success": "✅ Баланс пополнен!",
+        "payment_expired": "Время оплаты истекло",
+        "payment_pending": "Ожидание оплаты...",
         "rounds_short": "р.",
     },
     "en": {
@@ -281,6 +294,19 @@ LOCALES = {
         "ai_selects": "🤖 AI selects:",
         "reason": "💬 Reason:",
         "main_event": "ME",
+        "topup": "Top up",
+        "topup_title": "Balance top-up",
+        "choose_tariff": "Choose a tariff",
+        "predictions_count": "predictions",
+        "days_count": "days",
+        "pay_instruction": "Transfer the exact amount via SBP to the number:",
+        "exact_amount": "Exact amount:",
+        "time_left": "Time left:",
+        "i_paid": "I paid",
+        "cancel": "Cancel",
+        "payment_success": "✅ Balance topped up!",
+        "payment_expired": "Payment time expired",
+        "payment_pending": "Waiting for payment...",
         "rounds_short": "r.",
     }
 }
@@ -741,6 +767,243 @@ class FightAnalysisDialog(QDialog):
         except Exception:
             pass
 
+# === ОПРОС СТАТУСА ПЛАТЕЖА ===
+class PaymentPollWorker(QThread):
+    status_signal = pyqtSignal(str)  # pending / success / failed / expired
+    error_signal = pyqtSignal(str)
+
+    def __init__(self, transaction_id: str, parent=None):
+        super().__init__(parent)
+        self.transaction_id = transaction_id
+        self._running = True
+
+    def stop(self):
+        self._running = False
+
+    def run(self):
+        import time
+        while self._running:
+            try:
+                r = requests.get(
+                    f"{API_URL}/api/pay/status",
+                    params={"transaction_id": self.transaction_id},
+                    timeout=10,
+                )
+                if r.status_code == 200:
+                    data = r.json()
+                    status = data.get("status", "pending")
+                    self.status_signal.emit(status)
+                    if status != "pending":
+                        return
+            except Exception as e:
+                self.error_signal.emit(str(e))
+            for _ in range(10):
+                if not self._running:
+                    return
+                time.sleep(1)
+
+
+# === ДИАЛОГ ОПЛАТЫ ===
+class PaymentDialog(QDialog):
+    """Выбор тарифа → реквизиты с таймером → ожидание оплаты."""
+
+    def __init__(self, device_id: str, lang: str, parent=None):
+        super().__init__(parent)
+        self.device_id = device_id
+        self.lang = lang
+        self.t = LOCALES[lang]
+        self.reservation = None
+        self.poll_worker = None
+        self.timer_seconds = 15 * 60
+        self.paid = False
+        self.setWindowTitle(self.t["topup_title"])
+        self.resize(520, 520)
+        self._build_tariff_screen()
+
+    # ---------- Экран 1: выбор тарифа ----------
+    def _build_tariff_screen(self):
+        layout = QVBoxLayout(self)
+        layout.setSpacing(12)
+
+        title = QLabel(f"💰 {self.t['choose_tariff']}")
+        title.setStyleSheet("font-size: 18px; font-weight: bold; color: #667eea;")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(title)
+
+        tariffs = [
+            (10, 100, 60, "#667eea"),
+            (20, 200, 150, "#764ba2"),
+            (30, 350, 365, "#ff9800"),
+        ]
+
+        for price, preds, days, color in tariffs:
+            card = QFrame()
+            card.setStyleSheet(
+                f"QFrame {{ background: #1a1f3a; border: 2px solid {color}; "
+                f"border-radius: 12px; padding: 12px; }}"
+            )
+            card_layout = QHBoxLayout(card)
+            card_layout.setContentsMargins(16, 12, 16, 12)
+
+            info_layout = QVBoxLayout()
+            price_lbl = QLabel(f"{price} ₽")
+            price_lbl.setStyleSheet(f"font-size: 22px; font-weight: bold; color: {color};")
+            info_layout.addWidget(price_lbl)
+
+            desc_lbl = QLabel(f"{preds} {self.t['predictions_count']} • {days} {self.t['days_count']}")
+            desc_lbl.setStyleSheet("font-size: 13px; color: #e0e0e0;")
+            info_layout.addWidget(desc_lbl)
+
+            card_layout.addLayout(info_layout, 1)
+
+            btn = QPushButton(self.t["topup"])
+            btn.setProperty("class", "primary")
+            btn.setMinimumWidth(100)
+            btn.clicked.connect(lambda checked, p=price: self._select_tariff(p))
+            card_layout.addWidget(btn)
+
+            layout.addWidget(card)
+
+        cancel_btn = QPushButton(self.t["cancel"])
+        cancel_btn.clicked.connect(self.reject)
+        layout.addWidget(cancel_btn)
+
+    def _select_tariff(self, price: int):
+        # Запрашиваем резерв на сервере
+        try:
+            r = requests.post(
+                f"{API_URL}/api/pay/create",
+                json={"device_id": self.device_id, "tariff": price},
+                timeout=15,
+            )
+            if r.status_code != 200:
+                QMessageBox.critical(self, self.t["error"], r.text[:300])
+                return
+            data = r.json()
+            if not data.get("success"):
+                QMessageBox.critical(self, self.t["error"], data.get("error", "?"))
+                return
+            self.reservation = data
+            self._build_payment_screen()
+        except Exception as e:
+            QMessageBox.critical(self, self.t["error"], str(e))
+
+    # ---------- Экран 2: реквизиты + таймер ----------
+    def _build_payment_screen(self):
+        # Очищаем текущий layout
+        while self.layout().count():
+            item = self.layout().takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        layout = self.layout()
+        layout.setSpacing(10)
+
+        title = QLabel(f"💳 {self.t['topup_title']}")
+        title.setStyleSheet("font-size: 18px; font-weight: bold; color: #667eea;")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(title)
+
+        instr = QLabel(self.t["pay_instruction"])
+        instr.setStyleSheet("font-size: 13px; color: #a0a0a0;")
+        instr.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(instr)
+
+        phone_lbl = QLabel(self.reservation.get("sbp_phone", ""))
+        phone_lbl.setStyleSheet(
+            "font-size: 22px; font-weight: bold; color: #4caf50; "
+            "background: #1a1f3a; padding: 10px; border-radius: 8px;"
+        )
+        phone_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        phone_lbl.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        layout.addWidget(phone_lbl)
+
+        amount_lbl = QLabel(f"{self.t['exact_amount']} {self.reservation['amount']:.2f} ₽")
+        amount_lbl.setStyleSheet(
+            "font-size: 18px; font-weight: bold; color: #ff9800; "
+            "background: #1a1f3a; padding: 12px; border-radius: 8px;"
+        )
+        amount_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        amount_lbl.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        layout.addWidget(amount_lbl)
+
+        self.timer_lbl = QLabel(f"⏱ {self.t['time_left']} 15:00")
+        self.timer_lbl.setStyleSheet(
+            "font-size: 14px; color: #e0e0e0; "
+            "background: #1a1f3a; padding: 8px; border-radius: 8px;"
+        )
+        self.timer_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.timer_lbl)
+
+        self.status_lbl = QLabel(f"⏳ {self.t['payment_pending']}")
+        self.status_lbl.setStyleSheet("color: #a0a0a0; font-size: 12px;")
+        self.status_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.status_lbl)
+
+        btn_row = QHBoxLayout()
+        self.check_btn = QPushButton(self.t["i_paid"])
+        self.check_btn.setProperty("class", "primary")
+        self.check_btn.clicked.connect(self._manual_check)
+        btn_row.addWidget(self.check_btn)
+
+        cancel_btn = QPushButton(self.t["cancel"])
+        cancel_btn.clicked.connect(self.reject)
+        btn_row.addWidget(cancel_btn)
+        layout.addLayout(btn_row)
+
+        # Запускаем автоопрос
+        self.poll_worker = PaymentPollWorker(self.reservation["transaction_id"], self)
+        self.poll_worker.status_signal.connect(self._on_poll_status)
+        self.poll_worker.error_signal.connect(self._on_poll_error)
+        self.poll_worker.start()
+
+        # Таймер обратного отсчёта
+        from PyQt6.QtCore import QTimer
+        self._timer = QTimer(self)
+        self._timer.timeout.connect(self._tick)
+        self._timer.start(1000)
+
+    def _tick(self):
+        self.timer_seconds -= 1
+        if self.timer_seconds <= 0:
+            self._timer.stop()
+            if self.poll_worker:
+                self.poll_worker.stop()
+            self.status_lbl.setText(f"❌ {self.t['payment_expired']}")
+            self.check_btn.setEnabled(False)
+            return
+        m, s = divmod(self.timer_seconds, 60)
+        self.timer_lbl.setText(f"⏱ {self.t['time_left']} {m:02d}:{s:02d}")
+
+    def _manual_check(self):
+        # Просто триггерим дополнительный запрос, остальное делает poll
+        if self.poll_worker:
+            self.status_lbl.setText(f"⏳ {self.t['payment_pending']}")
+
+    def _on_poll_status(self, status: str):
+        if status == "success":
+            self.paid = True
+            self._timer.stop()
+            if self.poll_worker:
+                self.poll_worker.stop()
+            self.status_lbl.setText(self.t["payment_success"])
+            self.status_lbl.setStyleSheet("color: #4caf50; font-size: 14px; font-weight: bold;")
+            self.check_btn.setEnabled(False)
+            from PyQt6.QtCore import QTimer
+            QTimer.singleShot(1500, self.accept)
+        elif status == "failed":
+            self.status_lbl.setText(f"❌ {self.t['error']}")
+            self.status_lbl.setStyleSheet("color: #f44336;")
+
+    def _on_poll_error(self, msg: str):
+        self.status_lbl.setText(f"⚠ {msg}")
+
+    def closeEvent(self, event):
+        if self.poll_worker:
+            self.poll_worker.stop()
+        super().closeEvent(event)
+
+
 
 # === ГЛАВНОЕ ОКНО ===
 class MainWindow(QMainWindow):
@@ -805,6 +1068,10 @@ class MainWindow(QMainWindow):
         self.balance_label = QLabel(f"{t['balance']} {self.balance}")
         self.balance_label.setStyleSheet("color: white; font-weight: bold;")
         ub_layout.addWidget(self.balance_label)
+        self.topup_btn_header = QPushButton(f"+ {t['topup']}")
+        self.topup_btn_header.setProperty("class", "primary")
+        self.topup_btn_header.clicked.connect(self._show_topup_dialog)
+        ub_layout.addWidget(self.topup_btn_header)
         header_layout.addWidget(user_bar)
         main_layout.addWidget(header)
 
@@ -846,6 +1113,8 @@ class MainWindow(QMainWindow):
         self.train2b_load_btn.setText(t["load_card"])
         self.train2b_run_btn.setText(t["start_check"])
         self.status_btn.setText(t["check_status"])
+        self.topup_btn_header.setText(f"+ {t['topup']}")
+        self.topup_btn_status.setText(f"💰 {t['topup']}")
 
     def _show_about(self):
         dlg = QDialog(self)
@@ -1184,15 +1453,31 @@ class MainWindow(QMainWindow):
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
+        btn_row = QHBoxLayout()
         self.status_btn = QPushButton(t["check_status"])
         self.status_btn.setProperty("class", "primary")
         self.status_btn.clicked.connect(self._refresh_status)
-        layout.addWidget(self.status_btn)
+        btn_row.addWidget(self.status_btn)
+
+        self.topup_btn_status = QPushButton(f"💰 {t['topup']}")
+        self.topup_btn_status.setProperty("class", "primary")
+        self.topup_btn_status.clicked.connect(self._show_topup_dialog)
+        btn_row.addWidget(self.topup_btn_status)
+
+        layout.addLayout(btn_row)
 
         self.status_output = QTextEdit()
         self.status_output.setReadOnly(True)
         layout.addWidget(self.status_output, 1)
         return tab
+    def _show_topup_dialog(self):
+        dlg = PaymentDialog(self.device_id, self.lang, self)
+        dlg.exec()
+        if dlg.paid:
+            # Баланс обновится автоматически через silent refresh
+            self._refresh_status_silent()
+        dlg.deleteLater()
+
 
     def _refresh_status(self):
         t = LOCALES[self.lang]
