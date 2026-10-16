@@ -129,7 +129,7 @@ def startup():
 # --- Эндпоинты ---
 @app.post("/api/register")
 def api_register(req: RegisterRequest, db: Session = Depends(get_db)):
-    return register_user(db, req.device_id, req.email)
+    return register_user(db, req.device_id, req.email, req.language, req.disclaimer_accepted)
 
 @app.post("/api/activate")
 def api_activate(req: ActivateRequest, db: Session = Depends(get_db)):
