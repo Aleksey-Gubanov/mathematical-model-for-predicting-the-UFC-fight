@@ -233,6 +233,7 @@ LOCALES = {
         "payment_success": "✅ Баланс пополнен!",
         "payment_expired": "Время оплаты истекло",
         "payment_pending": "Ожидание оплаты...",
+        "sber_only": "⚠ Оплата принимается ТОЛЬКО переводом по СБП на счёт Сбербанка. Переводы на другие банки не будут засчитаны!",
         "rounds_short": "р.",
     },
     "en": {
@@ -307,6 +308,7 @@ LOCALES = {
         "payment_success": "✅ Balance topped up!",
         "payment_expired": "Payment time expired",
         "payment_pending": "Waiting for payment...",
+        "sber_only": "⚠ Payment is accepted ONLY via SBP transfer to a Sberbank account. Transfers to other banks will NOT be counted!",
         "rounds_short": "r.",
     }
 }
@@ -346,7 +348,14 @@ ABOUT_TEXT = {
 <li>Расхождение → <b style="color:#a0a0a0;">СЛАБАЯ РЕКОМЕНДАЦИЯ</b> / <b style="color:#f44336;">ПРОПУСТИТЬ</b></li>
 </ul>
 <h3>💰 Оплата</h3>
-<p>20 бесплатных прогнозов при регистрации. Пополнение через DonationAlerts.</p>
+<p>20 бесплатных прогнозов при регистрации. Пополнение баланса — переводом по СБП на счёт только Сбербанка:</p>
+<ul>
+<li><b>Тариф 1</b> — 100 прогнозов, 60 дней</li>
+<li><b>Тариф 2</b> — 200 прогнозов, 150 дней</li>
+<li><b>Тариф 3</b> — 350 прогнозов, 365 дней</li>
+</ul>
+<p>После перевода приложение автоматически определит оплату по SMS от банка и начислит прогнозы.</p>
+<p><b style="color:#f44336;">Оплата принимается ТОЛЬКО на счёт Сбербанка.</b></p>
 <h3>⚠️ Важное предупреждение</h3>
 <p><b style="color:#f44336;">Модель даёт только рекомендации, а не гарантии результата.</b></p>
 """,
@@ -383,7 +392,14 @@ ABOUT_TEXT = {
 <li>Disagreement → <b style="color:#a0a0a0;">WEAK RECOMMENDATION</b> / <b style="color:#f44336;">SKIP</b></li>
 </ul>
 <h3>💰 Payment</h3>
-<p>20 free predictions on registration. Top-up via DonationAlerts.</p>
+<p>20 free predictions on registration. Balance top-up via SBP transfer to a Sberbank account:</p>
+<ul>
+<li><b>Rate 1</b> — 100 predictions, 60 days</li>
+<li><b>Rate 2</b> — 200 predictions, 150 days</li>
+<li><b>Rate 3</b> — 350 predictions, 365 days</li>
+</ul>
+<p>After the transfer, the app automatically detects the payment via bank SMS and credits the predictions.</p>
+<p><b style="color:#f44336;">Payments are accepted ONLY to a Sberbank account.</b></p>
 <h3>⚠️ Important disclaimer</h3>
 <p><b style="color:#f44336;">The model provides only recommendations, not guarantees.</b></p>
 """
@@ -829,6 +845,11 @@ class PaymentDialog(QDialog):
         title.setStyleSheet("font-size: 18px; font-weight: bold; color: #667eea;")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title)
+        note_lbl = QLabel(self.t["sber_only"])
+        note_lbl.setWordWrap(True)
+        note_lbl.setStyleSheet("font-size: 12px; color: #ff9800;")
+        note_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(note_lbl)
 
         tariffs = [
             (10, 100, 60, "#667eea"),
@@ -908,6 +929,15 @@ class PaymentDialog(QDialog):
         instr.setStyleSheet("font-size: 13px; color: #a0a0a0;")
         instr.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(instr)
+        warn_lbl = QLabel(self.t["sber_only"])
+        warn_lbl.setWordWrap(True)
+        warn_lbl.setStyleSheet(
+            "font-size: 13px; font-weight: bold; color: #f44336; "
+            "background: rgba(244,67,54,0.15); border: 1px solid #f44336; "
+            "padding: 10px; border-radius: 8px;"
+        )
+        warn_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(warn_lbl)
 
         phone_lbl = QLabel(self.reservation.get("sbp_phone", ""))
         phone_lbl.setStyleSheet(
