@@ -81,21 +81,34 @@ def verify_license_key(key: str, device_id: str) -> Dict[str, Any]:
 # 2. УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ И БАЛАНСОМ
 # ============================================================================
 
-def register_user(db: Session, device_id: str, email: Optional[str] = None) -> Dict[str, Any]:
+def register_user(db: Session, device_id: str, email: Optional[str] = None,
+                  language: Optional[str] = None, disclaimer_accepted: Optional[bool] = None) -> Dict[str, Any]:
     """Регистрирует нового пользователя или возвращает данные существующего."""
     user = db.query(User).filter(User.device_id == device_id).first()
 
     if user:
+        # Обновляем язык и согласие, если присланы
+        if language is not None:
+            user.language = language
+        if disclaimer_accepted is not None:
+            user.disclaimer_accepted = disclaimer_accepted
+        if language is not None or disclaimer_accepted is not None:
+            db.commit()
+            db.refresh(user)
+
         license_obj = db.query(License).filter(License.user_id == user.id).first()
         return {
             "status": "existing",
             "user_id": user.id,
             "balance": license_obj.balance if license_obj else 0,
             "plan": license_obj.plan if license_obj else "free",
+            "language": user.language,
+            "disclaimer_accepted": user.disclaimer_accepted or False,
             "message": "С возвращением!"
         }
 
-    new_user = User(device_id=device_id, email=email)
+    new_user = User(device_id=device_id, email=email,
+                    language=language, disclaimer_accepted=disclaimer_accepted or False)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -107,8 +120,11 @@ def register_user(db: Session, device_id: str, email: Optional[str] = None) -> D
         "user_id": new_user.id,
         "balance": config.TRIAL_PREDICTIONS,
         "plan": "free",
+        "language": new_user.language,
+        "disclaimer_accepted": new_user.disclaimer_accepted,
         "message": f"Добро пожаловать! Вам начислено {config.TRIAL_PREDICTIONS} бесплатных прогнозов."
     }
+
 
 
 def activate_license(db: Session, device_id: str, key: str) -> Dict[str, Any]:

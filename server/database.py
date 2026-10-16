@@ -59,6 +59,10 @@ class User(Base):
                        comment="Хэш аппаратного ID или UUID")
     email = Column(String(128), unique=True, index=True, nullable=True,
                    comment="Email для восстановления/уведомлений")
+    language = Column(String(2), nullable=True,
+                      comment="Выбранный язык: ru или en")
+    disclaimer_accepted = Column(Boolean, default=False,
+                                 comment="Принял ли пользователь дисклеймер")
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Связи

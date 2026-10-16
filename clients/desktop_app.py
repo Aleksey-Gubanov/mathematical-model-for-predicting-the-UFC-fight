@@ -24,9 +24,6 @@ from PyQt6.QtGui import QColor
 
 # === КОНСТАНТЫ ===
 API_URL = "http://201.51.30.5"
-HWID_CACHE = Path(__file__).parent.parent / ".hwid_cache"
-DISCLAIMER_FILE = Path(__file__).parent.parent / ".disclaimer_accepted"
-LANGUAGE_FILE = Path(__file__).parent.parent / ".language"
 
 # === СТИЛИ ===
 STYLESHEET = """
@@ -414,25 +411,20 @@ def get_hwid() -> str:
 
 
 def load_or_create_hwid() -> str:
-    if HWID_CACHE.exists():
-        try:
-            return HWID_CACHE.read_text(encoding="utf-8").strip()
-        except Exception:
-            pass
-    hwid = get_hwid()
-    try:
-        HWID_CACHE.write_text(hwid, encoding="utf-8")
-    except Exception as e:
-        print(f"Не удалось сохранить кэш HWID: {e}")
-    return hwid
-
+    """HWID вычисляется при каждом запуске. Локально не хранится ничего."""
+    return get_hwid()
 
 # === АВТОРЕГИСТРАЦИЯ ===
-def autoregister(device_id: str) -> dict:
+def autoregister(device_id: str, language: str = None, disclaimer_accepted: bool = None) -> dict:
+    payload = {"device_id": device_id}
+    if language is not None:
+        payload["language"] = language
+    if disclaimer_accepted is not None:
+        payload["disclaimer_accepted"] = disclaimer_accepted
     try:
         r = requests.post(
             f"{API_URL}/api/register",
-            json={"device_id": device_id},
+            json=payload,
             timeout=10,
         )
         if r.status_code == 200:
@@ -440,7 +432,6 @@ def autoregister(device_id: str) -> dict:
     except Exception as e:
         print(f"Register error: {e}")
     return None
-
 
 # === ДИАЛОГ ВЫБОРА ЯЗЫКА ===
 class LanguageDialog(QDialog):
@@ -1122,6 +1113,12 @@ class MainWindow(QMainWindow):
     def _toggle_lang(self):
         self.lang = "en" if self.lang == "ru" else "ru"
         self._retranslate_ui()
+        # Сохраняем язык на сервере
+        w = JSONWorker("POST", f"{API_URL}/api/register",
+                       {"device_id": self.device_id, "language": self.lang})
+        self.workers.append(w)
+        w.finished.connect(lambda: self.workers.remove(w))
+        w.start()
 
     def _retranslate_ui(self):
         t = LOCALES[self.lang]
@@ -1578,33 +1575,35 @@ def main():
 
     device_id = load_or_create_hwid()
 
-    if not LANGUAGE_FILE.exists():
-        lang_dlg = LanguageDialog()
-        if not lang_dlg.exec():
-            sys.exit(0)
-        selected_lang = lang_dlg.selected_lang
-        try:
-            LANGUAGE_FILE.write_text(selected_lang, encoding="utf-8")
-        except Exception as e:
-            print(f"Не удалось сохранить язык: {e}")
-    else:
-        try:
-            selected_lang = LANGUAGE_FILE.read_text(encoding="utf-8").strip()
-            if selected_lang not in ("ru", "en"):
-                selected_lang = "ru"
-        except Exception:
-            selected_lang = "ru"
+    # Первый запрос к серверу: получаем сохранённые настройки (язык, дисклеймер)
+    reg = autoregister(device_id)
 
-    if not DISCLAIMER_FILE.exists():
+    if reg is None:
+        # Сервер недоступен: локальные значения по умолчанию
+        selected_lang = "ru"
         dlg = DisclaimerDialog(selected_lang)
         if not dlg.exec():
             sys.exit(0)
-        try:
-            DISCLAIMER_FILE.write_text("1", encoding="utf-8")
-        except Exception as e:
-            print(f"Не удалось сохранить флаг согласия: {e}")
+    else:
+        selected_lang = reg.get("language") or "ru"
+        if selected_lang not in ("ru", "en"):
+            selected_lang = "ru"
 
-    reg = autoregister(device_id)
+        # Сервер не хранит язык — спрашиваем пользователя
+        if not reg.get("language"):
+            lang_dlg = LanguageDialog()
+            if not lang_dlg.exec():
+                sys.exit(0)
+            selected_lang = lang_dlg.selected_lang
+
+        # Сервер не хранит согласие — показываем дисклеймер
+        if not reg.get("disclaimer_accepted"):
+            dlg = DisclaimerDialog(selected_lang)
+            if not dlg.exec():
+                sys.exit(0)
+
+        # Сохраняем выбор на сервере (reg не перезаписываем: он нужен для приветствия)
+        autoregister(device_id, language=selected_lang, disclaimer_accepted=True)
     initial_balance = 0
     welcome = ""
 

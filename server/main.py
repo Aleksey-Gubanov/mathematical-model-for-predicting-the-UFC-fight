@@ -84,6 +84,8 @@ app.add_middleware(
 class RegisterRequest(BaseModel):
     device_id: str
     email: Optional[str] = None
+    language: Optional[str] = None
+    disclaimer_accepted: Optional[bool] = None
 
 class ActivateRequest(BaseModel):
     device_id: str
