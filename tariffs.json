@@ -1,0 +1,8 @@
+{
+  "tariffs": {
+    "10": {"predictions": 110, "days": 60},
+    "20": {"predictions": 200, "days": 150},
+    "30": {"predictions": 350, "days": 365}
+  },
+  "sbp_phone": "+7-914-790-52-77"
+}
