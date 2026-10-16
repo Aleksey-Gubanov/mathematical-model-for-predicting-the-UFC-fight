@@ -25,6 +25,7 @@ from sqlalchemy.orm import Session
 
 
 import config
+import json
 
 
 # ============================================================================
@@ -213,3 +214,133 @@ def refund_balance(db: Session, device_id: str) -> Dict[str, Any]:
     license_obj.balance += 1
     db.commit()
     return {"success": True, "balance": license_obj.balance}
+
+
+# ============================================================================
+# 3. SMS-ОПЛАТА ЧЕРЕЗ СБП (резервирование и применение платежей)
+# ============================================================================
+
+def _load_tariffs() -> dict:
+    """Читает tariffs.json из корня проекта. Позволяет менять тарифы без перезапуска сервера."""
+    tariffs_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "tariffs.json")
+    try:
+        with open(tariffs_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Ошибка чтения tariffs.json: {e}")
+        return {"tariffs": {}, "sbp_phone": ""}
+
+
+def create_payment_reservation(db: Session, device_id: str, tariff_price: int) -> Dict[str, Any]:
+    """
+    Создаёт резервирование платежа: уникальная сумма с копейками + запись в Payment.
+    Возвращает amount, transaction_id, expires_at, sbp_phone.
+    """
+
+    import random
+    from datetime import timedelta
+
+    tariffs_data = _load_tariffs()
+    tariff_key = str(tariff_price)
+    tariff = tariffs_data.get("tariffs", {}).get(tariff_key)
+    if not tariff:
+        return {"success": False, "error": "Неизвестный тариф"}
+
+    user = db.query(User).filter(User.device_id == device_id).first()
+    if not user:
+        return {"success": False, "error": "Пользователь не найден"}
+
+    # Генерируем уникальную сумму: базовая цена + случайные копейки 1-99
+    for _ in range(50):
+        cents = random.randint(1, 99)
+        amount = float(tariff_price) + cents / 100.0
+        # Проверяем, что такая сумма не зарезервирована в последние 15 минут
+        cutoff = datetime.now(timezone.utc) - timedelta(minutes=15)
+        existing = (db.query(Payment)
+                    .filter(Payment.amount == amount,
+                            Payment.status == "pending",
+                            Payment.created_at >= cutoff)
+                    .first())
+        if not existing:
+            break
+    else:
+        return {"success": False, "error": "Не удалось сгенерировать уникальную сумму"}
+
+    transaction_id = f"sbp_{device_id}_{int(datetime.now(timezone.utc).timestamp())}"
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
+
+    payment = Payment(
+        user_id=user.id,
+        amount=amount,
+        currency="RUB",
+        status="pending",
+        provider="sbp_sms",
+        transaction_id=transaction_id,
+    )
+    payment.created_at = datetime.now(timezone.utc)
+    db.add(payment)
+    db.commit()
+
+    return {
+        "success": True,
+        "amount": amount,
+        "transaction_id": transaction_id,
+        "expires_at": expires_at.isoformat(),
+        "sbp_phone": tariffs_data.get("sbp_phone", ""),
+        "predictions": tariff.get("predictions", 0),
+        "days": tariff.get("days", 0),
+    }
+
+
+def finalize_payment(db: Session, transaction_id: str) -> Dict[str, Any]:
+    """
+    Применяет оплаченный платёж: начисляет прогнозы и продлевает срок.
+    Вызывается из webhook-а после совпадения суммы SMS с pending-платежом.
+    """
+
+    payment = db.query(Payment).filter(
+        Payment.transaction_id == transaction_id,
+        Payment.status == "pending"
+    ).first()
+    if not payment:
+        return {"success": False, "error": "Платёж не найден или уже обработан"}
+
+    # Определяем тариф по целой части суммы
+    tariffs_data = _load_tariffs()
+    tariff_key = str(int(payment.amount))
+    tariff = tariffs_data.get("tariffs", {}).get(tariff_key)
+    if not tariff:
+        payment.status = "failed"
+        db.commit()
+        return {"success": False, "error": "Неизвестный тариф для суммы"}
+
+    license_obj = db.query(License).filter(License.user_id == payment.user_id).first()
+    if not license_obj:
+        license_obj = License(user_id=payment.user_id, balance=0, plan="free", is_active=True)
+        db.add(license_obj)
+
+    # Суммируем прогнозы
+    license_obj.balance = (license_obj.balance or 0) + tariff.get("predictions", 0)
+
+    # Срок = максимум из текущего и (сейчас + дни тарифа)
+    days = tariff.get("days", 0)
+    if days > 0:
+        new_expiry = datetime.now(timezone.utc) + timedelta(days=days)
+        if license_obj.expires_at:
+            current_expiry = license_obj.expires_at
+            if current_expiry.tzinfo is None:
+                current_expiry = current_expiry.replace(tzinfo=timezone.utc)
+            license_obj.expires_at = max(current_expiry, new_expiry)
+        else:
+            license_obj.expires_at = new_expiry
+        license_obj.is_active = True
+
+    payment.status = "success"
+    db.commit()
+
+    return {
+        "success": True,
+        "new_balance": license_obj.balance,
+        "added_predictions": tariff.get("predictions", 0),
+        "expires_at": license_obj.expires_at.isoformat() if license_obj.expires_at else None,
+    }

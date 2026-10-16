@@ -59,10 +59,13 @@ print("✅ OddsAPIClient инициализирован.")
 # ============================================================================
 # ИМПОРТЫ ВНУТРЕННИХ МОДУЛЕЙ СЕРВЕРА
 # ============================================================================
-from .database import get_db, init_db
+import re
+from datetime import timezone
+from .database import get_db, init_db, Payment
 from .license_manager import (
     register_user, activate_license,
-    check_and_decrement_balance, get_user_status, refund_balance
+    check_and_decrement_balance, get_user_status, refund_balance,
+    create_payment_reservation, finalize_payment
 )
 from .engine_pool import EnginePool
 from .model_adapter import get_real_prediction
@@ -110,6 +113,10 @@ class SmsWebhookRequest(BaseModel):
     text: str
     sender: str = ""
 
+
+class PayCreateRequest(BaseModel):
+    device_id: str
+    tariff: int
 
 # --- События ---
 @app.on_event("startup")
@@ -297,13 +304,27 @@ async def api_train_2b(req: Train2bRequest, db: Session = Depends(get_db)):
 
     return StreamingResponse(generate_stream(), media_type="text/event-stream")
 
+# === ОПЛАТА ЧЕРЕЗ СБП ===
+@app.post("/api/pay/create")
+def api_pay_create(req: PayCreateRequest, db: Session = Depends(get_db)):
+    """Создаёт резервирование уникальной суммы для СБП-перевода."""
+    return create_payment_reservation(db, req.device_id, req.tariff)
+
+@app.get("/api/pay/status")
+def api_pay_status(transaction_id: str, db: Session = Depends(get_db)):
+    """Возвращает статус платежа для опроса клиентом."""
+    payment = db.query(Payment).filter(Payment.transaction_id == transaction_id).first()
+    if not payment:
+        return {"status": "not_found"}
+    return {"status": payment.status, "amount": payment.amount}
+
 
 # === ВЕБХУК SMS-ОПЛАТ (MacroDroid → сервер) ===
 WEBHOOK_SECRET = "mma_sms_webhook_2026_secret"
 
 @app.post("/webhook/sms-payment")
-async def sms_webhook(req: SmsWebhookRequest, request: Request):
-    """Принимает текст SMS от MacroDroid. Пока только логирует."""
+async def sms_webhook(req: SmsWebhookRequest, request: Request, db: Session = Depends(get_db)):
+    """Принимает текст SMS от MacroDroid, логирует и ищет совпадение с pending-платежом."""
     secret = request.headers.get("X-Webhook-Secret", "")
     if secret != WEBHOOK_SECRET:
         raise HTTPException(403, "Неверный секрет вебхука")
@@ -311,4 +332,24 @@ async def sms_webhook(req: SmsWebhookRequest, request: Request):
     with open("/app/sms_log.txt", "a", encoding="utf-8") as f:
         f.write(line + "\n")
     print(f"📩 SMS-вебхук: {line}")
+
+    # Парсим сумму входящего перевода: "+1000р", "+10.47р", "+10,47р"
+    amount = None
+    if "Перевод" in req.text and "+" in req.text:
+        m = re.search(r"\+(\d+(?:[.,]\d{1,2})?)\s*р", req.text)
+        if m:
+            amount = float(m.group(1).replace(",", "."))
+
+    if amount is not None:
+        cutoff = datetime.now(timezone.utc) - timedelta(minutes=15)
+        payment = (db.query(Payment)
+                   .filter(Payment.status == "pending",
+                           Payment.amount == amount,
+                           Payment.created_at >= cutoff)
+                   .first())
+        if payment:
+            result = finalize_payment(db, payment.transaction_id)
+            print(f"💰 Платёж найден и применён: {result}")
+            return {"status": "paid", "result": result}
+
     return {"status": "logged"}
