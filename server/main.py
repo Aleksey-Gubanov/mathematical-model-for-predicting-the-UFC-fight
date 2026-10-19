@@ -169,7 +169,12 @@ async def get_card(date: str, device_id: str):
 @app.post("/api/predict")
 async def api_predict(req: PredictRequest, db: Session = Depends(get_db)):
     """Эталонный прогноз: ВСЕ расчёты выполняет mma_predictor_bridge.py."""
-
+    try:
+        fight_date = datetime.strptime(req.date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(400, "Неверный формат даты")
+    if fight_date < datetime.now(timezone.utc).date():
+        raise HTTPException(400, "В режиме прогноза недопустима дата старше сегодня")
     async def generate_stream():
         # 1. Проверка и списание баланса
         balance = check_and_decrement_balance(db, req.device_id)
@@ -273,6 +278,16 @@ async def api_predict(req: PredictRequest, db: Session = Depends(get_db)):
 @app.post("/api/train/2a")
 async def api_train_2a(req: Train2aRequest, db: Session = Depends(get_db)):
     """Обучение 2a с SSE-стримингом этапов."""
+    today = datetime.now(timezone.utc).date()
+    try:
+        months = req.period.strip().split("-")
+        end_month = int(months[-1])
+        if not 1 <= end_month <= 12:
+            raise ValueError
+    except (ValueError, AttributeError):
+        raise HTTPException(400, "Неверный формат периода (ожидается ММ или ММ-ММ)")
+    if req.year > today.year or (req.year == today.year and end_month > today.month):
+        raise HTTPException(400, "В обучении недопустим период из будущего")
     status = get_user_status(db, req.device_id)
     if not status.get("exists"):
         raise HTTPException(404, "Пользователь не найден")
@@ -291,6 +306,12 @@ async def api_train_2a(req: Train2aRequest, db: Session = Depends(get_db)):
 @app.post("/api/train/2b")
 async def api_train_2b(req: Train2bRequest, db: Session = Depends(get_db)):
     """Проверка модели (бэктест) с SSE-стримингом."""
+    try:
+        train_date = datetime.strptime(req.date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(400, "Неверный формат даты")
+    if train_date > datetime.now(timezone.utc).date():
+        raise HTTPException(400, "В обучении недопустима дата младше сегодня")
     status = get_user_status(db, req.device_id)
     if not status.get("exists"):
         raise HTTPException(404, "Пользователь не найден")
