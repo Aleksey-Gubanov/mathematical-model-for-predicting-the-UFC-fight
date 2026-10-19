@@ -1299,10 +1299,10 @@ def run_backtest_session(engine: MMAEngine, known_fighters_training: List[str]):
 
     try:
         target_date = datetime.strptime(date_input, "%d.%m.%Y")
-        max_date = datetime.now() - timedelta(days=30)
+        today = datetime.now().date()
 
-        if target_date > max_date:
-            print(f"❌ Дата должна быть не позже {max_date.strftime('%d.%m.%Y')}")
+        if target_date.date() > today:
+            print(f"❌ В обучении недопустима дата младше сегодня")
             input("\n[Нажмите Enter для продолжения...]")
             return
     except ValueError:
@@ -1832,7 +1832,10 @@ if __name__ == "__main__":
                             target_date = datetime.now().strftime("%d.%m.%Y")
                         else:
                             try:
-                                datetime.strptime(date_input, "%d.%m.%Y")
+                                parsed_date = datetime.strptime(date_input, "%d.%m.%Y")
+                                if parsed_date.date() < datetime.now().date():
+                                    print("❌ В режиме прогноза недопустима дата старше сегодня")
+                                    continue
                                 target_date = date_input
                             except ValueError:
                                 print("❌ Неверный формат. Используйте ДД.ММ.ГГГГ")

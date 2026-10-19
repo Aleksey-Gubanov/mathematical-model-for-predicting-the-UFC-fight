@@ -28,9 +28,21 @@ from secure_neural_channel import SecureNeuralChannel
 from secure_keys import SecureKeys
 from espn_parser import ESPNParser
 from odds_api_client import OddsAPIClient
-from mystic_calculator import calculate_mystic_factor
+import contextlib
+
+@contextlib.contextmanager
+def redirect_stdout_to_stderr():
+    """Перенаправляет stdout в stderr на время вызова."""
+    old_stdout = sys.stdout
+    sys.stdout = sys.stderr
+    try:
+        yield
+    finally:
+        sys.stdout = old_stdout
+
 
 MASTER_PASSWORD = "5Tgfder%$"
+
 
 def init_engine():
     log("⚙️ Инициализация движка в bridge...")
@@ -61,7 +73,8 @@ def run_predict(fighter_a: str, fighter_b: str, date_str: str) -> dict:
         result["stats_b"] = f"{fb.wins}-{fb.losses}, reach={fb.reach_cm}см, camp={fb.camp_name}"
 
         odds_client = OddsAPIClient()
-        odds_result = odds_client.get_fight_odds(f1_clean, f2_clean)
+        with redirect_stdout_to_stderr():
+            odds_result = odds_client.get_fight_odds(f1_clean, f2_clean)
         if odds_result:
             result["odds_a"], result["odds_b"], result["bookmaker"] = odds_result['odds_a'], odds_result['odds_b'], odds_result['bookmaker']
 
