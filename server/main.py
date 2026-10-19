@@ -143,9 +143,14 @@ def api_status(device_id: str, db: Session = Depends(get_db)):
     return get_user_status(db, device_id)
 
 @app.get("/api/card")
-async def get_card(date: str, device_id: str):
+async def get_card(date: str, device_id: str, mode: str = "predict"):
     try:
         date_obj = datetime.strptime(date, "%Y-%m-%d")
+        today = datetime.now(timezone.utc).date()
+        if mode == "predict" and date_obj.date() < today:
+            return {"status": "error", "message": "В режиме прогноза недопустима дата старше сегодня", "fights": []}
+        if mode == "train" and date_obj.date() > today:
+            return {"status": "error", "message": "В режиме обучения недопустима дата младше сегодня", "fights": []}
         date_str_ddmmyyyy = date_obj.strftime("%d.%m.%Y")
 
         espn = await EnginePool.get_espn()

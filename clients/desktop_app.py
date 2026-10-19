@@ -1182,6 +1182,7 @@ class MainWindow(QMainWindow):
         self.date_edit.setCalendarPopup(True)
         self.date_edit.setDate(QDate.currentDate())
         self.date_edit.setDisplayFormat("yyyy-MM-dd")
+        self.date_edit.setMinimumDate(QDate.currentDate())
         f_layout.addWidget(self.date_edit, 1)
         self.load_card_btn = QPushButton(t["load_card"])
         self.load_card_btn.setProperty("class", "primary")
@@ -1205,7 +1206,7 @@ class MainWindow(QMainWindow):
         self.fights_list.clear()
         self.predictions.clear()
         self.card_status.setText(t["loading_card"])
-        url = f"{API_URL}/api/card?date={date}&device_id={self.device_id}"
+        url = f"{API_URL}/api/card?date={date}&device_id={self.device_id}&mode=train"
         w = JSONWorker("GET", url)
         w.done_signal.connect(self._on_card_loaded)
         w.error_signal.connect(self._on_net_error)
@@ -1363,6 +1364,7 @@ class MainWindow(QMainWindow):
         self.train2b_date.setCalendarPopup(True)
         self.train2b_date.setDate(QDate.currentDate())
         self.train2b_date.setDisplayFormat("yyyy-MM-dd")
+        self.train2b_date.setMaximumDate(QDate.currentDate())
         f_layout.addWidget(self.train2b_date, 1)
         self.train2b_load_btn = QPushButton(t["load_card"])
         self.train2b_load_btn.setProperty("class", "primary")
@@ -1392,7 +1394,7 @@ class MainWindow(QMainWindow):
         date = self.train2b_date.date().toString("yyyy-MM-dd")
         self.train2b_list.clear()
         self.train2b_result.clear()
-        url = f"{API_URL}/api/card?date={date}&device_id={self.device_id}"
+        url = f"{API_URL}/api/card?date={date}&device_id={self.device_id}&mode=predict"
         w = JSONWorker("GET", url)
         w.done_signal.connect(self._on_train2b_card_loaded)
         w.error_signal.connect(self._on_net_error)
