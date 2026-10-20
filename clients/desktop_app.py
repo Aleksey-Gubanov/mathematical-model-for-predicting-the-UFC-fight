@@ -1206,7 +1206,7 @@ class MainWindow(QMainWindow):
         self.fights_list.clear()
         self.predictions.clear()
         self.card_status.setText(t["loading_card"])
-        url = f"{API_URL}/api/card?date={date}&device_id={self.device_id}&mode=train"
+        url = f"{API_URL}/api/card?date={date}&device_id={self.device_id}&mode=predict"
         w = JSONWorker("GET", url)
         w.done_signal.connect(self._on_card_loaded)
         w.error_signal.connect(self._on_net_error)
@@ -1315,6 +1315,16 @@ class MainWindow(QMainWindow):
         if not period:
             QMessageBox.warning(self, t["error"], t["fill_period"])
             return
+        try:
+            end_month = int(period.split("-")[-1])
+        except (ValueError, AttributeError):
+            QMessageBox.warning(self, t["error"], t["fill_period"])
+            return
+        now = QDate.currentDate()
+        if year > now.year() or (year == now.year() and end_month > now.month()):
+            warn = "В обучении недопустим период из будущего" if self.lang == "ru" else "Training period cannot be in the future"
+            QMessageBox.warning(self, t["error"], warn)
+            return
         self.train2a_log.clear()
         self.train2a_log.append(f"{t['training_started']} {period}.{year}...")
         payload = {
@@ -1394,7 +1404,7 @@ class MainWindow(QMainWindow):
         date = self.train2b_date.date().toString("yyyy-MM-dd")
         self.train2b_list.clear()
         self.train2b_result.clear()
-        url = f"{API_URL}/api/card?date={date}&device_id={self.device_id}&mode=predict"
+        url = f"{API_URL}/api/card?date={date}&device_id={self.device_id}&mode=train"
         w = JSONWorker("GET", url)
         w.done_signal.connect(self._on_train2b_card_loaded)
         w.error_signal.connect(self._on_net_error)

@@ -20,8 +20,15 @@ def check(name, ok, detail=""):
 src = open("clients/desktop_app.py", encoding="utf-8").read()
 check("T1.1 клиент: календарь прогноза не раньше сегодня", "setMinimumDate(QDate.currentDate())" in src)
 check("T1.2 клиент: календарь 2b не позже сегодня", "setMaximumDate(QDate.currentDate())" in src)
-check("T1.3 клиент: кард шлёт mode=predict", "mode=predict" in src)
-check("T1.4 клиент: кард шлёт mode=train", "mode=train" in src)
+i = src.index("def _load_card")
+j = src.index("def _on_card_loaded")
+check("T1.3 клиент: кард ПРОГНОЗА шлёт mode=predict", "mode=predict" in src[i:j])
+i2 = src.index("def _load_train2b_card")
+j2 = src.index("def _on_train2b_card_loaded")
+check("T1.4 клиент: кард 2b шлёт mode=train", "mode=train" in src[i2:j2])
+i3 = src.index("def _start_train2a")
+j3 = src.index("def _on_train2a_stage")
+check("T1.5 клиент: 2a блокирует будущий период", "период из будущего" in src[i3:j3])
 
 # --- T2: исходники сервера и консоли (локальные копии) ---
 src_main = open("server/main.py", encoding="utf-8").read()
