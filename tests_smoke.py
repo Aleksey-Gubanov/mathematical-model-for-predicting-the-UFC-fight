@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Смоук-тесты: слои защиты дат и путь коэффициентов. Запуск: python tests_smoke.py"""
 import json
+import os
 import subprocess
 import sys
 
@@ -47,13 +48,18 @@ r = requests.post(f"{API}/api/predict",
 check("T3.3 сервер живой: /api/predict прошлое отклоняет (400)", r.status_code == 400, f"code={r.status_code}")
 
 # --- T4: bridge локально: JSON в stdout, логи Odds в stderr ---
+env = os.environ.copy()
+env["PYTHONIOENCODING"] = "utf-8"
 p = subprocess.run(
     [sys.executable, "mma_predictor_bridge.py", "--predict",
      "Merab Dvalishvili", "Petr Yan", "25.10.2026"],
     capture_output=True, text=True, timeout=300,
-    encoding="utf-8", errors="replace"
+    encoding="utf-8", errors="replace", env=env
 )
 out, err = p.stdout, p.stderr
+print("----- STDERR BRIDGE (хвост) -----")
+print(err[-3000:])
+print("---------------------------------")
 data = {}
 ok_json = False
 try:
