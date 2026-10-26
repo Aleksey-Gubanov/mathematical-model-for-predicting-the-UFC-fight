@@ -373,9 +373,10 @@ async def sms_webhook(request: Request, db: Session = Depends(get_db)):
 
     # Парсим сумму входящего перевода: "+1000р", "+10.47р", "+10,47р"
     amount = None
-    keywords = ("Перевод", "Поступление", "Зачисление", "Пополнение", "Приход", "СБП")
-    if any(k in text for k in keywords) and "+" in text:
-        m = re.search(r"\+(\d+(?:\s\d{3})*(?:[.,]\d{1,2})?)\s*(?:руб|₽|р)", text)
+    low = text.lower()
+    incoming_words = ("поступл", "зачислен", "пополнен", "приход", "СБП")
+    if any(w in low for w in incoming_words):
+        m = re.search(r"(\d+(?:\s\d{3})*(?:[.,]\d{1,2})?)\s*(?:руб|₽|р)", low)
         if m:
             amount = float(m.group(1).replace(" ", "").replace(",", "."))
 
