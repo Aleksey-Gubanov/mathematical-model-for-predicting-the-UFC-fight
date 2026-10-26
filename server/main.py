@@ -351,22 +351,33 @@ def api_pay_status(transaction_id: str, db: Session = Depends(get_db)):
 WEBHOOK_SECRET = "mma_sms_webhook_2026_secret"
 
 @app.post("/webhook/sms-payment")
-async def sms_webhook(req: SmsWebhookRequest, request: Request, db: Session = Depends(get_db)):
-    """Принимает текст SMS от MacroDroid, логирует и ищет совпадение с pending-платежом."""
-    secret = request.headers.get("X-Webhook-Secret", "")
+async def sms_webhook(request: Request, db: Session = Depends(get_db)):
+    """Принимает SMS/PUSH: JSON с заголовком (старые клиенты) или form-data с secret в URL (SMSForward)."""
+    content_type = request.headers.get("content-type", "")
+    if "json" in content_type:
+        payload = await request.json()
+        text = str(payload.get("text", ""))
+        sender = str(payload.get("sender", ""))
+        secret = request.headers.get("X-Webhook-Secret", "")
+    else:
+        form = await request.form()
+        text = str(form.get("text", ""))
+        sender = str(form.get("sender", ""))
+        secret = request.query_params.get("secret", "")
     if secret != WEBHOOK_SECRET:
         raise HTTPException(403, "Неверный секрет вебхука")
-    line = f"{datetime.now().isoformat()} | sender={req.sender} | {req.text}"
+    line = f"{datetime.now().isoformat()} | sender={sender} | {text}"
     with open("/app/sms_log.txt", "a", encoding="utf-8") as f:
         f.write(line + "\n")
     print(f"📩 SMS-вебхук: {line}")
 
     # Парсим сумму входящего перевода: "+1000р", "+10.47р", "+10,47р"
     amount = None
-    if "Перевод" in req.text and "+" in req.text:
-        m = re.search(r"\+(\d+(?:[.,]\d{1,2})?)\s*р", req.text)
+    keywords = ("Перевод", "Поступление", "Зачисление", "Пополнение", "Приход", "СБП")
+    if any(k in text for k in keywords) and "+" in text:
+        m = re.search(r"\+(\d+(?:\s\d{3})*(?:[.,]\d{1,2})?)\s*(?:руб|₽|р)", text)
         if m:
-            amount = float(m.group(1).replace(",", "."))
+            amount = float(m.group(1).replace(" ", "").replace(",", "."))
 
     if amount is not None:
         cutoff = datetime.now(timezone.utc) - timedelta(minutes=15)
