@@ -352,8 +352,10 @@ WEBHOOK_SECRET = "mma_sms_webhook_2026_secret"
 
 @app.post("/webhook/sms-payment")
 async def sms_webhook(request: Request, db: Session = Depends(get_db)):
-    """Принимает SMS/PUSH: JSON с заголовком (старые клиенты) или form-data с secret в URL (SMSForward)."""
+    """Принимает SMS/PUSH: JSON с заголовком (старые клиенты) или form-data с Bearer-токеном (SMSForward)."""
     content_type = request.headers.get("content-type", "")
+    auth_header = request.headers.get("authorization", "")
+
     if "json" in content_type:
         payload = await request.json()
         text = str(payload.get("text", ""))
@@ -363,7 +365,12 @@ async def sms_webhook(request: Request, db: Session = Depends(get_db)):
         form = await request.form()
         text = str(form.get("text", ""))
         sender = str(form.get("sender", ""))
-        secret = request.query_params.get("secret", "")
+        # Извлекаем Bearer-токен из заголовка Authorization
+        if auth_header.startswith("Bearer "):
+            secret = auth_header[7:]  # Убираем "Bearer "
+        else:
+            secret = request.query_params.get("secret", "")
+
     if secret != WEBHOOK_SECRET:
         raise HTTPException(403, "Неверный секрет вебхука")
     line = f"{datetime.now().isoformat()} | sender={sender} | {text}"
