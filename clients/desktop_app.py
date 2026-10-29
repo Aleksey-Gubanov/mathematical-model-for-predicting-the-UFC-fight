@@ -23,7 +23,7 @@ from PyQt6.QtCore import Qt, QThread, pyqtSignal, QDate
 from PyQt6.QtGui import QColor
 
 # === КОНСТАНТЫ ===
-API_URL = "http://201.51.30.5"
+API_URL = "https://201-51-30-5.nip.io"
 
 # === СТИЛИ ===
 STYLESHEET = """

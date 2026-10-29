@@ -7,7 +7,7 @@ import sys
 
 import requests
 
-API = "http://201.51.30.5"
+API = "https://201-51-30-5.nip.io"
 RESULTS = []
 
 
