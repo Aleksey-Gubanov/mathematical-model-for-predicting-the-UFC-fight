@@ -979,16 +979,18 @@ class MMAEngine:
                 print(f"⚠️ Ошибка создания файла весов: {e2}")
 
     def load_baseline_weights(self):
-        if os.path.exists("weights_baseline.json"):
+        # ✅ v55.20: по замыслу эталон == лучшие веса, отдельный файл не нужен
+        if os.path.exists("weights_best.json"):
             try:
-                with open("weights_baseline.json", "r", encoding="utf-8") as f:
+                with open("weights_best.json", "r", encoding="utf-8") as f:
                     data = json.load(f)
+                data = {k.strip(): v for k, v in data.items()}
                 self.baseline_accuracy = data.get('loocv_accuracy', 0.0)
-                print(f"✅ Эталон загружен: {self.baseline_accuracy * 100:.1f}%")
+                print(f"✅ Эталон (=best) загружен: {self.baseline_accuracy * 100:.1f}%")
             except Exception as e:
                 print(f"⚠️ Ошибка загрузки эталона: {e}")
         else:
-            print("⚠️ Эталон не найден.")
+            self.baseline_accuracy = 0.0
 
     def load_best_weights(self):
         """
@@ -1133,34 +1135,8 @@ class MMAEngine:
         self._recalibrated_this_cycle = True
 
     def rollback_to_baseline(self):
-        if not os.path.exists("weights_baseline.json"):
-            print("❌ Эталон не найден!")
-            return False
-
-        try:
-            with open("weights_baseline.json", "r", encoding="utf-8") as f:
-                data = json.load(f)
-
-            self.model.weights = data["weights"]
-            self.model.bias = data["bias"]
-            self.model.feature_means = data.get("feature_means", [])
-            self.model.feature_stds = data.get("feature_stds", [])
-
-            raw_names = data.get("feature_names", []) or []
-            self.model.feature_names = [n.strip() if isinstance(n, str) else n for n in raw_names]
-
-            if abs(self.model.bias) > 0.3:
-                self.model.bias = 0.0
-
-            with open("mma_weights_v21.json", "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2)
-
-            print(f"✅ Откат к эталону! Точность: {self.baseline_accuracy * 100:.1f}%")
-            return True
-
-        except Exception as e:
-            print(f"❌ Ошибка: {e}")
-            return False
+        # ✅ v55.20: эталон == best, откат делегируется rollback_to_best
+        return self.rollback_to_best()
 
     def rollback_to_best(self):
         if not os.path.exists("weights_best.json"):
@@ -1194,9 +1170,10 @@ class MMAEngine:
         print("❌ Полное переобучение запрещено! (занимает 30+ часов)")
         print(" Используйте инкрементальное обучение (команда 2).")
 
-    def get_recent_accuracies(self, dataset: list) -> Tuple[float, float, float]:
+    def get_recent_accuracies(self, dataset: list, model=None) -> Tuple[float, float, float]:
         if len(dataset) < 5:
             return 0.0, 0.0, 0.0
+        m = model if model is not None else self.model
 
         # ✅ v55.13: свежий срез оценки, не пересекающийся с батчем
         eval_start = max(0, len(dataset) - 200)
@@ -1224,8 +1201,8 @@ class MMAEngine:
                 except (ValueError, TypeError):
                     odds_b = 1.85
 
-                features, _ = self.model._extract_features(a, b, odds_a, odds_b)
-                prob_a = self.model.predict_proba(features)
+                features, _ = m._extract_features(a, b, odds_a, odds_b)
+                prob_a = m.predict_proba(features)
                 predicted_winner = fight.get("fighter_a") if prob_a > 0.5 else fight.get("fighter_b")
 
                 if _names_match_by_id(predicted_winner, fight.get("winner", "")):
@@ -1675,6 +1652,7 @@ class MMAEngine:
 
         current_timestamp = datetime.now()
         batch_size = len(self.pending_fights)
+        batch_fights = list(self.pending_fights)   # ✅ v55.20: копия для отчёта
 
         print(f"📦 ПАКЕТНОЕ ОБУЧЕНИЕ на {batch_size} боях...")
         print("=" * 50)
@@ -1719,14 +1697,33 @@ class MMAEngine:
         acc_win, acc_rnd, acc_mth = self.get_recent_accuracies(dataset)
         acc_win_ratio = acc_win / 100.0
 
+        # ✅ v55.20: честная приёмка — best-веса меряются на ТОМ ЖЕ окне в ЭТОМ ЖЕ прогоне
+        best_now_ratio = 0.0
+        if os.path.exists("weights_best.json"):
+            try:
+                with open("weights_best.json", "r", encoding="utf-8") as f:
+                    best_bundle = json.load(f)
+                best_bundle = {k.strip(): v for k, v in best_bundle.items()}
+                shadow = AdvancedMathEngine()
+                shadow.weights = list(best_bundle.get("weights", []))
+                shadow.bias = best_bundle.get("bias", 0.0)
+                shadow.feature_means = list(best_bundle.get("feature_means", []))
+                shadow.feature_stds = list(best_bundle.get("feature_stds", []))
+                raw_names = best_bundle.get("feature_names", []) or []
+                shadow.feature_names = [n.strip() if isinstance(n, str) else n for n in raw_names]
+                best_now, _, _ = self.get_recent_accuracies(dataset, model=shadow)
+                best_now_ratio = best_now / 100.0
+                print(f" 🎯 Best-веса на том же окне: {best_now:.1f}% | кандидат: {acc_win:.1f}%")
+            except Exception as e:
+                print(f"⚠️ Ошибка замера best на окне: {e}")
+
         # ✅ v55.14: накопительный счётчик обученных боёв
         self.trained_on_fights = getattr(self, 'trained_on_fights', 0) + len(self.pending_fights)
 
         print(f" 💾 Сохранение текущих весов...")
 
-        # ✅ v55.8: цель — глобальный максимум (best), а не прошлый прогон:
-        # деградация не lowers планку, «отскок» не уничтожает best
-        target_accuracy = self.best_accuracy
+        # ✅ v55.20: цель — best, ИЗМЕРЕННЫЙ НА ТОМ ЖЕ ОКНЕ в этом прогоне (конец легаси-замка)
+        target_accuracy = best_now_ratio
 
         with open("mma_weights_v21.json", "w", encoding="utf-8") as f:
             json.dump({
@@ -1766,6 +1763,8 @@ class MMAEngine:
             print(f" ⚠️ Точность НЕ улучшилась: {acc_win:.1f}% vs {target_accuracy * 100:.1f}% ({delta:+.1f}%)")
             print(f" 📌 Веса сохранены для накопления знаний (инкрементальное обучение)")
 
+        self._print_batch_report(batch_fights)   # ✅ v55.20: отчёт по просчётам/попаданиям
+
         if new_fights_to_save:
             print(f" Сохранение {len(new_fights_to_save)} новых боев в part-файлы...")
             active_part = self._get_active_part_file()
@@ -1784,6 +1783,7 @@ class MMAEngine:
                 print(f" ❌ Ошибка сохранения в part-файл: {e}")
 
         self.pending_fights = []
+        self.save_pending_buffer()   # ✅ v55.20: бой выписан из приёмной в постоянную память (датасет), приёмная пуста
 
         pair_stats = FeaturePairConstraints.get_pair_stats(self.model.weights)
         return {
@@ -1799,14 +1799,57 @@ class MMAEngine:
             "pair_stats": pair_stats
         }
 
+    def _print_batch_report(self, fights: list):
+        """✅ v55.20: отчёт по батчу: топ-3 признака-виновника просчёта и топ-3 героя попадания."""
+        print("=" * 60)
+        print("📋 ОТЧЁТ ПО БАТЧУ: просчёты и попадания")
+        names = self.model.feature_names
+        misses = 0
+        for fight in fights:
+            try:
+                a = make_fighter_from_dict(fight.get("stats_a", {}), fight.get("fighter_a", "Unknown"), fight_date=fight.get("date"))
+                b = make_fighter_from_dict(fight.get("stats_b", {}), fight.get("fighter_b", "Unknown"), fight_date=fight.get("date"))
+                try:
+                    odds_a = float(fight.get("odds_a", 1.85))
+                except (ValueError, TypeError):
+                    odds_a = 1.85
+                try:
+                    odds_b = float(fight.get("odds_b", 1.85))
+                except (ValueError, TypeError):
+                    odds_b = 1.85
+                features, _ = self.model._extract_features(a, b, odds_a, odds_b)
+                norm_row = self.model._normalize([features], fit=False, skip_indices=[5, 22])
+                norm_features = norm_row[0] if norm_row else features
+                prob_a = self.model.predict_proba(features)
+                predicted = fight.get("fighter_a") if prob_a > 0.5 else fight.get("fighter_b")
+                actual = fight.get("winner", "")
+                contrib = [w * x for w, x in zip(self.model.weights, norm_features)]
+                direction = 1.0 if prob_a > 0.5 else -1.0
+                scored = sorted(range(len(contrib)), key=lambda i: direction * contrib[i], reverse=True)
+                top = [(names[i] if i < len(names) else f"f{i}", contrib[i]) for i in scored[:3]]
+                top_str = ", ".join(f"{n}({c:+.3f})" for n, c in top)
+                if _names_match_by_id(predicted, actual):
+                    print(f" ✅ {fight.get('fighter_a')} vs {fight.get('fighter_b')} -> {predicted} | герои: {top_str}")
+                else:
+                    misses += 1
+                    print(f" ❌ {fight.get('fighter_a')} vs {fight.get('fighter_b')} -> прогноз {predicted}, факт {actual} | завели: {top_str}")
+            except Exception as e:
+                print(f" ⚠️ Отчёт по бою пропущен: {e}")
+        print(f"📋 Итог отчёта: {misses} просчётов из {len(fights)} боёв батча")
+        print("=" * 60)
+
     def set_training_mode(self, enabled: bool):
         self.is_training_mode = enabled
         status = "включён" if enabled else "отключён"
         print(f"📌 Режим обучения {status}")
 
         if not enabled and len(self.pending_fights) > 0:
-            print(f"⚠️ В буфере {len(self.pending_fights)} боёв. Обучение перед отключением...")
-            return self.process_batch()
+            # ✅ v55.20: ЗАКРЫТА ДЫРА — обучение только при полном батче, иначе бои остаются в буфере
+            if len(self.pending_fights) >= self.BATCH_TRAIN_SIZE:
+                print(f"⚠️ В буфере {len(self.pending_fights)} боёв. Обучение перед отключением...")
+                return self.process_batch()
+            print(f"📦 В буфере {len(self.pending_fights)}/{self.BATCH_TRAIN_SIZE} боёв — "
+                  f"обучение отложено, бои остаются в буфере")
 
         return {"status": "mode_changed", "training_mode": enabled}
 
