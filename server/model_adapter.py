@@ -119,6 +119,15 @@ def run_training_2a_stream(period: str, year: str):
             creationflags=CREATE_NO_WINDOW
         )
 
+        # ✅ v55.22: читаем stderr в отдельном потоке, чтобы буфер не переполнялся
+        import threading
+        def drain_stderr():
+            for line in iter(process.stderr.readline, ''):
+                print(line.rstrip(), file=sys.stderr)
+
+        stderr_thread = threading.Thread(target=drain_stderr, daemon=True)
+        stderr_thread.start()
+
         for line in iter(process.stdout.readline, ''):
             line = line.strip()
             if not line:
@@ -167,6 +176,15 @@ def run_training_2b_stream(date_str: str, fight_indices: list):
             stdin=subprocess.DEVNULL,
             creationflags=CREATE_NO_WINDOW
         )
+
+        # ✅ v55.22: читаем stderr в отдельном потоке, чтобы буфер не переполнялся
+        import threading
+        def drain_stderr():
+            for line in iter(process.stderr.readline, ''):
+                print(line.rstrip(), file=sys.stderr)
+
+        stderr_thread = threading.Thread(target=drain_stderr, daemon=True)
+        stderr_thread.start()
 
         for line in iter(process.stdout.readline, ''):
             line = line.strip()
