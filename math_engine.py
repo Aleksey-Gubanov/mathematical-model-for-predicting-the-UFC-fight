@@ -1722,8 +1722,8 @@ class MMAEngine:
 
         print(f" 💾 Сохранение текущих весов...")
 
-        # ✅ v55.20: цель — best, ИЗМЕРЕННЫЙ НА ТОМ ЖЕ ОКНЕ в этом прогоне (конец легаси-замка)
-        target_accuracy = best_now_ratio
+        # ✅ v55.21: best — исторический максимум, НЕ сбрасывается на текущее окно
+        target_accuracy = self.best_accuracy
 
         with open("mma_weights_v21.json", "w", encoding="utf-8") as f:
             json.dump({
