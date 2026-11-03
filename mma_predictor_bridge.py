@@ -118,6 +118,11 @@ def run_train_2a(period: str, year: str) -> dict:
     log(f"🚀 Обучение 2a: период {period}, год {year}")
     result = {"status": "error", "message": "", "period": period, "year": year, "total_fights": 0, "trained_fights": 0, "accuracy": 0.0, "new_best_accuracy": 0.0}
     try:
+        # ✅ v55.23: мгновенный сигнал клиенту до долгой инициализации
+        stage = {"type": "stage", "current": 0, "total": 0, "title": "⚙️ Инициализация движка..."}
+        print(json.dumps(stage, ensure_ascii=False))
+        sys.stdout.flush()
+
         engine, espn = init_engine()
         months = list(range(int(period.split('-')[0]), int(period.split('-')[1]) + 1)) if '-' in period else [int(period)]
         all_fights = []
@@ -136,7 +141,7 @@ def run_train_2a(period: str, year: str) -> dict:
             # Выводим этап в stdout как JSON
             stage = {"type": "stage", "current": idx, "total": len(all_fights)}
             print(json.dumps(stage, ensure_ascii=False))
-
+            sys.stdout.flush()  # ✅ v55.23: принудительная отправка клиенту
             f1, f2 = fight.get('fighter_a', 'Unknown'), fight.get('fighter_b', 'Unknown')
             try:
                 target_date_str = (fight.get('date') - timedelta(days=1)).strftime("%Y-%m-%d")
