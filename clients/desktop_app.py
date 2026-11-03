@@ -230,7 +230,7 @@ LOCALES = {
         "payment_success": "✅ Баланс пополнен!",
         "payment_expired": "Время оплаты истекло",
         "payment_pending": "Ожидание оплаты...",
-        "sber_only": "⚠ Оплата принимается ТОЛЬКО переводом по СБП на счёт Сбербанка. Переводы на другие банки не будут засчитаны!",
+        "sber_only": "⚠ Оплата принимается переводом по СБП на указанный номер. Поддерживается любой банк с СБП по номеру телефона.",
         "rounds_short": "р.",
     },
     "en": {
@@ -305,7 +305,7 @@ LOCALES = {
         "payment_success": "✅ Balance topped up!",
         "payment_expired": "Payment time expired",
         "payment_pending": "Waiting for payment...",
-        "sber_only": "⚠ Payment is accepted ONLY via SBP transfer to a Sberbank account. Transfers to other banks will NOT be counted!",
+        "sber_only": "⚠ Payment is accepted via SBP transfer to the specified number. Any bank with SBP is supported.",
         "rounds_short": "r.",
     }
 }
@@ -345,14 +345,13 @@ ABOUT_TEXT = {
 <li>Расхождение → <b style="color:#a0a0a0;">СЛАБАЯ РЕКОМЕНДАЦИЯ</b> / <b style="color:#f44336;">ПРОПУСТИТЬ</b></li>
 </ul>
 <h3>💰 Оплата</h3>
-<p>20 бесплатных прогнозов при регистрации. Пополнение баланса — переводом по СБП на счёт только Сбербанка:</p>
+<p>20 бесплатных прогнозов при регистрации. Пополнение баланса — переводом по СБП на указанный номер (любой банк с СБП):</p>
 <ul>
-<li><b>Тариф 1</b> — 100 прогнозов, 60 дней</li>
-<li><b>Тариф 2</b> — 200 прогнозов, 150 дней</li>
-<li><b>Тариф 3</b> — 350 прогнозов, 365 дней</li>
+<li><b>Тариф 1</b> — 500 прогнозов, 60 дней — 500₽</li>
+<li><b>Тариф 2</b> — 1000 прогнозов, 150 дней — 1000₽</li>
+<li><b>Тариф 3</b> — 1500 прогнозов, 365 дней — 1500₽</li>
 </ul>
-<p>После перевода приложение автоматически определит оплату по SMS от банка и начислит прогнозы.</p>
-<p><b style="color:#f44336;">Оплата принимается ТОЛЬКО на счёт Сбербанка.</b></p>
+<p>После перевода приложение автоматически определит оплату и начислит прогнозы.</p>
 <h3>⚠️ Важное предупреждение</h3>
 <p><b style="color:#f44336;">Модель даёт только рекомендации, а не гарантии результата.</b></p>
 """,
@@ -389,14 +388,13 @@ ABOUT_TEXT = {
 <li>Disagreement → <b style="color:#a0a0a0;">WEAK RECOMMENDATION</b> / <b style="color:#f44336;">SKIP</b></li>
 </ul>
 <h3>💰 Payment</h3>
-<p>20 free predictions on registration. Balance top-up via SBP transfer to a Sberbank account:</p>
+<p>20 free predictions on registration. Balance top-up via SBP transfer to the specified number (any bank with SBP):</p>
 <ul>
-<li><b>Rate 1</b> — 100 predictions, 60 days</li>
-<li><b>Rate 2</b> — 200 predictions, 150 days</li>
-<li><b>Rate 3</b> — 350 predictions, 365 days</li>
+<li><b>Rate 1</b> — 500 predictions, 60 days — 500₽</li>
+<li><b>Rate 2</b> — 1000 predictions, 150 days — 1000₽</li>
+<li><b>Rate 3</b> — 1500 predictions, 365 days — 1500₽</li>
 </ul>
-<p>After the transfer, the app automatically detects the payment via bank SMS and credits the predictions.</p>
-<p><b style="color:#f44336;">Payments are accepted ONLY to a Sberbank account.</b></p>
+<p>After the transfer, the app automatically detects the payment and credits the predictions.</p>
 <h3>⚠️ Important disclaimer</h3>
 <p><b style="color:#f44336;">The model provides only recommendations, not guarantees.</b></p>
 """
@@ -842,11 +840,33 @@ class PaymentDialog(QDialog):
         note_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(note_lbl)
 
-        tariffs = [
-            (10, 100, 60, "#667eea"),
-            (20, 200, 150, "#764ba2"),
-            (30, 350, 365, "#ff9800"),
-        ]
+        # Загружаем тарифы с сервера
+        try:
+            r = requests.get(f"{API_URL}/api/pay/tariffs", timeout=10)
+            if r.status_code == 200:
+                data = r.json()
+                tariffs_data = data.get("tariffs", {})
+            else:
+                tariffs_data = {}
+        except Exception:
+            tariffs_data = {}
+
+        # Fallback, если сервер недоступен
+        if not tariffs_data:
+            tariffs_data = {
+                "500": {"predictions": 500, "days": 60},
+                "1000": {"predictions": 1000, "days": 150},
+                "1500": {"predictions": 1500, "days": 365},
+            }
+
+        colors = ["#667eea", "#764ba2", "#ff9800"]
+        tariffs = []
+        for i, (price_str, info) in enumerate(tariffs_data.items()):
+            price = int(price_str)
+            preds = info.get("predictions", 0)
+            days = info.get("days", 0)
+            color = colors[i % len(colors)]
+            tariffs.append((price, preds, days, color))
 
         for price, preds, days, color in tariffs:
             card = QFrame()

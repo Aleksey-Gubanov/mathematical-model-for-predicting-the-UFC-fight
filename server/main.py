@@ -333,6 +333,16 @@ async def api_train_2b(req: Train2bRequest, db: Session = Depends(get_db)):
     return StreamingResponse(generate_stream(), media_type="text/event-stream")
 
 # === ОПЛАТА ЧЕРЕЗ СБП ===
+@app.get("/api/pay/tariffs")
+def get_tariffs():
+    """Возвращает актуальные тарифы из tariffs.json."""
+    try:
+        tariffs_path = os.path.join(ROOT_DIR, "tariffs.json")
+        with open(tariffs_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data
+    except Exception as e:
+        return {"error": str(e)}
 @app.post("/api/pay/create")
 def api_pay_create(req: PayCreateRequest, db: Session = Depends(get_db)):
     """Создаёт резервирование уникальной суммы для СБП-перевода."""
