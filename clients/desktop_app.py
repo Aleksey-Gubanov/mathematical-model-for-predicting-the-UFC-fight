@@ -347,9 +347,9 @@ ABOUT_TEXT = {
 <h3>💰 Оплата</h3>
 <p>20 бесплатных прогнозов при регистрации. Пополнение баланса — переводом по СБП на указанный номер (любой банк с СБП):</p>
 <ul>
-<li><b>Тариф 1</b> — 500 прогнозов, 60 дней — 500₽</li>
-<li><b>Тариф 2</b> — 1000 прогнозов, 150 дней — 1000₽</li>
-<li><b>Тариф 3</b> — 1500 прогнозов, 365 дней — 1500₽</li>
+<li><b>Тариф 1</b> — 100 прогнозов, 60 дней — 500₽</li>
+<li><b>Тариф 2</b> — 200 прогнозов, 150 дней — 1000₽</li>
+<li><b>Тариф 3</b> — 350 прогнозов, 365 дней — 1500₽</li>
 </ul>
 <p>После перевода приложение автоматически определит оплату и начислит прогнозы.</p>
 <h3>⚠️ Важное предупреждение</h3>
@@ -390,9 +390,9 @@ ABOUT_TEXT = {
 <h3>💰 Payment</h3>
 <p>20 free predictions on registration. Balance top-up via SBP transfer to the specified number (any bank with SBP):</p>
 <ul>
-<li><b>Rate 1</b> — 500 predictions, 60 days — 500₽</li>
-<li><b>Rate 2</b> — 1000 predictions, 150 days — 1000₽</li>
-<li><b>Rate 3</b> — 1500 predictions, 365 days — 1500₽</li>
+<li><b>Rate 1</b> — 100 predictions, 60 days — 500₽</li>
+<li><b>Rate 2</b> — 200 predictions, 150 days — 1000₽</li>
+<li><b>Rate 3</b> — 350 predictions, 365 days — 1500₽</li>
 </ul>
 <p>After the transfer, the app automatically detects the payment and credits the predictions.</p>
 <h3>⚠️ Important disclaimer</h3>
